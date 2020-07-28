@@ -1,0 +1,3 @@
+Node	Nx  	Ny  	Nz  	dx  		dy  		dz  		tsteps  	Time				VM/Node(GB) 	RM/Node(GB) 	OMP   
+
+ 8		4096	0512	0256	3.00e-05	2.40e-04	2.40e-04	008001		1 day, 4:47:26.066760		14.418			11.077
