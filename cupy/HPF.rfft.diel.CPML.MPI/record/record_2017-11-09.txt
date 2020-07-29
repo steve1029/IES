@@ -1,0 +1,3 @@
+gridx	gridy	gridz	gridgapx	gridgapy	gridgapz	nsteps	cal_time
+64		64		200		5e-09		5e-09		5e-09		12001		0:31:38.284784
+64		64		200		5e-09		5e-09		5e-09		12001		0:31:34.733124
