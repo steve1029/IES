@@ -102,6 +102,9 @@ class Basic3D(object):
 		self.myPBCregion_x = False
 		self.myPBCregion_y = False
 		self.myPBCregion_z = False
+		self.myBBCregion_x = False
+		self.myBBCregion_y = False
+		self.myBBCregion_z = False
 
 		assert self.dt < self.maxdt, "Time interval is too big so that causality is broken. Lower the courant number."
 		assert float(self.Nx) % self.MPIsize == 0., "Nx must be a multiple of the number of nodes."
@@ -113,28 +116,28 @@ class Basic3D(object):
 		self.myNx	  = int(self.Nx/self.MPIsize)
 		self.loc_grid = (self.myNx, self.Ny, self.Nz)
 
-		self.Ex_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.Ey_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.Ez_re = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.Ex = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.Ey = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.Ez = np.zeros(self.loc_grid, dtype=self.dtype)
 
-		self.Hx_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.Hy_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.Hz_re = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.Hx = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.Hy = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.Hz = np.zeros(self.loc_grid, dtype=self.dtype)
 		###############################################################################
 
-		self.diffxEy_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.diffxEz_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.diffyEx_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.diffyEz_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.diffzEx_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.diffzEy_re = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.diffxEy = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.diffxEz = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.diffyEx = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.diffyEz = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.diffzEx = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.diffzEy = np.zeros(self.loc_grid, dtype=self.dtype)
 
-		self.diffxHy_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.diffxHz_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.diffyHx_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.diffyHz_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.diffzHx_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.diffzHy_re = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.diffxHy = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.diffxHz = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.diffyHx = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.diffyHz = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.diffzHx = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.diffzHy = np.zeros(self.loc_grid, dtype=self.dtype)
 		############################################################################
 
 		self.eps_Ex = np.ones(self.loc_grid, dtype=self.dtype) * epsilon_0
@@ -226,16 +229,17 @@ class Basic3D(object):
 
 			if	 key == 'x' and value != '':
 
-				self.psi_eyx_p_re = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
-				self.psi_ezx_p_re = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
-				self.psi_hyx_p_re = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
-				self.psi_hzx_p_re = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
+				self.psi_eyx_p = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
+				self.psi_ezx_p = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
+				self.psi_hyx_p = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
+				self.psi_hzx_p = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
 
-				self.psi_eyx_m_re = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
-				self.psi_ezx_m_re = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
-				self.psi_hyx_m_re = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
-				self.psi_hzx_m_re = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
+				self.psi_eyx_m = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
+				self.psi_ezx_m = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
+				self.psi_hyx_m = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
+				self.psi_hzx_m = np.zeros((npml, self.Ny, self.Nz), dtype=self.dtype)
 
+				"""
 				for i in range(self.PMLgrading):
 
 					loc  = np.float64(i) * self.dx / self.bdw_x
@@ -243,19 +247,24 @@ class Basic3D(object):
 					self.PMLsigmax[i] = self.PMLsigmamaxx * (loc **self.gO)
 					self.PMLkappax[i] = 1 + ((self.PMLkappamaxx-1) * (loc **self.gO))
 					self.PMLalphax[i] = self.PMLalphamaxx * ((1-loc) **self.sO)
+				"""
+				loc = np.arange(self.PMLgrading) * self.dx / self.bdw_x
+				self.PMLsigmax = self.PMLsigmamaxx * (loc **self.gO)
+				self.PMLkappax = 1 + ((self.PMLkappamaxx-1) * (loc **self.gO))
+				self.PMLalphax = self.PMLalphamaxx * ((1-loc) **self.sO)
 
 			elif key == 'y' and value != '':
 
-				self.psi_exy_p_re = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
-				self.psi_ezy_p_re = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
-				self.psi_hxy_p_re = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
-				self.psi_hzy_p_re = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
+				self.psi_exy_p = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
+				self.psi_ezy_p = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
+				self.psi_hxy_p = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
+				self.psi_hzy_p = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
 
-				self.psi_exy_m_re = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
-				self.psi_ezy_m_re = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
-				self.psi_hxy_m_re = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
-				self.psi_hzy_m_re = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
-
+				self.psi_exy_m = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
+				self.psi_ezy_m = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
+				self.psi_hxy_m = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
+				self.psi_hzy_m = np.zeros((self.myNx, npml, self.Nz), dtype=self.dtype)
+				"""
 				for i in range(self.PMLgrading):
 
 					loc  = np.float64(i) * self.dy / self.bdw_y
@@ -263,19 +272,26 @@ class Basic3D(object):
 					self.PMLsigmay[i] = self.PMLsigmamaxy * (loc **self.gO)
 					self.PMLkappay[i] = 1 + ((self.PMLkappamaxy-1) * (loc **self.gO))
 					self.PMLalphay[i] = self.PMLalphamaxy * ((1-loc) **self.sO)
+				"""
+
+				loc  = np.arange(self.PMLgrading) * self.dy / self.bdw_y
+				self.PMLsigmay = self.PMLsigmamaxy * (loc **self.gO)
+				self.PMLkappay = 1 + ((self.PMLkappamaxy-1) * (loc **self.gO))
+				self.PMLalphay = self.PMLalphamaxy * ((1-loc) **self.sO)
 
 			elif key == 'z' and value != '':
 
-				self.psi_exz_p_re = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
-				self.psi_eyz_p_re = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
-				self.psi_hxz_p_re = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
-				self.psi_hyz_p_re = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
+				self.psi_exz_p = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
+				self.psi_eyz_p = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
+				self.psi_hxz_p = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
+				self.psi_hyz_p = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
 
-				self.psi_exz_m_re = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
-				self.psi_eyz_m_re = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
-				self.psi_hxz_m_re = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
-				self.psi_hyz_m_re = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
+				self.psi_exz_m = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
+				self.psi_eyz_m = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
+				self.psi_hxz_m = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
+				self.psi_hyz_m = np.zeros((self.myNx, self.Ny, npml), dtype=self.dtype)
 
+				"""
 				for i in range(self.PMLgrading):
 
 					loc  = np.float64(i) * self.dz / self.bdw_z
@@ -283,6 +299,12 @@ class Basic3D(object):
 					self.PMLsigmaz[i] = self.PMLsigmamaxz * (loc **self.gO)
 					self.PMLkappaz[i] = 1 + ((self.PMLkappamaxz-1) * (loc **self.gO))
 					self.PMLalphaz[i] = self.PMLalphamaxz * ((1-loc) **self.sO)
+				"""
+
+				loc  = np.arange(selfe.PMLgrading) * self.dz / self.bdw_z
+				self.PMLsigmaz = self.PMLsigmamaxz * (loc **self.gO)
+				self.PMLkappaz = 1 + ((self.PMLkappamaxz-1) * (loc **self.gO))
+				self.PMLalphaz = self.PMLalphamaxz * ((1-loc) **self.sO)
 
 		#------------------------------------------------------------------------------------------------#
 		#--------------------------------- Get 'b' and 'a' for CPML theory ------------------------------#
@@ -368,7 +390,6 @@ class Basic3D(object):
 
 	def apply_PBC(self, region):
 		"""Specify the boundary to apply Periodic Boundary Condition.
-		Phase compensation is not developed yet.
 
 		PARAMETERS
 		----------
@@ -380,12 +401,31 @@ class Basic3D(object):
 		None
 		"""
 
+		value = region.get('x')
+		if value == '+-' or value == '-+':
+			if self.MPIsize > 1:
+				if	 self.MPIrank == 0				 : self.myPBCregion_x = '-'
+				elif self.MPIrank == (self.MPIsize-1): self.myPBCregion_x = '+'
+		elif value == None: pass
+		else: raise ValueError("The value of key 'x' should be None or '+-' or '-+'.")
+
+		value = region.get('y')
+		if   value == True:  self.myPBCregion_y = True
+		elif value == False: self.myPBCregion_y = False
+		else: raise ValueError("Choose True or False")
+
+		value = region.get('z')
+		if   value == True:  self.myPBCregion_z = True
+		elif value == False: self.myPBCregion_z = False
+		else: raise ValueError("Choose True or False")
+
+		"""
 		for key, value in region.items():
 
 			if	 key == 'x':
 
-				if	 value == '+'				   : raise ValueError("input '+-' or '-+'.")
-				elif value == '-'				   : raise ValueError("input '+-' or '-+'.")
+				if	 value == '+': raise ValueError("input '+-' or '-+'.")
+				elif value == '-': raise ValueError("input '+-' or '-+'.")
 				elif value == '+-' or value == '-+':
 
 					if	 self.MPIrank == 0				 : self.myPBCregion_x = '-'
@@ -402,71 +442,68 @@ class Basic3D(object):
 				if value == True: self.myPBCregion_z = True
 				elif value == False: self.myPBCregion_z = False
 				else: raise ValueError("Choose True or False")
+		"""
 
 		self.MPIcomm.Barrier()
 		#print("PBC region of rank: {}, x: {}, y: {}, z: {}" \
 		#		.format(self.MPIrank, self.myPBCregion_x, self.myPBCregion_y, self.myPBCregion_z))
 
-	def set_ref_trs_pos(self, ref_pos, trs_pos):
-		"""Set x position to collect srcref and trs
+	def apply_BBC(self, region):
+		"""Specify the boundary to apply Bloch Boundary Condition.
 
 		PARAMETERS
 		----------
-		pos : tuple
-				x index of ref position and trs position
+		region : dictionary
+			ex) {'x':'','y':'+-','z':'+-'}
 
 		RETURNS
 		-------
 		None
 		"""
 
-		assert self.tsteps != None, "Set time tstep first!"
+		value = region.get('x')
+		if value == '+-' or value == '-+':
+			if self.MPIsize > 1:
+				if	 self.MPIrank == 0				 : self.myBBCregion_x = '-'
+				elif self.MPIrank == (self.MPIsize-1): self.myBBCregion_x = '+'
+		elif value == None: pass
+		else: raise ValueError("The value of key 'x' should be None or '+-' or '-+'.")
 
-		if ref_pos >= 0: self.ref_pos = ref_pos
-		else		   : self.ref_pos = ref_pos + self.Nx
-		if trs_pos >= 0: self.trs_pos = trs_pos
-		else		   : self.trs_pos = trs_pos + self.Nx
+		value = region.get('y')
+		if   value == True:  self.myBBCregion_y = True
+		elif value == False: self.myBBCregion_y = False
+		else: raise ValueError("Choose True or False")
 
-		#----------------------------------------------------#
-		#-------- All rank should know who gets trs ---------#
-		#----------------------------------------------------#
+		value = region.get('z')
+		if   value == True:  self.myBBCregion_z = True
+		elif value == False: self.myBBCregion_z = False
+		else: raise ValueError("Choose True or False")
 
-		for rank in range(self.MPIsize) : 
+		"""
+		for key, value in region.items():
 
-			srt = self.myNx_indice[rank][0]
-			end = self.myNx_indice[rank][1]
+			if	 key == 'x':
 
-			if self.trs_pos >= srt and self.trs_pos < end : 
-				self.who_get_trs	= rank 
-				self.local_trs_xpos = self.trs_pos - srt
+				if	 value == '+': raise ValueError("input '+-' or '-+'.")
+				elif value == '-': raise ValueError("input '+-' or '-+'.")
+				elif value == '+-' or value == '-+':
 
-		#----------------------------------------------------#
-		#------- All rank should know who gets the ref ------#
-		#----------------------------------------------------#
+					if	 self.MPIrank == 0				 : self.myBBCregion_x = '-'
+					elif self.MPIrank == (self.MPIsize-1): self.myBBCregion_x = '+'
 
-		for rank in range(self.MPIsize):
-			srt = self.myNx_indice[rank][0]
-			end = self.myNx_indice[rank][1]
+			elif key == 'y':
 
-			if self.ref_pos >= srt and self.ref_pos < end :
-				self.who_get_ref	= rank
-				self.local_ref_xpos = self.ref_pos - srt 
+				if value == True: self.myBBCregion_y = True
+				elif value == False: self.myBBCregion_y = False
+				else: raise ValueError("Choose True or False")
 
-		#----------------------------------------------------#
-		#-------- Ready to put ref and trs collector --------#
-		#----------------------------------------------------#
-
+			elif key == 'z':
+	
+				if value == True: self.myBBCregion_z = True
+				elif value == False: self.myBBCregion_z = False
+				else: raise ValueError("Choose True or False")
+		"""
 		self.MPIcomm.Barrier()
-
-		if	 self.MPIrank == self.who_get_trs:
-			#print("rank %d: I collect trs from %d which is essentially %d in my own grid."\
-			#		 %(self.MPIrank, self.trs_pos, self.local_trs_xpos))
-			self.trs_re = np.zeros(self.tsteps, dtype=self.dtype) 
-
-		if self.MPIrank == self.who_get_ref: 
-			#print("rank %d: I collect ref from %d which is essentially %d in my own grid."\
-			#		 %(self.MPIrank, self.ref_pos, self.local_ref_xpos))
-			self.ref_re = np.zeros(self.tsteps, dtype=self.dtype)
 
 	def set_src_pos(self, src_srt, src_end):
 		"""Set the position, type of the source and field.
@@ -527,7 +564,7 @@ class Basic3D(object):
 						self.my_src_xsrt = self.src_xsrt - my_xsrt
 						self.my_src_xend = self.src_xend - my_xsrt
 
-						self.src_re = np.zeros(self.tsteps, dtype=self.dtype)
+						self.src = np.zeros(self.tsteps, dtype=self.dtype)
 
 						#print("rank{:>2}: src_xsrt : {}, my_src_xsrt: {}, my_src_xend: {}"\
 						#		.format(self.MPIrank, self.src_xsrt, self.my_src_xsrt, self.my_src_xend))
@@ -545,7 +582,7 @@ class Basic3D(object):
 				self.my_src_xsrt = self.src_xsrt
 				self.my_src_xend = self.src_xend
 
-				self.src_re = np.zeros(self.tsteps, dtype=self.dtype)
+				self.src = np.zeros(self.tsteps, dtype=self.dtype)
 
 			# case 3. x position of source is reversed.
 			elif self.src_xsrt > self.src_xend:
@@ -554,19 +591,19 @@ class Basic3D(object):
 			else:
 				raise IndexError("x position of src is not defined!")
 
-	def put_src(self, where_re, pulse_re, put_type):
+	def put_src(self, where, pulse, put_type):
 		"""Put source at the designated postion set by set_src_pos method.
 		
 		PARAMETERS
 		----------	
 		where : string
 			ex)
-				'Ex_re' or 'ex_re'
-				'Ey_re' or 'ey_re'
-				'Ez_re' or 'ez_re'
+				'Ex' or 'ex'
+				'Ey' or 'ey'
+				'Ez' or 'ez'
 
 		pulse : float
-			float returned by source.pulse_re.
+			float returned by source.pulse.
 
 		put_type : string
 			'soft' or 'hard'
@@ -578,9 +615,9 @@ class Basic3D(object):
 
 		self.put_type = put_type
 
-		self.where_re = where_re
+		self.where = where
 		
-		self.pulse_re = self.dtype(pulse_re)
+		self.pulse = self.dtype(pulse)
 
 		if self.MPIrank == self.who_put_src:
 
@@ -590,21 +627,21 @@ class Basic3D(object):
 			
 			if	 self.put_type == 'soft':
 
-				if (self.where_re == 'Ex_re') or (self.where_re == 'ex_re'): self.Ex_re[x,y,z] += self.pulse_re
-				if (self.where_re == 'Ey_re') or (self.where_re == 'ey_re'): self.Ey_re[x,y,z] += self.pulse_re
-				if (self.where_re == 'Ez_re') or (self.where_re == 'ez_re'): self.Ez_re[x,y,z] += self.pulse_re
-				if (self.where_re == 'Hx_re') or (self.where_re == 'hx_re'): self.Hx_re[x,y,z] += self.pulse_re
-				if (self.where_re == 'Hy_re') or (self.where_re == 'hy_re'): self.Hy_re[x,y,z] += self.pulse_re
-				if (self.where_re == 'Hz_re') or (self.where_re == 'hz_re'): self.Hz_re[x,y,z] += self.pulse_re
+				if (self.where == 'Ex') or (self.where == 'ex'): self.Ex[x,y,z] += self.pulse
+				if (self.where == 'Ey') or (self.where == 'ey'): self.Ey[x,y,z] += self.pulse
+				if (self.where == 'Ez') or (self.where == 'ez'): self.Ez[x,y,z] += self.pulse
+				if (self.where == 'Hx') or (self.where == 'hx'): self.Hx[x,y,z] += self.pulse
+				if (self.where == 'Hy') or (self.where == 'hy'): self.Hy[x,y,z] += self.pulse
+				if (self.where == 'Hz') or (self.where == 'hz'): self.Hz[x,y,z] += self.pulse
 
 			elif self.put_type == 'hard':
 	
-				if (self.where_re == 'Ex_re') or (self.where_re == 'ex_re'): self.Ex_re[x,y,z] = self.pulse_re
-				if (self.where_re == 'Ey_re') or (self.where_re == 'ey_re'): self.Ey_re[x,y,z] = self.pulse_re
-				if (self.where_re == 'Ez_re') or (self.where_re == 'ez_re'): self.Ez_re[x,y,z] = self.pulse_re
-				if (self.where_re == 'Hx_re') or (self.where_re == 'hx_re'): self.Hx_re[x,y,z] = self.pulse_re
-				if (self.where_re == 'Hy_re') or (self.where_re == 'hy_re'): self.Hy_re[x,y,z] = self.pulse_re
-				if (self.where_re == 'Hz_re') or (self.where_re == 'hz_re'): self.Hz_re[x,y,z] = self.pulse_re
+				if (self.where == 'Ex') or (self.where == 'ex'): self.Ex[x,y,z] = self.pulse
+				if (self.where == 'Ey') or (self.where == 'ey'): self.Ey[x,y,z] = self.pulse
+				if (self.where == 'Ez') or (self.where == 'ez'): self.Ez[x,y,z] = self.pulse
+				if (self.where == 'Hx') or (self.where == 'hx'): self.Hx[x,y,z] = self.pulse
+				if (self.where == 'Hy') or (self.where == 'hy'): self.Hy[x,y,z] = self.pulse
+				if (self.where == 'Hz') or (self.where == 'hz'): self.Hz[x,y,z] = self.pulse
 
 			else:
 				raise ValueError("Please insert 'soft' or 'hard'")
@@ -1193,11 +1230,11 @@ class Basic3D(object):
 
 		if (self.MPIrank > 0) and (self.MPIrank < self.MPIsize):
 
-			sendEyfirst_re = self.Ey_re[0,:,:].copy()
-			sendEzfirst_re = self.Ez_re[0,:,:].copy()
+			sendEyfirst = self.Ey[0,:,:].copy()
+			sendEzfirst = self.Ez[0,:,:].copy()
 
-			self.MPIcomm.send( sendEyfirst_re, dest=(self.MPIrank-1), tag=(tstep*100+9 ))
-			self.MPIcomm.send( sendEzfirst_re, dest=(self.MPIrank-1), tag=(tstep*100+11))
+			self.MPIcomm.send( sendEyfirst, dest=(self.MPIrank-1), tag=(tstep*100+9 ))
+			self.MPIcomm.send( sendEzfirst, dest=(self.MPIrank-1), tag=(tstep*100+11))
 
 		else: pass
 
@@ -1207,8 +1244,8 @@ class Basic3D(object):
 
 		if (self.MPIrank > (-1)) and (self.MPIrank < (self.MPIsize-1)):
 
-			recvEylast_re = self.MPIcomm.recv( source=(self.MPIrank+1), tag=(tstep*100+9 ))
-			recvEzlast_re = self.MPIcomm.recv( source=(self.MPIrank+1), tag=(tstep*100+11))
+			recvEylast = self.MPIcomm.recv( source=(self.MPIrank+1), tag=(tstep*100+9 ))
+			recvEzlast = self.MPIcomm.recv( source=(self.MPIrank+1), tag=(tstep*100+11))
 
 		else: pass
 
@@ -1221,17 +1258,17 @@ class Basic3D(object):
 			self.clib_core.get_diff_of_E_rankFM(\
 												self.myNx, self.Ny, self.Nz,\
 												self.dt, self.dx, self.dy, self.dz, \
-												recvEylast_re, 
-												recvEzlast_re, 
-												self.Ex_re, 
-												self.Ey_re, 
-												self.Ez_re, 
-												self.diffxEy_re, 
-												self.diffxEz_re, 
-												self.diffyEx_re, 
-												self.diffyEz_re, 
-												self.diffzEx_re, 
-												self.diffzEy_re
+												recvEylast, 
+												recvEzlast, 
+												self.Ex, 
+												self.Ey, 
+												self.Ez, 
+												self.diffxEy, 
+												self.diffxEz, 
+												self.diffyEx, 
+												self.diffyEz, 
+												self.diffzEx, 
+												self.diffzEy
 												)
 
 		elif self.MPIrank == (self.MPIsize-1):
@@ -1239,15 +1276,15 @@ class Basic3D(object):
 			self.clib_core.get_diff_of_E_rank_L(\
 												self.myNx, self.Ny, self.Nz,\
 												self.dt, self.dx, self.dy, self.dz, \
-												self.Ex_re, 
-												self.Ey_re, 
-												self.Ez_re, 
-												self.diffxEy_re, 
-												self.diffxEz_re, 
-												self.diffyEx_re, 
-												self.diffyEz_re, 
-												self.diffzEx_re, 
-												self.diffzEy_re
+												self.Ex, 
+												self.Ey, 
+												self.Ez, 
+												self.diffxEy, 
+												self.diffxEz, 
+												self.diffyEx, 
+												self.diffyEz, 
+												self.diffzEx, 
+												self.diffzEy
 												)
 
 		#-----------------------------------------------------------#
@@ -1260,15 +1297,15 @@ class Basic3D(object):
 												self.dt, \
 												self.mu_Hx, self.mu_Hy, self.mu_Hz, \
 												self.mcon_Hx, self.mcon_Hy, self.mcon_Hz, \
-												self.Hx_re, 
-												self.Hy_re, 
-												self.Hz_re, 
-												self.diffxEy_re, 
-												self.diffxEz_re, 
-												self.diffyEx_re, 
-												self.diffyEz_re, 
-												self.diffzEx_re, 
-												self.diffzEy_re
+												self.Hx, 
+												self.Hy, 
+												self.Hz, 
+												self.diffxEy, 
+												self.diffxEz, 
+												self.diffyEx, 
+												self.diffyEz, 
+												self.diffzEx, 
+												self.diffzEy
 											)
 
 		elif self.MPIrank == (self.MPIsize-1):
@@ -1278,15 +1315,15 @@ class Basic3D(object):
 												self.dt, \
 												self.mu_Hx, self.mu_Hy, self.mu_Hz, \
 												self.mcon_Hx, self.mcon_Hy, self.mcon_Hz, \
-												self.Hx_re, 
-												self.Hy_re, 
-												self.Hz_re, 
-												self.diffxEy_re, 
-												self.diffxEz_re, 
-												self.diffyEx_re, 
-												self.diffyEz_re, 
-												self.diffzEx_re, 
-												self.diffzEy_re
+												self.Hx, 
+												self.Hy, 
+												self.Hz, 
+												self.diffxEy, 
+												self.diffxEz, 
+												self.diffyEx, 
+												self.diffyEz, 
+												self.diffzEx, 
+												self.diffzEy
 											)
 
 		#-----------------------------------------------------------#
@@ -1304,12 +1341,12 @@ class Basic3D(object):
 													self.PMLkappax, self.PMLbx, self.PMLax, \
 													self.mu_Hy, self.mu_Hz, \
 													self.mcon_Hy, self.mcon_Hz, \
-													self.Hy_re, 
-													self.Hz_re, 
-													self.diffxEy_re, 
-													self.diffxEz_re, 
-													self.psi_hyx_p_re, 
-													self.psi_hzx_p_re
+													self.Hy, 
+													self.Hz, 
+													self.diffxEy, 
+													self.diffxEz, 
+													self.psi_hyx_p, 
+													self.psi_hzx_p
 												)
 
 				if '-' in self.PMLregion.get('x'):
@@ -1320,12 +1357,12 @@ class Basic3D(object):
 													self.PMLkappax, self.PMLbx, self.PMLax, \
 													self.mu_Hy, self.mu_Hz, \
 													self.mcon_Hy, self.mcon_Hz, \
-													self.Hy_re, 
-													self.Hz_re, 
-													self.diffxEy_re, 
-													self.diffxEz_re, 
-													self.psi_hyx_m_re, 
-													self.psi_hzx_m_re
+													self.Hy, 
+													self.Hz, 
+													self.diffxEy, 
+													self.diffxEz, 
+													self.psi_hyx_m, 
+													self.psi_hzx_m
 												)
 
 			if 'y' in self.PMLregion.keys():
@@ -1337,12 +1374,12 @@ class Basic3D(object):
 													self.PMLkappay, self.PMLby, self.PMLay, \
 													self.mu_Hx, self.mu_Hz, \
 													self.mcon_Hx, self.mcon_Hz, \
-													self.Hx_re, 
-													self.Hz_re, 
-													self.diffyEx_re, 
-													self.diffyEz_re, 
-													self.psi_hxy_p_re, 
-													self.psi_hzy_p_re
+													self.Hx, 
+													self.Hz, 
+													self.diffyEx, 
+													self.diffyEz, 
+													self.psi_hxy_p, 
+													self.psi_hzy_p
 												)
 
 				if '-' in self.PMLregion.get('y'):
@@ -1353,12 +1390,12 @@ class Basic3D(object):
 													self.PMLkappay, self.PMLby, self.PMLay, \
 													self.mu_Hx, self.mu_Hz, \
 													self.mcon_Hx, self.mcon_Hz, \
-													self.Hx_re, 
-													self.Hz_re, 
-													self.diffyEx_re, 
-													self.diffyEz_re, 
-													self.psi_hxy_m_re, 
-													self.psi_hzy_m_re
+													self.Hx, 
+													self.Hz, 
+													self.diffyEx, 
+													self.diffyEz, 
+													self.psi_hxy_m, 
+													self.psi_hzy_m
 												)
 
 			if 'z' in self.PMLregion.keys():
@@ -1370,12 +1407,12 @@ class Basic3D(object):
 													self.PMLkappaz, self.PMLbz, self.PMLaz, \
 													self.mu_Hx, self.mu_Hy, \
 													self.mcon_Hx, self.mcon_Hy, \
-													self.Hx_re, 
-													self.Hy_re, 
-													self.diffzEx_re, 
-													self.diffzEy_re, 
-													self.psi_hxz_p_re, 
-													self.psi_hyz_p_re
+													self.Hx, 
+													self.Hy, 
+													self.diffzEx, 
+													self.diffzEy, 
+													self.psi_hxz_p, 
+													self.psi_hyz_p
 												)
 
 				if '-' in self.PMLregion.get('z'):
@@ -1386,12 +1423,12 @@ class Basic3D(object):
 													self.PMLkappaz, self.PMLbz, self.PMLaz, \
 													self.mu_Hx, self.mu_Hy, \
 													self.mcon_Hx, self.mcon_Hy, \
-													self.Hx_re, 
-													self.Hy_re, 
-													self.diffzEx_re, 
-													self.diffzEy_re, 
-													self.psi_hxz_m_re, 
-													self.psi_hyz_m_re
+													self.Hx, 
+													self.Hy, 
+													self.diffzEx, 
+													self.diffzEy, 
+													self.psi_hxz_m, 
+													self.psi_hyz_m
 												)
 
 		# Middle rank
@@ -1410,12 +1447,12 @@ class Basic3D(object):
 													self.PMLkappay, self.PMLby, self.PMLay, \
 													self.mu_Hx, self.mu_Hz, \
 													self.mcon_Hx, self.mcon_Hz, \
-													self.Hx_re, 
-													self.Hz_re, 
-													self.diffyEx_re, 
-													self.diffyEz_re, 
-													self.psi_hxy_p_re, 
-													self.psi_hzy_p_re
+													self.Hx, 
+													self.Hz, 
+													self.diffyEx, 
+													self.diffyEz, 
+													self.psi_hxy_p, 
+													self.psi_hzy_p
 												)
 
 				if '-' in self.PMLregion.get('y'):
@@ -1426,12 +1463,12 @@ class Basic3D(object):
 													self.PMLkappay, self.PMLby, self.PMLay, \
 													self.mu_Hx, self.mu_Hz, \
 													self.mcon_Hx, self.mcon_Hz, \
-													self.Hx_re, 
-													self.Hz_re, 
-													self.diffyEx_re, 
-													self.diffyEz_re, 
-													self.psi_hxy_m_re, 
-													self.psi_hzy_m_re
+													self.Hx, 
+													self.Hz, 
+													self.diffyEx, 
+													self.diffyEz, 
+													self.psi_hxy_m, 
+													self.psi_hzy_m
 												)
 
 			if 'z' in self.PMLregion.keys():
@@ -1444,12 +1481,12 @@ class Basic3D(object):
 													self.PMLkappaz, self.PMLbz, self.PMLaz, \
 													self.mu_Hx, self.mu_Hy, \
 													self.mcon_Hx, self.mcon_Hy, \
-													self.Hx_re, 
-													self.Hy_re, 
-													self.diffzEx_re, 
-													self.diffzEy_re, 
-													self.psi_hxz_p_re, 
-													self.psi_hyz_p_re
+													self.Hx, 
+													self.Hy, 
+													self.diffzEx, 
+													self.diffzEy, 
+													self.psi_hxz_p, 
+													self.psi_hyz_p
 												)
 
 				if '-' in self.PMLregion.get('z'):
@@ -1460,12 +1497,12 @@ class Basic3D(object):
 													self.PMLkappaz, self.PMLbz, self.PMLaz, \
 													self.mu_Hx, self.mu_Hy, \
 													self.mcon_Hx, self.mcon_Hy, \
-													self.Hx_re, 
-													self.Hy_re, 
-													self.diffzEx_re, 
-													self.diffzEy_re, 
-													self.psi_hxz_m_re, 
-													self.psi_hyz_m_re
+													self.Hx, 
+													self.Hy, 
+													self.diffzEx, 
+													self.diffzEy, 
+													self.psi_hxz_m, 
+													self.psi_hyz_m
 												)
 
 		# Last rank
@@ -1481,12 +1518,12 @@ class Basic3D(object):
 													self.PMLkappax, self.PMLbx, self.PMLax, \
 													self.mu_Hy, self.mu_Hz, \
 													self.mcon_Hy, self.mcon_Hz, \
-													self.Hy_re, 
-													self.Hz_re, 
-													self.diffxEy_re, 
-													self.diffxEz_re, 
-													self.psi_hyx_p_re, 
-													self.psi_hzx_p_re
+													self.Hy, 
+													self.Hz, 
+													self.diffxEy, 
+													self.diffxEz, 
+													self.psi_hyx_p, 
+													self.psi_hzx_p
 												)
 
 				if '-' in self.PMLregion.get('x'): pass
@@ -1501,12 +1538,12 @@ class Basic3D(object):
 													self.PMLkappay, self.PMLby, self.PMLay, \
 													self.mu_Hx, self.mu_Hz, \
 													self.mcon_Hx, self.mcon_Hz, \
-													self.Hx_re, 
-													self.Hz_re, 
-													self.diffyEx_re, 
-													self.diffyEz_re, 
-													self.psi_hxy_p_re, 
-													self.psi_hzy_p_re
+													self.Hx, 
+													self.Hz, 
+													self.diffyEx, 
+													self.diffyEz, 
+													self.psi_hxy_p, 
+													self.psi_hzy_p
 												)
 
 				if '-' in self.PMLregion.get('y'):
@@ -1517,12 +1554,12 @@ class Basic3D(object):
 													self.PMLkappay, self.PMLby, self.PMLay, \
 													self.mu_Hx, self.mu_Hz, \
 													self.mcon_Hx, self.mcon_Hz, \
-													self.Hx_re, 
-													self.Hz_re, 
-													self.diffyEx_re, 
-													self.diffyEz_re, 
-													self.psi_hxy_m_re, 
-													self.psi_hzy_m_re
+													self.Hx, 
+													self.Hz, 
+													self.diffyEx, 
+													self.diffyEz, 
+													self.psi_hxy_m, 
+													self.psi_hzy_m
 												)
 
 			if 'z' in self.PMLregion.keys():
@@ -1535,12 +1572,12 @@ class Basic3D(object):
 													self.PMLkappaz, self.PMLbz, self.PMLaz, \
 													self.mu_Hx, self.mu_Hy, \
 													self.mcon_Hx, self.mcon_Hy, \
-													self.Hx_re, 
-													self.Hy_re, 
-													self.diffzEx_re, 
-													self.diffzEy_re, 
-													self.psi_hxz_p_re, 
-													self.psi_hyz_p_re
+													self.Hx, 
+													self.Hy, 
+													self.diffzEx, 
+													self.diffzEy, 
+													self.psi_hxz_p, 
+													self.psi_hyz_p
 												)
 
 				if '-' in self.PMLregion.get('z'):
@@ -1551,12 +1588,12 @@ class Basic3D(object):
 													self.PMLkappaz, self.PMLbz, self.PMLaz, \
 													self.mu_Hx, self.mu_Hy, \
 													self.mcon_Hx, self.mcon_Hy, \
-													self.Hx_re, 
-													self.Hy_re, 
-													self.diffzEx_re, 
-													self.diffzEy_re, 
-													self.psi_hxz_m_re, 
-													self.psi_hyz_m_re
+													self.Hx, 
+													self.Hy, 
+													self.diffzEx, 
+													self.diffzEy, 
+													self.psi_hxz_m, 
+													self.psi_hyz_m
 												)
 
 		#-----------------------------------------------------------#
@@ -1573,16 +1610,16 @@ class Basic3D(object):
 											self.dt, self.dx, self.dy, self.dz, \
 											self.mu_Hx, self.mu_Hz, \
 											self.mcon_Hx, self.mcon_Hz, \
-											recvEylast_re, 
-											self.Hx_re, 
-											self.Hz_re, 
-											self.Ex_re, 
-											self.Ey_re, 
-											self.Ez_re, 
-											self.diffxEy_re, 
-											self.diffyEx_re, 
-											self.diffyEz_re, 
-											self.diffzEy_re
+											recvEylast, 
+											self.Hx, 
+											self.Hz, 
+											self.Ex, 
+											self.Ey, 
+											self.Ez, 
+											self.diffxEy, 
+											self.diffyEx, 
+											self.diffyEz, 
+											self.diffzEy
 										)
 
 				# The first rank apply PBC on PML region.
@@ -1593,9 +1630,9 @@ class Basic3D(object):
 													self.dt,\
 													self.PMLkappax, self.PMLbx, self.PMLax,\
 													self.mu_Hz, self.mcon_Hz,\
-													self.Hz_re, 
-													self.diffxEy_re, 
-													self.psi_hzx_m_re
+													self.Hz, 
+													self.diffxEy, 
+													self.psi_hzx_m
 												)
 
 			# The last rank.
@@ -1605,15 +1642,15 @@ class Basic3D(object):
 											self.dt, self.dx, self.dy, self.dz, \
 											self.mu_Hx, self.mu_Hz, \
 											self.mcon_Hx, self.mcon_Hz, \
-											self.Hx_re, 
-											self.Hz_re, 
-											self.Ex_re, 
-											self.Ey_re, 
-											self.Ez_re, 
-											self.diffxEy_re, 
-											self.diffyEx_re, 
-											self.diffyEz_re, 
-											self.diffzEy_re
+											self.Hx, 
+											self.Hz, 
+											self.Ex, 
+											self.Ey, 
+											self.Ez, 
+											self.diffxEy, 
+											self.diffyEx, 
+											self.diffyEz, 
+											self.diffzEy
 										)
 
 				# The last rank apply PBC on PML region.
@@ -1624,9 +1661,9 @@ class Basic3D(object):
 													self.dt,\
 													self.PMLkappax, self.PMLbx, self.PMLax,\
 													self.mu_Hz, self.mcon_Hz,\
-													self.Hz_re, 
-													self.diffxEy_re, 
-													self.psi_hzx_p_re
+													self.Hz, 
+													self.diffxEy, 
+													self.psi_hzx_p
 												)
 
 
@@ -1645,16 +1682,16 @@ class Basic3D(object):
 											self.dt, self.dx, self.dy, self.dz, \
 											self.mu_Hx, self.mu_Hy, \
 											self.mcon_Hx, self.mcon_Hy, \
-											recvEzlast_re, 
-											self.Hx_re, 
-											self.Hy_re, 
-											self.Ex_re, 
-											self.Ey_re, 
-											self.Ez_re, 
-											self.diffxEz_re, 
-											self.diffyEz_re, 
-											self.diffzEx_re, 
-											self.diffzEy_re
+											recvEzlast, 
+											self.Hx, 
+											self.Hy, 
+											self.Ex, 
+											self.Ey, 
+											self.Ez, 
+											self.diffxEz, 
+											self.diffyEz, 
+											self.diffzEx, 
+											self.diffzEy
 										)
 
 				# The first rank apply PBC on PML region.
@@ -1665,9 +1702,9 @@ class Basic3D(object):
 													self.dt,\
 													self.PMLkappax, self.PMLbx, self.PMLax,\
 													self.mu_Hy, self.mcon_Hy,\
-													self.Hy_re, 
-													self.diffxEz_re, 
-													self.psi_hyx_m_re
+													self.Hy, 
+													self.diffxEz, 
+													self.psi_hyx_m
 												)
 
 			# The last rank.
@@ -1677,15 +1714,15 @@ class Basic3D(object):
 											self.dt, self.dx, self.dy, self.dz, \
 											self.mu_Hx, self.mu_Hy, \
 											self.mcon_Hx, self.mcon_Hy, \
-											self.Hx_re, 
-											self.Hy_re, 
-											self.Ex_re, 
-											self.Ey_re, 
-											self.Ez_re, 
-											self.diffxEz_re, 
-											self.diffyEz_re, 
-											self.diffzEx_re, 
-											self.diffzEy_re
+											self.Hx, 
+											self.Hy, 
+											self.Ex, 
+											self.Ey, 
+											self.Ez, 
+											self.diffxEz, 
+											self.diffyEz, 
+											self.diffzEx, 
+											self.diffzEy
 										)
 
 				# The last rank apply PBC on PML region.
@@ -1696,9 +1733,9 @@ class Basic3D(object):
 													self.dt,\
 													self.PMLkappax, self.PMLbx, self.PMLax,\
 													self.mu_Hy, self.mcon_Hy,\
-													self.Hy_re, 
-													self.diffxEz_re, 
-													self.psi_hyx_p_re
+													self.Hy, 
+													self.diffxEz, 
+													self.psi_hyx_p
 												)
 
 		else: pass
@@ -1727,11 +1764,11 @@ class Basic3D(object):
 
 		if self.MPIrank > (-1) and self.MPIrank < (self.MPIsize-1):
 
-			sendHylast_re = self.Hy_re[-1,:,:].copy()
-			sendHzlast_re = self.Hz_re[-1,:,:].copy()
+			sendHylast = self.Hy[-1,:,:].copy()
+			sendHzlast = self.Hz[-1,:,:].copy()
 
-			self.MPIcomm.send(sendHylast_re, dest=(self.MPIrank+1), tag=(tstep*100+3))
-			self.MPIcomm.send(sendHzlast_re, dest=(self.MPIrank+1), tag=(tstep*100+5))
+			self.MPIcomm.send(sendHylast, dest=(self.MPIrank+1), tag=(tstep*100+3))
+			self.MPIcomm.send(sendHzlast, dest=(self.MPIrank+1), tag=(tstep*100+5))
 		
 		else: pass
 
@@ -1741,8 +1778,8 @@ class Basic3D(object):
 
 		if self.MPIrank > 0 and self.MPIrank < self.MPIsize:
 
-			recvHyfirst_re = self.MPIcomm.recv( source=(self.MPIrank-1), tag=(tstep*100+3))
-			recvHzfirst_re = self.MPIcomm.recv( source=(self.MPIrank-1), tag=(tstep*100+5))
+			recvHyfirst = self.MPIcomm.recv( source=(self.MPIrank-1), tag=(tstep*100+3))
+			recvHzfirst = self.MPIcomm.recv( source=(self.MPIrank-1), tag=(tstep*100+5))
 		
 		else: pass
 
@@ -1755,32 +1792,32 @@ class Basic3D(object):
 			self.clib_core.get_diff_of_H_rank_F(\
 												self.myNx, self.Ny, self.Nz,\
 												self.dt, self.dx, self.dy, self.dz, \
-												self.Hx_re, 
-												self.Hy_re, 
-												self.Hz_re, 
-												self.diffxHy_re, 
-												self.diffxHz_re, 
-												self.diffyHx_re, 
-												self.diffyHz_re, 
-												self.diffzHx_re, 
-												self.diffzHy_re
+												self.Hx, 
+												self.Hy, 
+												self.Hz, 
+												self.diffxHy, 
+												self.diffxHz, 
+												self.diffyHx, 
+												self.diffyHz, 
+												self.diffzHx, 
+												self.diffzHy
 												)
 		else:
 
 			self.clib_core.get_diff_of_H_rankML(\
 												self.myNx, self.Ny, self.Nz,\
 												self.dt, self.dx, self.dy, self.dz, \
-												recvHyfirst_re, 
-												recvHzfirst_re, 
-												self.Hx_re, 
-												self.Hy_re, 
-												self.Hz_re, 
-												self.diffxHy_re, 
-												self.diffxHz_re, 
-												self.diffyHx_re, 
-												self.diffyHz_re, 
-												self.diffzHx_re, 
-												self.diffzHy_re
+												recvHyfirst, 
+												recvHzfirst, 
+												self.Hx, 
+												self.Hy, 
+												self.Hz, 
+												self.diffxHy, 
+												self.diffxHz, 
+												self.diffyHx, 
+												self.diffyHz, 
+												self.diffzHx, 
+												self.diffzHy
 												)
 
 		#-----------------------------------------------------------#
@@ -1794,15 +1831,15 @@ class Basic3D(object):
 												self.dt, \
 												self.eps_Ex, self.eps_Ey, self.eps_Ez, \
 												self.econ_Ex, self.econ_Ey, self.econ_Ez, \
-												self.Ex_re, 
-												self.Ey_re, 
-												self.Ez_re, 
-												self.diffxHy_re, 
-												self.diffxHz_re, 
-												self.diffyHx_re, 
-												self.diffyHz_re, 
-												self.diffzHx_re, 
-												self.diffzHy_re
+												self.Ex, 
+												self.Ey, 
+												self.Ez, 
+												self.diffxHy, 
+												self.diffxHz, 
+												self.diffyHx, 
+												self.diffyHz, 
+												self.diffzHx, 
+												self.diffzHy
 											)
 
 		else:
@@ -1812,15 +1849,15 @@ class Basic3D(object):
 												self.dt, \
 												self.eps_Ex, self.eps_Ey, self.eps_Ez, \
 												self.econ_Ex, self.econ_Ey, self.econ_Ez, \
-												self.Ex_re, 
-												self.Ey_re, 
-												self.Ez_re, 
-												self.diffxHy_re, 
-												self.diffxHz_re, 
-												self.diffyHx_re, 
-												self.diffyHz_re, 
-												self.diffzHx_re, 
-												self.diffzHy_re
+												self.Ex, 
+												self.Ey, 
+												self.Ez, 
+												self.diffxHy, 
+												self.diffxHz, 
+												self.diffyHx, 
+												self.diffyHz, 
+												self.diffzHx, 
+												self.diffzHy
 											)
 
 		#-----------------------------------------------------------#
@@ -1838,12 +1875,12 @@ class Basic3D(object):
 													self.PMLkappax, self.PMLbx, self.PMLax, \
 													self.eps_Ey, self.eps_Ez, \
 													self.econ_Ey, self.econ_Ez, \
-													self.Ey_re, 
-													self.Ez_re, 
-													self.diffxHy_re, 
-													self.diffxHz_re, 
-													self.psi_eyx_p_re, 
-													self.psi_ezx_p_re
+													self.Ey, 
+													self.Ez, 
+													self.diffxHy, 
+													self.diffxHz, 
+													self.psi_eyx_p, 
+													self.psi_ezx_p
 												)
 
 				if '-' in self.PMLregion.get('x'):
@@ -1854,12 +1891,12 @@ class Basic3D(object):
 													self.PMLkappax, self.PMLbx, self.PMLax, \
 													self.eps_Ey, self.eps_Ez, \
 													self.econ_Ey, self.econ_Ez, \
-													self.Ey_re, 
-													self.Ez_re, 
-													self.diffxHy_re, 
-													self.diffxHz_re, 
-													self.psi_eyx_m_re,
-													self.psi_ezx_m_re
+													self.Ey, 
+													self.Ez, 
+													self.diffxHy, 
+													self.diffxHz, 
+													self.psi_eyx_m,
+													self.psi_ezx_m
 												)
 
 			if 'y' in self.PMLregion.keys():
@@ -1872,12 +1909,12 @@ class Basic3D(object):
 													self.PMLkappay, self.PMLby, self.PMLay, \
 													self.eps_Ex, self.eps_Ez, \
 													self.econ_Ex, self.econ_Ez, \
-													self.Ex_re, 
-													self.Ez_re, 
-													self.diffyHx_re, 
-													self.diffyHz_re, 
-													self.psi_exy_p_re, 
-													self.psi_ezy_p_re
+													self.Ex, 
+													self.Ez, 
+													self.diffyHx, 
+													self.diffyHz, 
+													self.psi_exy_p, 
+													self.psi_ezy_p
 												)
 
 				if '-' in self.PMLregion.get('y'):
@@ -1888,12 +1925,12 @@ class Basic3D(object):
 													self.PMLkappay, self.PMLby, self.PMLay, \
 													self.eps_Ex, self.eps_Ez, \
 													self.econ_Ex, self.econ_Ez, \
-													self.Ex_re, 
-													self.Ez_re, 
-													self.diffyHx_re, 
-													self.diffyHz_re, 
-													self.psi_exy_m_re, 
-													self.psi_ezy_m_re
+													self.Ex, 
+													self.Ez, 
+													self.diffyHx, 
+													self.diffyHz, 
+													self.psi_exy_m, 
+													self.psi_ezy_m
 												)
 
 			if 'z' in self.PMLregion.keys():
@@ -1904,12 +1941,12 @@ class Basic3D(object):
 													self.PMLkappaz, self.PMLbz, self.PMLaz, \
 													self.eps_Ex, self.eps_Ey, \
 													self.econ_Ex, self.econ_Ey, \
-													self.Ex_re, 
-													self.Ey_re, 
-													self.diffzHx_re, 
-													self.diffzHy_re, 
-													self.psi_exz_p_re, 
-													self.psi_eyz_p_re
+													self.Ex, 
+													self.Ey, 
+													self.diffzHx, 
+													self.diffzHy, 
+													self.psi_exz_p, 
+													self.psi_eyz_p
 												)
 
 				if '-' in self.PMLregion.get('z'):
@@ -1919,12 +1956,12 @@ class Basic3D(object):
 													self.PMLkappaz, self.PMLbz, self.PMLaz, \
 													self.eps_Ex, self.eps_Ey, \
 													self.econ_Ex, self.econ_Ey, \
-													self.Ex_re, 
-													self.Ey_re, 
-													self.diffzHx_re, 
-													self.diffzHy_re, 
-													self.psi_exz_m_re, 
-													self.psi_eyz_m_re
+													self.Ex, 
+													self.Ey, 
+													self.diffzHx, 
+													self.diffzHy, 
+													self.psi_exz_m, 
+													self.psi_eyz_m
 												)
 
 		# Middle rank
@@ -1944,12 +1981,12 @@ class Basic3D(object):
 													self.PMLkappay, self.PMLby, self.PMLay, \
 													self.eps_Ex, self.eps_Ez, \
 													self.econ_Ex, self.econ_Ez, \
-													self.Ex_re, 
-													self.Ez_re, 
-													self.diffyHx_re, 
-													self.diffyHz_re, 
-													self.psi_exy_p_re, 
-													self.psi_ezy_p_re
+													self.Ex, 
+													self.Ez, 
+													self.diffyHx, 
+													self.diffyHz, 
+													self.psi_exy_p, 
+													self.psi_ezy_p
 												)
 
 				if '-' in self.PMLregion.get('y'):
@@ -1960,12 +1997,12 @@ class Basic3D(object):
 													self.PMLkappay, self.PMLby, self.PMLay, \
 													self.eps_Ex, self.eps_Ez, \
 													self.econ_Ex, self.econ_Ez, \
-													self.Ex_re, 
-													self.Ez_re, 
-													self.diffyHx_re, 
-													self.diffyHz_re, 
-													self.psi_exy_m_re, 
-													self.psi_ezy_m_re
+													self.Ex, 
+													self.Ez, 
+													self.diffyHx, 
+													self.diffyHz, 
+													self.psi_exy_m, 
+													self.psi_ezy_m
 												)
 
 			if 'z' in self.PMLregion.keys():
@@ -1976,12 +2013,12 @@ class Basic3D(object):
 													self.PMLkappaz, self.PMLbz, self.PMLaz, \
 													self.eps_Ex, self.eps_Ey, \
 													self.econ_Ex, self.econ_Ey, \
-													self.Ex_re, 
-													self.Ey_re, 
-													self.diffzHx_re, 
-													self.diffzHy_re, 
-													self.psi_exz_p_re, 
-													self.psi_eyz_p_re
+													self.Ex, 
+													self.Ey, 
+													self.diffzHx, 
+													self.diffzHy, 
+													self.psi_exz_p, 
+													self.psi_eyz_p
 												)
 
 				if '-' in self.PMLregion.get('z'):
@@ -1991,12 +2028,12 @@ class Basic3D(object):
 													self.PMLkappaz, self.PMLbz, self.PMLaz, \
 													self.eps_Ex, self.eps_Ey, \
 													self.econ_Ex, self.econ_Ey, \
-													self.Ex_re, 
-													self.Ey_re, 
-													self.diffzHx_re, 
-													self.diffzHy_re, 
-													self.psi_exz_m_re, 
-													self.psi_eyz_m_re
+													self.Ex, 
+													self.Ey, 
+													self.diffzHx, 
+													self.diffzHy, 
+													self.psi_exz_m, 
+													self.psi_eyz_m
 												)
 
 		# Last rank
@@ -2010,12 +2047,12 @@ class Basic3D(object):
 													self.PMLkappax, self.PMLbx, self.PMLax, \
 													self.eps_Ey, self.eps_Ez, \
 													self.econ_Ey, self.econ_Ez, \
-													self.Ey_re, 
-													self.Ez_re, 
-													self.diffxHy_re, 
-													self.diffxHz_re, 
-													self.psi_eyx_p_re, 
-													self.psi_ezx_p_re
+													self.Ey, 
+													self.Ez, 
+													self.diffxHy, 
+													self.diffxHz, 
+													self.psi_eyx_p, 
+													self.psi_ezx_p
 												)
 
 				if '-' in self.PMLregion.get('x'): pass
@@ -2030,12 +2067,12 @@ class Basic3D(object):
 													self.PMLkappay, self.PMLby, self.PMLay, \
 													self.eps_Ex, self.eps_Ez, \
 													self.econ_Ex, self.econ_Ez, \
-													self.Ex_re, 
-													self.Ez_re, 
-													self.diffyHx_re, 
-													self.diffyHz_re, 
-													self.psi_exy_p_re,
-													self.psi_ezy_p_re
+													self.Ex, 
+													self.Ez, 
+													self.diffyHx, 
+													self.diffyHz, 
+													self.psi_exy_p,
+													self.psi_ezy_p
 												)
 
 				if '-' in self.PMLregion.get('y'):
@@ -2046,12 +2083,12 @@ class Basic3D(object):
 													self.PMLkappay, self.PMLby, self.PMLay, \
 													self.eps_Ex, self.eps_Ez, \
 													self.econ_Ex, self.econ_Ez, \
-													self.Ex_re, 
-													self.Ez_re, 
-													self.diffyHx_re, 
-													self.diffyHz_re,
-													self.psi_exy_m_re,
-													self.psi_ezy_m_re
+													self.Ex, 
+													self.Ez, 
+													self.diffyHx, 
+													self.diffyHz,
+													self.psi_exy_m,
+													self.psi_ezy_m
 												)
 
 			if 'z' in self.PMLregion.keys():
@@ -2062,12 +2099,12 @@ class Basic3D(object):
 													self.PMLkappaz, self.PMLbz, self.PMLaz, \
 													self.eps_Ex, self.eps_Ey, \
 													self.econ_Ex, self.econ_Ey, \
-													self.Ex_re,
-													self.Ey_re,
-													self.diffzHx_re,
-													self.diffzHy_re,
-													self.psi_exz_p_re,
-													self.psi_eyz_p_re
+													self.Ex,
+													self.Ey,
+													self.diffzHx,
+													self.diffzHy,
+													self.psi_exz_p,
+													self.psi_eyz_p
 												)
 
 				if '-' in self.PMLregion.get('z'):
@@ -2077,12 +2114,12 @@ class Basic3D(object):
 													self.PMLkappaz, self.PMLbz, self.PMLaz, \
 													self.eps_Ex, self.eps_Ey, \
 													self.econ_Ex, self.econ_Ey, \
-													self.Ex_re,
-													self.Ey_re,
-													self.diffzHx_re,
-													self.diffzHy_re,
-													self.psi_exz_m_re,
-													self.psi_eyz_m_re
+													self.Ex,
+													self.Ey,
+													self.diffzHx,
+													self.diffzHy,
+													self.psi_exz_m,
+													self.psi_eyz_m
 												)
 
 		#-----------------------------------------------------------#
@@ -2099,15 +2136,15 @@ class Basic3D(object):
 											self.dt, self.dx, self.dy, self.dz,\
 											self.eps_Ex, self.eps_Ez, \
 											self.econ_Ex, self.econ_Ez, \
-											self.Ex_re, 
-											self.Ez_re, 
-											self.Hx_re, 
-											self.Hy_re, 
-											self.Hz_re, 
-											self.diffxHy_re, 
-											self.diffyHx_re, 
-											self.diffyHz_re, 
-											self.diffzHy_re
+											self.Ex, 
+											self.Ez, 
+											self.Hx, 
+											self.Hy, 
+											self.Hz, 
+											self.diffxHy, 
+											self.diffyHx, 
+											self.diffyHz, 
+											self.diffzHy
 										)
 
 				# The first rank apply PBC on PML region.
@@ -2118,9 +2155,9 @@ class Basic3D(object):
 													self.dt,\
 													self.PMLkappax, self.PMLbx, self.PMLax,\
 													self.eps_Ez, self.econ_Ez,\
-													self.Ez_re, 
-													self.diffxHy_re, 
-													self.psi_ezx_m_re
+													self.Ez, 
+													self.diffxHy, 
+													self.psi_ezx_m
 												)
 
 			# Ranks except the first rank.
@@ -2130,16 +2167,16 @@ class Basic3D(object):
 											self.dt, self.dx, self.dy, self.dz,\
 											self.eps_Ex, self.eps_Ez, \
 											self.econ_Ex, self.econ_Ez, \
-											recvHyfirst_re,
-											self.Ex_re,
-											self.Ez_re, 
-											self.Hx_re, 
-											self.Hy_re, 
-											self.Hz_re,
-											self.diffxHy_re, 
-											self.diffyHx_re, 
-											self.diffyHz_re, 
-											self.diffzHy_re
+											recvHyfirst,
+											self.Ex,
+											self.Ez, 
+											self.Hx, 
+											self.Hy, 
+											self.Hz,
+											self.diffxHy, 
+											self.diffyHx, 
+											self.diffyHz, 
+											self.diffzHy
 										)
 
 				# The last rank apply PBC on PML region.
@@ -2150,9 +2187,9 @@ class Basic3D(object):
 													self.dt,\
 													self.PMLkappax, self.PMLbx, self.PMLax,\
 													self.eps_Ez, self.econ_Ez,\
-													self.Ez_re, 
-													self.diffxHy_re,
-													self.psi_ezx_p_re
+													self.Ez, 
+													self.diffxHy,
+													self.psi_ezx_p
 												)
 
 		else: pass
@@ -2171,15 +2208,15 @@ class Basic3D(object):
 											self.dt, self.dx, self.dy, self.dz,\
 											self.eps_Ex, self.eps_Ez, \
 											self.econ_Ex, self.econ_Ez, \
-											self.Ex_re, 
-											self.Ey_re, 
-											self.Hx_re, 
-											self.Hy_re, 
-											self.Hz_re, 
-											self.diffxHz_re, 
-											self.diffyHz_re, 
-											self.diffzHx_re, 
-											self.diffzHy_re
+											self.Ex, 
+											self.Ey, 
+											self.Hx, 
+											self.Hy, 
+											self.Hz, 
+											self.diffxHz, 
+											self.diffyHz, 
+											self.diffzHx, 
+											self.diffzHy
 										)
 
 				# The first rank applies PBC on PML region.
@@ -2190,9 +2227,9 @@ class Basic3D(object):
 													self.dt,\
 													self.PMLkappax, self.PMLbx, self.PMLax,\
 													self.eps_Ey, self.econ_Ey,\
-													self.Ey_re, 
-													self.diffxHz_re, 
-													self.psi_eyx_m_re
+													self.Ey, 
+													self.diffxHz, 
+													self.psi_eyx_m
 												)
 
 			# Ranks except the first rank.
@@ -2203,16 +2240,16 @@ class Basic3D(object):
 											self.dt, self.dx, self.dy, self.dz,\
 											self.eps_Ex, self.eps_Ez, \
 											self.econ_Ex, self.econ_Ez, \
-											recvHzfirst_re, 
-											self.Ex_re, 
-											self.Ey_re, 
-											self.Hx_re, 
-											self.Hy_re, 
-											self.Hz_re, 
-											self.diffxHz_re, 
-											self.diffyHz_re, 
-											self.diffzHx_re, 
-											self.diffzHy_re
+											recvHzfirst, 
+											self.Ex, 
+											self.Ey, 
+											self.Hx, 
+											self.Hy, 
+											self.Hz, 
+											self.diffxHz, 
+											self.diffyHz, 
+											self.diffzHx, 
+											self.diffzHy
 										)
 
 				# The last rank applies PBC on PML region.
@@ -2223,92 +2260,13 @@ class Basic3D(object):
 													self.dt,\
 													self.PMLkappax, self.PMLbx, self.PMLax,\
 													self.eps_Ey, self.econ_Ey,\
-													self.Ey_re, 
-													self.diffxHz_re, 
-													self.psi_eyx_p_re
+													self.Ey, 
+													self.diffxHz, 
+													self.psi_eyx_p
 												)
 
 
 		else: pass
-
-	def get_src(self, what, tstep):
-
-		if self.MPIrank == self.who_put_src:
-			
-			if	 what == 'Ex': 
-				from_the_re = self.Ex_re
-			elif what == 'Ey':
-				from_the_re = self.Ey_re
-			elif what == 'Ez': 
-				from_the_re = self.Ez_re
-			elif what == 'Hx': 
-				from_the_re = self.Hx_re
-			elif what == 'Hy':
-				from_the_re = self.Hy_re
-			elif what == 'Hz':
-				from_the_re = self.Hz_re
-
-			#if self.pulse_re != None: self.src_re[tstep] = self.pulse_re / 2. / self.courant
-			if self.pulse_re != None: self.src_re[tstep] = self.pulse_re
-
-	def get_ref(self, what, tstep):
-
-		######################################################################################
-		########################## All rank already knows who put src ########################
-		######################################################################################
-
-		if self.MPIrank == self.who_get_ref:
-
-			if	 what == 'Ex': 
-				from_the_re = self.Ex_re
-			elif what == 'Ey':
-				from_the_re = self.Ey_re
-			elif what == 'Ez': 
-				from_the_re = self.Ez_re
-			elif what == 'Hx': 
-				from_the_re = self.Hx_re
-			elif what == 'Hy':
-				from_the_re = self.Hy_re
-			elif what == 'Hz':
-				from_the_re = self.Hz_re
-			
-			#self.ref_re[tstep] = from_the_re[self.local_ref_xpos,:,:].mean() - (self.pulse_re / 2. / self.courant)
-			self.ref_re[tstep] = from_the_re[self.local_ref_xpos,:,:].mean()
-
-			#print(from_the_re[self.local_ref_xpos,:,:].mean(), self.pulse_re)
-
-		else : pass
-		
-	def get_trs(self, what, tstep) : 
-
-		if self.MPIrank == self.who_get_trs:
-			
-			if	 what == 'Ex': 
-				from_the_re = self.Ex_re
-			elif what == 'Ey':
-				from_the_re = self.Ey_re
-			elif what == 'Ez': 
-				from_the_re = self.Ez_re
-			elif what == 'Hx': 
-				from_the_re = self.Hx_re
-			elif what == 'Hy':
-				from_the_re = self.Hy_re
-			elif what == 'Hz':
-				from_the_re = self.Hz_re
-
-			self.trs_re[tstep] = from_the_re[self.local_trs_xpos,:,:].mean()
-
-		else : pass
-
-	def save_RT(self):
-
-		self.MPIcomm.Barrier()
-
-		if self.MPIrank == self.who_get_trs:
-			np.save('./graph/trs_re.npy', self.trs_re)
-
-		if self.MPIrank == self.who_get_ref:
-			np.save('./graph/ref_re.npy', self.ref_re)
 
 
 class Empty3D(object):
@@ -2407,6 +2365,9 @@ class Empty3D(object):
 		self.myPBCregion_x = False
 		self.myPBCregion_y = False
 		self.myPBCregion_z = False
+		self.myBBCregion_x = False
+		self.myBBCregion_y = False
+		self.myBBCregion_z = False
 
 		assert self.dt < self.maxdt, "Time interval is too big so that causality is broken. Lower the courant number."
 		assert float(self.Nx) % self.MPIsize == 0., "Nx must be a multiple of the number of nodes."
@@ -2418,13 +2379,13 @@ class Empty3D(object):
 		self.myNx	  = int(self.Nx/self.MPIsize)
 		self.loc_grid = (self.myNx, self.Ny, self.Nz)
 
-		self.Ex_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.Ey_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.Ez_re = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.Ex = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.Ey = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.Ez = np.zeros(self.loc_grid, dtype=self.dtype)
 
-		self.Hx_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.Hy_re = np.zeros(self.loc_grid, dtype=self.dtype)
-		self.Hz_re = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.Hx = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.Hy = np.zeros(self.loc_grid, dtype=self.dtype)
+		self.Hz = np.zeros(self.loc_grid, dtype=self.dtype)
 
 		###############################################################################
 
@@ -2448,11 +2409,25 @@ class Empty3D(object):
 		#		.format(self.MPIrank, self.myNx_indice[self.MPIrank], self.myNx_slices[self.MPIrank]))
 
 	def get_SF(self, TF, IF):
+		"""Get scattered field
 
-		self.Ex_re = TF.Ex_re - IF.Ex_re
-		self.Ey_re = TF.Ey_re - IF.Ey_re
-		self.Ez_re = TF.Ez_re - IF.Ez_re
+		Paramters
+		---------
+		TF: Basic3D class object.
+			Total field.
 
-		self.Hx_re = TF.Hx_re - IF.Hx_re
-		self.Hy_re = TF.Hy_re - IF.Hy_re
-		self.Hz_re = TF.Hz_re - IF.Hz_re
+		IF: Basic3D class object.
+			Input field.
+
+		Returns
+		-------
+		None
+		"""
+
+		self.Ex = TF.Ex - IF.Ex
+		self.Ey = TF.Ey - IF.Ey
+		self.Ez = TF.Ez - IF.Ez
+
+		self.Hx = TF.Hx - IF.Hx
+		self.Hy = TF.Hy - IF.Hy
+		self.Hz = TF.Hz - IF.Hz
