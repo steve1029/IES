@@ -89,68 +89,68 @@ start_time = datetime.datetime.now()
 # time loop begins
 for tstep in range(Space.tsteps):
 
-	# At the start point
-	if tstep == 0:
-		Space.MPIcomm.Barrier()
-		if Space.MPIrank == 0:
-			print("Total time step: %d" %(Space.tsteps))
-			print(("Size of a total field array : %05.2f Mbytes" %(Space.TOTAL_NUM_GRID_SIZE)))
-			print("Simulation start: {}".format(datetime.datetime.now()))
-		
-	pulse_re = Src.pulse_re(tstep, pick_pos)
-	#pulse_im = Src.pulse_im(tstep, pick_pos)
+    # At the start point
+    if tstep == 0:
+        Space.MPIcomm.Barrier()
+        if Space.MPIrank == 0:
+            print("Total time step: %d" %(Space.tsteps))
+            print(("Size of a total field array : %05.2f Mbytes" %(Space.TOTAL_NUM_GRID_SIZE)))
+            print("Simulation start: {}".format(datetime.datetime.now()))
+        
+    pulse_re = Src.pulse_re(tstep, pick_pos)
+    #pulse_im = Src.pulse_im(tstep, pick_pos)
 
-	#Space.put_src('Ex_re', 'Ex_im', pulse_re, 0, 'soft')
-	#Space.put_src('Ey_re', 'Ey_im', pulse_re, pulse_im, 'soft')
-	Space.put_src('Ey_re', pulse_re, 'soft')
-	#Space.put_src('Ey_re', 'Ey_im', pulse_re, 0, 'hard')
-	#Space.put_src('Ez_re', 'Ez_im', pulse_re, 0, 'soft')
-	#Space.put_src('Ez_re', 'Ez_im', 0, 0, 'soft')
+    #Space.put_src('Ex_re', 'Ex_im', pulse_re, 0, 'soft')
+    #Space.put_src('Ey_re', 'Ey_im', pulse_re, pulse_im, 'soft')
+    Space.put_src('Ey_re', pulse_re, 'soft')
+    #Space.put_src('Ey_re', 'Ey_im', pulse_re, 0, 'hard')
+    #Space.put_src('Ez_re', 'Ez_im', pulse_re, 0, 'soft')
+    #Space.put_src('Ez_re', 'Ez_im', 0, 0, 'soft')
 
-	#Space.get_src('Ey', tstep)
-	#Space.get_ref('Ey', tstep)
-	#Space.get_trs('Ey', tstep)
+    #Space.get_src('Ey', tstep)
+    #Space.get_ref('Ey', tstep)
+    #Space.get_trs('Ey', tstep)
 
-	Space.updateH(tstep)
-	Space.updateE(tstep)
+    Space.updateH(tstep)
+    Space.updateE(tstep)
 
-	# Plot the field profile
-	if tstep % plot_per == 0:
-		#graphtool.plot2D3D('Ex', tstep, xidx=Space.Nxc, colordeep=6., stride=2, zlim=6.)
-		graphtool.plot2D3D('Ey', tstep, yidx=Space.Nyc, colordeep=2., stride=2, zlim=1.)
-		#graphtool.plot2D3D('Ez', tstep, zidx=Space.Nzc, colordeep=2., stride=2, zlim=2.)
+    # Plot the field profile
+    if tstep % plot_per == 0:
+        #graphtool.plot2D3D('Ex', tstep, xidx=Space.Nxc, colordeep=6., stride=2, zlim=6.)
+        graphtool.plot2D3D('Ey', tstep, yidx=Space.Nyc, colordeep=2., stride=2, zlim=1.)
+        #graphtool.plot2D3D('Ez', tstep, zidx=Space.Nzc, colordeep=2., stride=2, zlim=2.)
 
-		if Space.MPIrank == 0:
+        if Space.MPIrank == 0:
 
-			interval_time = datetime.datetime.now()
-			print(("time: %s, step: %05d, %5.2f%%" %(interval_time-start_time, tstep, 100.*tstep/Space.tsteps)))
+            interval_time = datetime.datetime.now()
+            print(("time: %s, step: %05d, %5.2f%%" %(interval_time-start_time, tstep, 100.*tstep/Space.tsteps)))
 
 #Space.save_RT()
 
 if Space.MPIrank == 0:
 
-	# Simulation finished time
-	finished_time = datetime.datetime.now()
+    # Simulation finished time
+    finished_time = datetime.datetime.now()
 
-	# Record simulation size and operation time
-	if not os.path.exists("./record") : os.mkdir("./record")
-	record_path = "./record/record_%s.txt" %(datetime.date.today())
+    # Record simulation size and operation time
+    if not os.path.exists("./record") : os.mkdir("./record")
+    record_path = "./record/record_%s.txt" %(datetime.date.today())
 
-	if not os.path.exists(record_path):
-		f = open( record_path,'a')
-		f.write("{:4}\t{:4}\t{:4}\t{:4}\t{:4}\t\t{:4}\t\t{:4}\t\t{:8}\t{:4}\t\t\t\t{:12}\t{:12}\n\n" \
-			.format("Node","Nx","Ny","Nz","dx","dy","dz","tsteps","Time","VM/Node(GB)","RM/Node(GB)"))
-		f.close()
+    if not os.path.exists(record_path):
+        f = open( record_path,'a')
+        f.write("{:4}\t{:4}\t{:4}\t{:4}\t{:4}\t\t{:4}\t\t{:4}\t\t{:8}\t{:4}\t\t\t\t{:12}\t{:12}\n\n" \
+            .format("Node","Nx","Ny","Nz","dx","dy","dz","tsteps","Time","VM/Node(GB)","RM/Node(GB)"))
+        f.close()
 
-	me = psutil.Process(os.getpid())
-	me_rssmem_GB = float(me.memory_info().rss)/1024/1024/1024
-	me_vmsmem_GB = float(me.memory_info().vms)/1024/1024/1024
+    me = psutil.Process(os.getpid())
+    me_rssmem_GB = float(me.memory_info().rss)/1024/1024/1024
+    me_vmsmem_GB = float(me.memory_info().vms)/1024/1024/1024
 
-	cal_time = finished_time - start_time
-	f = open( record_path,'a')
-	f.write("{:2d}\t\t{:04d}\t{:04d}\t{:04d}\t{:5.2e}\t{:5.2e}\t{:5.2e}\t{:06d}\t\t{}\t\t{:06.3f}\t\t\t{:06.3f}\n" \
-				.format(Space.MPIsize, Space.Nx, Space.Ny, Space.Nz,\
-					Space.dx, Space.dy, Space.dz, Space.tsteps, cal_time, me_vmsmem_GB, me_rssmem_GB))
-	f.close()
-	
-	print("Simulation finished: {}".format(datetime.datetime.now()))
+    cal_time = finished_time - start_time
+    f = open( record_path,'a')
+    f.write("{:2d}\t\t{:04d}\t{:04d}\t{:04d}\t{:5.2e}\t{:5.2e}\t{:5.2e}\t{:06d}\t\t{}\t\t{:06.3f}\t\t\t{:06.3f}\n" \
+                .format(Space.MPIsize, Space.Nx, Space.Ny, Space.Nz,\
+                    Space.dx, Space.dy, Space.dz, Space.tsteps, cal_time, me_vmsmem_GB, me_rssmem_GB))
+    f.close()
+    
+    print("Simulation finished: {}".format(datetime.datetime.now()))

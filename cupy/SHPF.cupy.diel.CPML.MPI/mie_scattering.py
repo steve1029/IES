@@ -25,7 +25,7 @@ Tsteps = 5001
 
 wvc = 300*um
 interval = 2
-spread	 = 0.3
+spread   = 0.3
 pick_pos = 1000
 plot_per = 100
 
@@ -127,80 +127,80 @@ start_time = datetime.datetime.now()
 # time loop begins
 for tstep in range(Tsteps):
 
-	# At the start point
-	if tstep == 0:
-		TF.MPIcomm.Barrier()
-		if TF.MPIrank == 0:
-			print("Total time step: %d" %(TF.tsteps))
-			print(("Size of a total field array : %05.2f Mbytes" %(TF.TOTAL_NUM_GRID_SIZE)))
-			print("Simulation start: {}".format(datetime.datetime.now()))
-		
-	# pulse for gaussian wave
-	pulse_re = Src.pulse_re(tstep, pick_pos=pick_pos)
-	pulse_im = Src.pulse_im(tstep, pick_pos=pick_pos)
+    # At the start point
+    if tstep == 0:
+        TF.MPIcomm.Barrier()
+        if TF.MPIrank == 0:
+            print("Total time step: %d" %(TF.tsteps))
+            print(("Size of a total field array : %05.2f Mbytes" %(TF.TOTAL_NUM_GRID_SIZE)))
+            print("Simulation start: {}".format(datetime.datetime.now()))
+        
+    # pulse for gaussian wave
+    pulse_re = Src.pulse_re(tstep, pick_pos=pick_pos)
+    pulse_im = Src.pulse_im(tstep, pick_pos=pick_pos)
 
-	#TF.put_src('Ex_re', 'Ex_im', pulse_re, 0, 'soft')
-	TF.put_src('Ey_re', pulse_re, 'soft')
-	#TF.put_src('Ez_re', 'Ez_im', pulse_re, 0, 'soft')
+    #TF.put_src('Ex_re', 'Ex_im', pulse_re, 0, 'soft')
+    TF.put_src('Ey_re', pulse_re, 'soft')
+    #TF.put_src('Ez_re', 'Ez_im', pulse_re, 0, 'soft')
 
-	IF.put_src('Ey_re', pulse_re, 'soft')
-	#IF.put_src('Ez_re', 'Ez_im', pulse_re, 0, 'soft')
+    IF.put_src('Ey_re', pulse_re, 'soft')
+    #IF.put_src('Ez_re', 'Ez_im', pulse_re, 0, 'soft')
 
-	TF.updateH(tstep)
-	IF.updateH(tstep)
+    TF.updateH(tstep)
+    IF.updateH(tstep)
 
-	TF.updateE(tstep)
-	IF.updateE(tstep)
+    TF.updateE(tstep)
+    IF.updateE(tstep)
 
-	SF.get_SF(TF, IF)
+    SF.get_SF(TF, IF)
 
-	IF_Sx_R_calculator.do_RFT(tstep)
+    IF_Sx_R_calculator.do_RFT(tstep)
 
-	SF_Sx_L_calculator.do_RFT(tstep)
-	SF_Sx_R_calculator.do_RFT(tstep)
+    SF_Sx_L_calculator.do_RFT(tstep)
+    SF_Sx_R_calculator.do_RFT(tstep)
 
-	SF_Sy_L_calculator.do_RFT(tstep)
-	SF_Sy_R_calculator.do_RFT(tstep)
+    SF_Sy_L_calculator.do_RFT(tstep)
+    SF_Sy_R_calculator.do_RFT(tstep)
 
-	SF_Sz_L_calculator.do_RFT(tstep)
-	SF_Sz_R_calculator.do_RFT(tstep)
-	"""
-	TF_Sx_L_calculator.do_RFT(tstep)
-	TF_Sx_R_calculator.do_RFT(tstep)
+    SF_Sz_L_calculator.do_RFT(tstep)
+    SF_Sz_R_calculator.do_RFT(tstep)
+    """
+    TF_Sx_L_calculator.do_RFT(tstep)
+    TF_Sx_R_calculator.do_RFT(tstep)
 
-	TF_Sy_L_calculator.do_RFT(tstep)
-	TF_Sy_R_calculator.do_RFT(tstep)
+    TF_Sy_L_calculator.do_RFT(tstep)
+    TF_Sy_R_calculator.do_RFT(tstep)
 
-	TF_Sz_L_calculator.do_RFT(tstep)
-	TF_Sz_R_calculator.do_RFT(tstep)
-	"""
-	# Plot the field profile
-	if tstep % plot_per == 0:
-		#TFgraphtool.plot2D3D('Ex', tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
-		TFgraphtool.plot2D3D('Ey', tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
-		#TFgraphtool.plot2D3D('Ez', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
-		#TFgraphtool.plot2D3D('Hx', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
-		#TFgraphtool.plot2D3D('Hy', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
-		#TFgraphtool.plot2D3D('Hz', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
+    TF_Sz_L_calculator.do_RFT(tstep)
+    TF_Sz_R_calculator.do_RFT(tstep)
+    """
+    # Plot the field profile
+    if tstep % plot_per == 0:
+        #TFgraphtool.plot2D3D('Ex', tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
+        TFgraphtool.plot2D3D('Ey', tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
+        #TFgraphtool.plot2D3D('Ez', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
+        #TFgraphtool.plot2D3D('Hx', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
+        #TFgraphtool.plot2D3D('Hy', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
+        #TFgraphtool.plot2D3D('Hz', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
 
-		#IFgraphtool.plot2D3D('Ex', tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
-		IFgraphtool.plot2D3D('Ey', tstep, yidx=IF.Nyc, colordeep=2, stride=1, zlim=2)
-		#IFgraphtool.plot2D3D('Ez', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
-		#IFgraphtool.plot2D3D('Hx', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
-		#IFgraphtool.plot2D3D('Hy', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
-		#IFgraphtool.plot2D3D('Hz', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
+        #IFgraphtool.plot2D3D('Ex', tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
+        IFgraphtool.plot2D3D('Ey', tstep, yidx=IF.Nyc, colordeep=2, stride=1, zlim=2)
+        #IFgraphtool.plot2D3D('Ez', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
+        #IFgraphtool.plot2D3D('Hx', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
+        #IFgraphtool.plot2D3D('Hy', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
+        #IFgraphtool.plot2D3D('Hz', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
 
-		#SFgraphtool.plot2D3D('Ex', tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
-		SFgraphtool.plot2D3D('Ey', tstep, yidx=SF.Nyc, colordeep=2, stride=1, zlim=2)
-		#SFgraphtool.plot2D3D('Ez', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
-		#SFgraphtool.plot2D3D('Hx', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
-		#SFgraphtool.plot2D3D('Hy', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
-		#SFgraphtool.plot2D3D('Hz', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
+        #SFgraphtool.plot2D3D('Ex', tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
+        SFgraphtool.plot2D3D('Ey', tstep, yidx=SF.Nyc, colordeep=2, stride=1, zlim=2)
+        #SFgraphtool.plot2D3D('Ez', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
+        #SFgraphtool.plot2D3D('Hx', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
+        #SFgraphtool.plot2D3D('Hy', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
+        #SFgraphtool.plot2D3D('Hz', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
 
-		if TF.MPIrank == 0:
+        if TF.MPIrank == 0:
 
-			interval_time = datetime.datetime.now()
-			print(("time: %s, step: %05d, %5.2f%%" %(interval_time-start_time, tstep, 100.*tstep/TF.tsteps)))
+            interval_time = datetime.datetime.now()
+            print(("time: %s, step: %05d, %5.2f%%" %(interval_time-start_time, tstep, 100.*tstep/TF.tsteps)))
 
 IF_Sx_R_calculator.get_Sx()
 
@@ -226,28 +226,28 @@ TF_Sz_R_calculator.get_Sz()
 
 if TF.MPIrank == 0:
 
-	# Simulation finished time
-	finished_time = datetime.datetime.now()
+    # Simulation finished time
+    finished_time = datetime.datetime.now()
 
-	# Record simulation size and operation time
-	if not os.path.exists("./record") : os.mkdir("./record")
-	record_path = "./record/record_%s.txt" %(datetime.date.today())
+    # Record simulation size and operation time
+    if not os.path.exists("./record") : os.mkdir("./record")
+    record_path = "./record/record_%s.txt" %(datetime.date.today())
 
-	if not os.path.exists(record_path):
-		f = open( record_path,'a')
-		f.write("{:4}\t{:4}\t{:4}\t{:4}\t{:4}\t\t{:4}\t\t{:4}\t\t{:8}\t{:4}\t\t\t\t{:12}\t{:12}\n\n" \
-			.format("Node","Nx","Ny","Nz","dx","dy","dz","tsteps","Time","VM/Node(GB)","RM/Node(GB)"))
-		f.close()
+    if not os.path.exists(record_path):
+        f = open( record_path,'a')
+        f.write("{:4}\t{:4}\t{:4}\t{:4}\t{:4}\t\t{:4}\t\t{:4}\t\t{:8}\t{:4}\t\t\t\t{:12}\t{:12}\n\n" \
+            .format("Node","Nx","Ny","Nz","dx","dy","dz","tsteps","Time","VM/Node(GB)","RM/Node(GB)"))
+        f.close()
 
-	me = psutil.Process(os.getpid())
-	me_rssmem_GB = float(me.memory_info().rss)/1024/1024/1024
-	me_vmsmem_GB = float(me.memory_info().vms)/1024/1024/1024
+    me = psutil.Process(os.getpid())
+    me_rssmem_GB = float(me.memory_info().rss)/1024/1024/1024
+    me_vmsmem_GB = float(me.memory_info().vms)/1024/1024/1024
 
-	cal_time = finished_time - start_time
-	f = open( record_path,'a')
-	f.write("{:2d}\t\t{:04d}\t{:04d}\t{:04d}\t{:5.2e}\t{:5.2e}\t{:5.2e}\t{:06d}\t\t{}\t\t{:06.3f}\t\t\t{:06.3f}\n" \
-				.format(TF.MPIsize, TF.Nx, TF.Ny, TF.Nz,\
-					TF.dx, TF.dy, TF.dz, TF.tsteps, cal_time, me_vmsmem_GB, me_rssmem_GB))
-	f.close()
-	
-	print("Simulation finished: {}".format(datetime.datetime.now()))
+    cal_time = finished_time - start_time
+    f = open( record_path,'a')
+    f.write("{:2d}\t\t{:04d}\t{:04d}\t{:04d}\t{:5.2e}\t{:5.2e}\t{:5.2e}\t{:06d}\t\t{}\t\t{:06.3f}\t\t\t{:06.3f}\n" \
+                .format(TF.MPIsize, TF.Nx, TF.Ny, TF.Nz,\
+                    TF.dx, TF.dy, TF.dz, TF.tsteps, cal_time, me_vmsmem_GB, me_rssmem_GB))
+    f.close()
+    
+    print("Simulation finished: {}".format(datetime.datetime.now()))
