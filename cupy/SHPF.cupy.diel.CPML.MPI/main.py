@@ -10,7 +10,7 @@ from scipy.constants import c
 #----------------------- Paramter settings ------------------------#
 #------------------------------------------------------------------#
 
-savedir = '/home/ldg/script/pyctypes/FDTD.real.diel.CPML.MPI/'
+savedir = '/home/ldg/script/pyctypes/SHPF.cupy.diel.CPML.MPI/'
 
 nm = 1e-9
 um = 1e-6
@@ -55,7 +55,7 @@ Box1_end = (round(272*um/dx), round(96*um/dy), round( 96*um/dz))
 #-------------------------- Call objects --------------------------#
 #------------------------------------------------------------------#
 
-Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), courant, dt, Tstep, np.float64)
+Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tstep, np.float64)
 
 # Put structures
 #Box = structure.Box(Space, Box1_srt, Box1_end, 4., 1.)
@@ -65,8 +65,8 @@ Space.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
 Space.apply_PBC({'y':False,'z':False})
 
 # Save eps, mu and PML data.
-#Space.save_PML_parameters('./')
-#Space.save_eps_mu(savedir)
+Space.save_PML_parameters('./')
+Space.save_eps_mu(savedir)
 
 # Set position of Src, Ref and Trs.
 #Space.set_ref_trs_pos(ref_xpos, trs_xpos)
