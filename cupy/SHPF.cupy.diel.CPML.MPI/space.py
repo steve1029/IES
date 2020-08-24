@@ -727,10 +727,10 @@ class Basic3D(object):
             # No need to update diffzEx and diffyEx because they are already done.
             # To update Hy at x=myNx-1.
             #self.diffzEx[myNx-1,:,:-1] = (self.Ex[myNx-1,:,1:] - self.Ex[myNx-1,:,:-1]) / self.dz
-            self.diffxEz[myNx-1,:,:-1] = ( recvEzlast[0,:,:-1] - self.Ez[myNx-1,:,:-1]) / self.dx
+            self.diffxEz[myNx-1,:,:-1] = ( recvEzlast[:,:-1] - self.Ez[myNx-1,:,:-1]) / self.dx
 
             # To update Hz at x=myNx-1
-            self.diffxEy[myNx-1,:-1,:] = (recvEylast[0:,:-1,:] - self.Ey[myNx-1,:-1,:]) / self.dx
+            self.diffxEy[myNx-1,:-1,:] = (recvEylast[:-1,:] - self.Ey[myNx-1,:-1,:]) / self.dx
             #self.diffyEx[:-1,:-1,:] = (self.Ex[:-1,1:,:] - self.Ex[:-1,:-1,:]) / self.dx
 
             """
@@ -1293,14 +1293,43 @@ class Basic3D(object):
             recvHyfirst = self.MPIcomm.recv( source=(self.MPIrank-1), tag=(tstep*100+3))
             recvHzfirst = self.MPIcomm.recv( source=(self.MPIrank-1), tag=(tstep*100+5))
         
+            if self.engine == 'cupy':
+                recvHyfirst = cp.asarray(recvHyfirst)
+                recvHzfirst = cp.asarray(recvHzfirst)
+
         else: pass
 
         #-----------------------------------------------------------#
         #---------------------- Get derivatives --------------------#
         #-----------------------------------------------------------#
 
-        if self.MPIrank == 0:
+        if self.engine == 'cupy'
+            iky = xp.expand_dims(1j*self.ky, 1)
+            ikz = xp.expand_dims(1J*self.kz, 2)
+            yshifter = xp.expand_dims(xp.exp(1j*self.ky*self.dy/2), 1)
+            zshifter = xp.expand_dims(xp.exp(1j*self.kz*self.dz/2), 2)
+        else:
+            nax = np.newaxis
+            iky = 1j*self.ky[:,nax,:]
+            ikz = 1j*self.kz[:,:,nax]
+            yshifter = xp.exp(1j*self.ky*self.dy/2)[:,nax,:]
+            zshifter = xp.exp(1j*self.kz*self.dz/2)[:,:,nax]
 
+	    # Get derivatives of Hy and Hz to update Ex
+        self.diffyHz = xp.fft.ifftn(iky*xp.fft.fftn(self.Hz, axes=(1,)), axes=(1,))
+        self.diffzHy = xp.fft.ifftn(ikz*xp.fft.fftn(self.Hy, axes=(2,)), axes=(2,))
+
+	    # Get derivatives of Hx and Hz to update Ex
+        self.diffzHx = xp.fft.ifftn(ikz*yshifter*xp.fft.fftn(self.Hx, axes=(1,2)), axes=(1,2))
+        self.diffxHz[1:,:,1:] = (self.Hz[1:,:,1:] - self.Hz[:-1,:,1:]) / self.dz
+
+	    # Get derivatives of Hx and Hy to update Ex
+        self.diffxHy[1:,1:,:] = (self.Hy[1:,1:,:] - self.Hy[:-1,1:,:]) / self.dx
+        self.diffyHx = xp.fft.ifftn(iky*zshifter*xp.fft.fftn(self.Hx, axes=(1,2)), axes=(1,2))
+
+        if self.MPIrank == 0: pass
+
+            """
             self.clib_core.get_diff_of_H_rank_F(\
                                                 self.myNx, self.Ny, self.Nz,\
                                                 self.dt, self.dx, self.dy, self.dz, \
@@ -1314,8 +1343,13 @@ class Basic3D(object):
                                                 self.diffzHx, 
                                                 self.diffzHy
                                                 )
+            """
         else:
 
+            # Get derivatives of Hx and Hz to update Ey at x=0
+            self.diffxHz[0,:,1:] = (self.Hz[0,:,1:]-recvHzfirst[:,1:]) / self.dx
+            self.diffxHy[0,1:,:] = (self.Hy[0,1:,:]-recvHyfirst[1:,:]) / self.dx
+            """
             self.clib_core.get_diff_of_H_rankML(\
                                                 self.myNx, self.Ny, self.Nz,\
                                                 self.dt, self.dx, self.dy, self.dz, \
@@ -1331,13 +1365,40 @@ class Basic3D(object):
                                                 self.diffzHx, 
                                                 self.diffzHy
                                                 )
+            """
 
         #-----------------------------------------------------------#
         #--------------- Cast basic update equations ---------------#
         #-----------------------------------------------------------#
 
-        if self.MPIrank == 0:
+        CEx1 = (2.*self.eps_Ex[:,1:,1:]-self.econ_Ex[:,1:,1:]*self.dt) \
+               (2.*self.eps_Ex[:,1:,1:]+self.econ_Ex[:,1:,1:]*self.dt)
+        CEx2 = (2.*self.dt) / (2.*self.eps_Ex[:,1:,1:]+self.econ_Ex[:,1:,1:]*self.dt)
 
+        CEy1 = (2.*self.eps_Ey[1:,:,1:]-self.econ_Ey[1:,:,1:]*self.dt) \
+               (2.*self.eps_Ey[1:,:,1:]+self.econ_Ey[1:,:,1:]*self.dt)
+        CEy2 = (2.*self.dt) / (2.*self.eps_Ey[1:,:,1:]+self.econ_Ey[1:,:,1:]*self.dt)
+
+        CEz1 = (2.*self.eps_Ez[1:,1:,:]-self.econ_Ez[1:,1:,:]*self.dt) \
+               (2.*self.eps_Ez[1:,1:,:]+self.econ_Ez[1:,1:,:]*self.dt)
+        CEz2 = (2.*self.dt) / (2.*self.eps_Ez[1:,1:,:]+self.econ_Ez[1:,1:,:]*self.dt)
+
+        # PEC condition.
+        CEx1[self.eps_Ex > 1e3] = 0.
+        CEx2[self.eps_Ex > 1e3] = 0.
+        CEy1[self.eps_Ey > 1e3] = 0.
+        CEy2[self.eps_Ey > 1e3] = 0.
+        CEz1[self.eps_Ez > 1e3] = 0.
+        CEz2[self.eps_Ez > 1e3] = 0.
+
+        # Update Ex, Ey, Ez
+        self.Ex[:,1:,1:] = CEx1 * self.Ex[:,1:,1:] +CEx2 * (self.diffyHz[:,1:,1:] - self.diffzHy[:,1:,1:])
+        self.Ey[1:,:,1:] = CEy1 * self.Ey[1:,:,1:] +CEy2 * (self.diffzHx[1:,:,1:] - self.diffxHz[1:,:,1:])
+        self.Ez[1:,1:,:] = CEz1 * self.Ez[1:,1:,:] +CEz2 * (self.diffxHy[1:,1:,:] - self.diffyHx[1:,1:,:])
+
+        if self.MPIrank == 0: pass
+
+            """
             self.clib_core.updateE_rank_F   (\
                                                 self.myNx, self.Ny, self.Nz,\
                                                 self.dt, \
@@ -1353,9 +1414,15 @@ class Basic3D(object):
                                                 self.diffzHx, 
                                                 self.diffzHy
                                             )
+            """
 
         else:
 
+            # Update Ey and Ez at x=0.
+            self.Ey[0,:,1:] = CEy1 * self.Ey[0,:,1:] + CEy2 * (self.diffzHx[0,:,1:]-self.diffxHz[0,:,1:])
+            self.Ez[0,1:,:] = CEz1 * self.Ez[0,1:,:] + CEz2 * (self.diffxHy[0,1:,:]-self.diffyHx[0,1:,:])
+
+            """
             self.clib_core.updateE_rankML   (\
                                                 self.myNx, self.Ny, self.Nz,\
                                                 self.dt, \
@@ -1371,6 +1438,7 @@ class Basic3D(object):
                                                 self.diffzHx, 
                                                 self.diffzHy
                                             )
+            """
 
         #-----------------------------------------------------------#
         #---------------- Apply PML when it is given ---------------#
