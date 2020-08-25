@@ -840,103 +840,14 @@ class Basic3D(object):
         # First rank
         if self.MPIrank == 0:
             if 'x' in self.PMLregion.keys():
-                if '+' in self.PMLregion.get('x') and self.MPIsize == 1:
-
-                    self.clib_PML.PML_updateH_px( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappax, self.PMLbx, self.PMLax, \
-                                                    self.mu_Hy, self.mu_Hz, \
-                                                    self.mcon_Hy, self.mcon_Hz, \
-                                                    self.Hy, 
-                                                    self.Hz, 
-                                                    self.diffxEy, 
-                                                    self.diffxEz, 
-                                                    self.psi_hyx_p, 
-                                                    self.psi_hzx_p
-                                                )
-
-                if '-' in self.PMLregion.get('x'):
-
-                    self.clib_PML.PML_updateH_mx( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappax, self.PMLbx, self.PMLax, \
-                                                    self.mu_Hy, self.mu_Hz, \
-                                                    self.mcon_Hy, self.mcon_Hz, \
-                                                    self.Hy, 
-                                                    self.Hz, 
-                                                    self.diffxEy, 
-                                                    self.diffxEz, 
-                                                    self.psi_hyx_m, 
-                                                    self.psi_hzx_m
-                                                )
-
+                if '+' in self.PMLregion.get('x') and self.MPIsize == 1: self._PML_updateH_px()
+                if '-' in self.PMLregion.get('x'): self._PML_updateH_mx()
             if 'y' in self.PMLregion.keys():
-                if '+' in self.PMLregion.get('y'):
-
-                    self.clib_PML.PML_updateH_py( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappay, self.PMLby, self.PMLay, \
-                                                    self.mu_Hx, self.mu_Hz, \
-                                                    self.mcon_Hx, self.mcon_Hz, \
-                                                    self.Hx, 
-                                                    self.Hz, 
-                                                    self.diffyEx, 
-                                                    self.diffyEz, 
-                                                    self.psi_hxy_p, 
-                                                    self.psi_hzy_p
-                                                )
-
-                if '-' in self.PMLregion.get('y'):
-
-                    self.clib_PML.PML_updateH_my( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappay, self.PMLby, self.PMLay, \
-                                                    self.mu_Hx, self.mu_Hz, \
-                                                    self.mcon_Hx, self.mcon_Hz, \
-                                                    self.Hx, 
-                                                    self.Hz, 
-                                                    self.diffyEx, 
-                                                    self.diffyEz, 
-                                                    self.psi_hxy_m, 
-                                                    self.psi_hzy_m
-                                                )
-
+                if '+' in self.PMLregion.get('y'): self._PML_updateH_py()
+                if '-' in self.PMLregion.get('y'): self._PML_updateH_my()
             if 'z' in self.PMLregion.keys():
-                if '+' in self.PMLregion.get('z'):
-
-                    self.clib_PML.PML_updateH_pz( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappaz, self.PMLbz, self.PMLaz, \
-                                                    self.mu_Hx, self.mu_Hy, \
-                                                    self.mcon_Hx, self.mcon_Hy, \
-                                                    self.Hx, 
-                                                    self.Hy, 
-                                                    self.diffzEx, 
-                                                    self.diffzEy, 
-                                                    self.psi_hxz_p, 
-                                                    self.psi_hyz_p
-                                                )
-
-                if '-' in self.PMLregion.get('z'):
-
-                    self.clib_PML.PML_updateH_mz( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappaz, self.PMLbz, self.PMLaz, \
-                                                    self.mu_Hx, self.mu_Hy, \
-                                                    self.mcon_Hx, self.mcon_Hy, \
-                                                    self.Hx, 
-                                                    self.Hy, 
-                                                    self.diffzEx, 
-                                                    self.diffzEy, 
-                                                    self.psi_hxz_m, 
-                                                    self.psi_hyz_m
-                                                )
+                if '+' in self.PMLregion.get('z'): self._PML_updateH_pz()
+                if '-' in self.PMLregion.get('z'): self._PML_updateH_mz()
 
         # Middle rank
         elif self.MPIrank > 0 and self.MPIrank < (self.MPIsize-1):
@@ -1845,9 +1756,238 @@ class Basic3D(object):
                                                     self.psi_eyx_p
                                                 )
 
-
         else: pass
 
+    def _PML_updateH_px(self):
+
+        odd = slice(1,-2,2)
+
+        # Update Hy at x+.
+        psiidx = [slice(0,-1), slice(0,None), slice(0,-1)]
+        myidx = [slice(-self.npml, myNx-1), slice(0,None), slice(0,-1)]
+
+        CHy2 = (-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
+        self.psi_hyx_p[psiidx] = (self.PMLbx[odd,None,None]*self.psi_hyx_p[psiidx]) + \
+                                    (self.PMLax[odd,None,None]*self.diffxEz[myidx])
+        self.Hy[myidx] += CHy2 * (-((1./self.PMLkappax[odd,None,None] - 1.) *\
+                            self.diffxEz[myidx]) - self.psi_hyx_p[psiidx])
+
+        # Update Hz at x+.
+        psiidx = [slice(0,-1), slice(0,-1), slice(0,None)]
+        myidx = [slice(-self.npml, myNx-1), slice(0,-1), slice(0,None)]
+
+        CHz2 = (-2*self.dt) / (2.*self.mu_Hz[myidx] + self.mcon_Hz[myidx]*self.dt)
+        self.psi_hzx_p[psiidx] = (self.PMLbx[odd,None,None]*self.psi_hzx_p[psiidx]) + \
+                                    (self.PMLax[odd,None,None]*self.diffxEy[myidx])
+        self.Hz[myidx] += CHz2 * (-((1./self.PMLkappax[odd,None,None] - 1.) *\
+                            self.diffxEy[myidx]) - self.psi_hzx_p[psiidx])
+
+        """
+        self.clib_PML.PML_updateH_px( \
+                                        self.myNx, self.Ny, self.Nz, self.npml,\
+                                        self.dt, \
+                                        self.PMLkappax, self.PMLbx, self.PMLax, \
+                                        self.mu_Hy, self.mu_Hz, \
+                                        self.mcon_Hy, self.mcon_Hz, \
+                                        self.Hy, 
+                                        self.Hz, 
+                                        self.diffxEy, 
+                                        self.diffxEz, 
+                                        self.psi_hyx_p, 
+                                        self.psi_hzx_p
+                                    )
+        """
+    
+    def _PML_updateH_mx(self):
+
+        even = slice(-2,None,-2)
+
+        # Update Hy at x-.
+        psiidx = [slice(0,self.npml), slice(0,None), slice(0,-1)]
+        myidx = [slice(0,self.npml), slice(0,None), slice(0,-1)]
+
+        CHy2 = (-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
+        self.psi_hyx_m[psiidx] = (self.PMLbx[even,None,None]*self.psi_hyx_m[psiidx]) + \
+                                    (self.PMLax[even,None,None]*self.diffxEz[myidx])
+        self.Hy[myidx] += CHy2 * (-((1./self.PMLkappax[even,None,None] - 1.) *\
+                            self.diffxEz[myidx]) - self.psi_hyx_m[psiidx])
+
+        # Update Hz at x-.
+        psiidx = [slice(0, self.npml), slice(0,-1), slice(0,None)]
+        myidx = [slice(0, self.npml), slice(0,-1), slice(0,None)]
+
+        CHz2 = (-2*self.dt) / (2.*self.mu_Hz[myidx] + self.mcon_Hz[myidx]*self.dt)
+        self.psi_hzx_m[psiidx] = (self.PMLbx[even,None,None]*self.psi_hzx_m[psiidx]) + \
+                                    (self.PMLax[even,None,None]*self.diffxEy[myidx])
+        self.Hz[myidx] += CHz2 * (-((1./self.PMLkappax[even,None,None] - 1.) *\
+                            self.diffxEy[myidx]) - self.psi_hzx_m[psiidx])
+
+        """
+        self.clib_PML.PML_updateH_mx( \
+                                        self.myNx, self.Ny, self.Nz, self.npml,\
+                                        self.dt, \
+                                        self.PMLkappax, self.PMLbx, self.PMLax, \
+                                        self.mu_Hy, self.mu_Hz, \
+                                        self.mcon_Hy, self.mcon_Hz, \
+                                        self.Hy, 
+                                        self.Hz, 
+                                        self.diffxEy, 
+                                        self.diffxEz, 
+                                        self.psi_hyx_m, 
+                                        self.psi_hzx_m
+                                    )
+        """
+
+    def _PML_updateH_py(self):
+
+        odd = slice(1,None,2)
+        psiidx = [slice(0,None), slice(0,self.npml), slice(0,None)]
+        myidx = [slice(0,None), slice(-self.npml,None), slice(0,None)]
+
+        # Update Hx at y+.
+        CHx2 = (-2.*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt)
+
+        self.psi_hxy_p[psiidx] = (self.PMLby[None,odd,None]*self.psi_hxy_p[psiidx]) \
+                                + (self.PMLay[None,odd,None]*self.diffyEz[myidx]
+        self.Hx[myidx] += CHx2 * (+((1./self.PMLkappamaxy[None,odd,None] - 1.) * \
+                            self.diffyEz[myidx])+self.psi_hxy_p[psiidx])
+
+        # Update Hz at y+.
+        CHz2 = (-2.*self.dt) / (2.*self.mu_Hz[myidx] + self.mcon_Hz[myidx]*self.dt)
+
+        self.psi_hzy_p[psiidx] = (self.PMLby[None,odd,None] * self.psi_hzy_p[psiidx]) \
+                                + (self.PMLay[None,odd,None] * self.diffyEx[myidx])
+        self.Hz[myidx] += CHz2 * (-((1./self.PMLkappamaxy[None,odd,None]-1.) * \
+                            self.diffyEx[myidx])-self.psi_hzy_p[psiidx])
+
+        """
+        self.clib_PML.PML_updateH_py( \
+                                        self.myNx, self.Ny, self.Nz, self.npml,\
+                                        self.dt, \
+                                        self.PMLkappay, self.PMLby, self.PMLay, \
+                                        self.mu_Hx, self.mu_Hz, \
+                                        self.mcon_Hx, self.mcon_Hz, \
+                                        self.Hx, 
+                                        self.Hz, 
+                                        self.diffyEx, 
+                                        self.diffyEz, 
+                                        self.psi_hxy_p, 
+                                        self.psi_hzy_p
+                                    )
+        """
+
+    def _PML_updateH_my(self):
+
+        even = slice(-2,None,-2)
+        psiidx = [slice(0,None), slice(0, self.npml), slice(0,None)]
+        myidx = [slice(0,None), slice(0,self.npml), slice(0,None)]
+
+        # Update Hx at y-.
+        CHx2 =  (-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt);
+
+        self.psi_hxy_m[psiidx] = (self.PMLby[None,even,None] * self.psi_hxy_m[psiidx]) + \
+                                (self.PMLay[None,even,None] * self.diffyEz[myidx]);
+        self.Hx[myidx] += CHx2 * (+((1./self.PMLkappay[None,even,None] - 1.) * \
+                            self.diffyEz[myidx]) + self.psi_hxy_m[psiidx]);
+
+        # Update Hz at y-.
+        CHz2 =  (-2*self.dt) / (2.*self.mu_Hz[myidx] + self.mcon_Hz[myidx]*self.dt);
+
+        self.psi_hzy_m[psiidx] = (self.PMLby[None,even,None] * self.psi_hzy_m[psiidx]) + \
+                                    (self.PMLay[None,even,None] * self.diffyEx[myidx]);
+        self.Hz[myidx] += CHz2 * (-((1./self.PMLkappay[None,even,None] - 1.) * \
+                            self.diffyEx[myidx]) - self.psi_hzy_m[psiidx]);
+        """
+        self.clib_PML.PML_updateH_my( \
+                                        self.myNx, self.Ny, self.Nz, self.npml,\
+                                        self.dt, \
+                                        self.PMLkappay, self.PMLby, self.PMLay, \
+                                        self.mu_Hx, self.mu_Hz, \
+                                        self.mcon_Hx, self.mcon_Hz, \
+                                        self.Hx, 
+                                        self.Hz, 
+                                        self.diffyEx, 
+                                        self.diffyEz, 
+                                        self.psi_hxy_m, 
+                                        self.psi_hzy_m
+                                    )
+        """
+    def _PML_updateH_pz(self):
+
+        odd = slice(1,None,2)
+        psiidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
+        myidx = [slice(0,None), slice(0,None), slice(-self.npml, None)]
+
+        # Update Hx at z+.
+        CHx2 =	(-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt);
+        
+        self.psi_hxz_p[psiidx] = (self.PMLbz[None,None,odd] * self.psi_hxz_p[psiidx]) +\
+                                    (self.PMLaz[None,None,odd] * self.diffzEy[myidx]);
+        self.Hx[myidx] += CHx2 * (-((1./self.PMLkappaz[None,None,odd] - 1.) * \
+                            self.diffzEy[myidx]) - self.psi_hxz_p[psiidx]);
+
+        # Update Hy at z+.
+        CHy2 =	(-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt);
+        
+        self.psi_hyz_p[psiidx] = (self.PMLbz[None,None,odd] * self.psi_hyz_p[psiidx]) + \
+                                    (self.PMLaz[None,None,odd] * self.diffzEx[myidx]);
+        self.Hy[myidx] += CHy2 * (+((1./self.PMLkappaz[None,None,odd] - 1.) * \
+                            self.diffzEx[myidx]) + self.psi_hyz_p[psiidx]);
+        """
+        self.clib_PML.PML_updateH_pz( \
+                                        self.myNx, self.Ny, self.Nz, self.npml,\
+                                        self.dt, \
+                                        self.PMLkappaz, self.PMLbz, self.PMLaz, \
+                                        self.mu_Hx, self.mu_Hy, \
+                                        self.mcon_Hx, self.mcon_Hy, \
+                                        self.Hx, 
+                                        self.Hy, 
+                                        self.diffzEx, 
+                                        self.diffzEy, 
+                                        self.psi_hxz_p, 
+                                        self.psi_hyz_p
+                                    )
+        """
+    def _PML_updateH_mz(self):
+        even = slice(-2,None,-2)
+        psiidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
+        myidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
+
+        # Update Hx at z-.
+        CHx2 =	(-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt);
+        
+        self.psi_hxz_m[psiidx] = (self.PMLbz[None,None,even] * self.psi_hxz_m[psiidx]) + \
+                                    (self.PMLaz[None,None,even] * self.diffzEy[myidx]);
+        self.Hx[myidx] += CHx2 * (-((1./self.PMLkappaz[None,None,even] - 1.) * \
+                            self.diffzEy[myidx]) - self.psi_hxz_m_re[psiidx]);
+        # Update Hy at z-.
+        CHy2 =	(-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt);
+        
+        self.psi_hyz_m[psiidx] = (self.PMLbz[None,None,even] * self.psi_hyz_m[psiidx]) + \
+                                    (self.PMLaz[None,None,even] * self.diffzEx[myidx]);
+        self.Hy[myidx] += CHy2 * (+((1./self.PMLkappaz[None,None,even] - 1.) * \
+                            self.diffzEx[myidx]) + self.psi_hyz_m[psiidx]);
+        """
+        self.clib_PML.PML_updateH_mz( \
+                                        self.myNx, self.Ny, self.Nz, self.npml,\
+                                        self.dt, \
+                                        self.PMLkappaz, self.PMLbz, self.PMLaz, \
+                                        self.mu_Hx, self.mu_Hy, \
+                                        self.mcon_Hx, self.mcon_Hy, \
+                                        self.Hx, 
+                                        self.Hy, 
+                                        self.diffzEx, 
+                                        self.diffzEy, 
+                                        self.psi_hxz_m, 
+                                        self.psi_hyz_m
+                                    )
+        """
+    def _PML_updateE_px(self):
+    def _PML_updateE_mx(self):
+    def _PML_updateE_py(self):
+    def _PML_updateE_my(self):
+    def _PML_updateE_pz(self):
+    def _PML_updateE_mz(self):
 
 class Empty3D(object):
     
