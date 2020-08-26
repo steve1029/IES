@@ -837,182 +837,29 @@ class Basic3D(object):
         #---------------- Apply PML when it is given ---------------#
         #-----------------------------------------------------------#
 
+        # For all ranks.
+        if 'y' in self.PMLregion.keys():
+            if '+' in self.PMLregion.get('y'): self._PML_updateH_py()
+            if '-' in self.PMLregion.get('y'): self._PML_updateH_my()
+        if 'z' in self.PMLregion.keys():
+            if '+' in self.PMLregion.get('z'): self._PML_updateH_pz()
+            if '-' in self.PMLregion.get('z'): self._PML_updateH_mz()
+
         # First rank
         if self.MPIrank == 0:
             if 'x' in self.PMLregion.keys():
                 if '+' in self.PMLregion.get('x') and self.MPIsize == 1: self._PML_updateH_px()
                 if '-' in self.PMLregion.get('x'): self._PML_updateH_mx()
-            if 'y' in self.PMLregion.keys():
-                if '+' in self.PMLregion.get('y'): self._PML_updateH_py()
-                if '-' in self.PMLregion.get('y'): self._PML_updateH_my()
-            if 'z' in self.PMLregion.keys():
-                if '+' in self.PMLregion.get('z'): self._PML_updateH_pz()
-                if '-' in self.PMLregion.get('z'): self._PML_updateH_mz()
-
         # Middle rank
         elif self.MPIrank > 0 and self.MPIrank < (self.MPIsize-1):
             if 'x' in self.PMLregion.keys():
                 if '+' in self.PMLregion.get('x'): pass
                 if '-' in self.PMLregion.get('x'): pass
-
-            if 'y' in self.PMLregion.keys():
-
-                if '+' in self.PMLregion.get('y'):
-
-                    self.clib_PML.PML_updateH_py( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappay, self.PMLby, self.PMLay, \
-                                                    self.mu_Hx, self.mu_Hz, \
-                                                    self.mcon_Hx, self.mcon_Hz, \
-                                                    self.Hx, 
-                                                    self.Hz, 
-                                                    self.diffyEx, 
-                                                    self.diffyEz, 
-                                                    self.psi_hxy_p, 
-                                                    self.psi_hzy_p
-                                                )
-
-                if '-' in self.PMLregion.get('y'):
-
-                    self.clib_PML.PML_updateH_my( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappay, self.PMLby, self.PMLay, \
-                                                    self.mu_Hx, self.mu_Hz, \
-                                                    self.mcon_Hx, self.mcon_Hz, \
-                                                    self.Hx, 
-                                                    self.Hz, 
-                                                    self.diffyEx, 
-                                                    self.diffyEz, 
-                                                    self.psi_hxy_m, 
-                                                    self.psi_hzy_m
-                                                )
-
-            if 'z' in self.PMLregion.keys():
-
-                if '+' in self.PMLregion.get('z'):
-
-                    self.clib_PML.PML_updateH_pz( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappaz, self.PMLbz, self.PMLaz, \
-                                                    self.mu_Hx, self.mu_Hy, \
-                                                    self.mcon_Hx, self.mcon_Hy, \
-                                                    self.Hx, 
-                                                    self.Hy, 
-                                                    self.diffzEx, 
-                                                    self.diffzEy, 
-                                                    self.psi_hxz_p, 
-                                                    self.psi_hyz_p
-                                                )
-
-                if '-' in self.PMLregion.get('z'):
-
-                    self.clib_PML.PML_updateH_mz( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappaz, self.PMLbz, self.PMLaz, \
-                                                    self.mu_Hx, self.mu_Hy, \
-                                                    self.mcon_Hx, self.mcon_Hy, \
-                                                    self.Hx, 
-                                                    self.Hy, 
-                                                    self.diffzEx, 
-                                                    self.diffzEy, 
-                                                    self.psi_hxz_m, 
-                                                    self.psi_hyz_m
-                                                )
-
         # Last rank
         elif self.MPIrank == (self.MPIsize-1) and self.MPIsize != 1:
-
             if 'x' in self.PMLregion.keys():
-
-                if '+' in self.PMLregion.get('x'):
-
-                    self.clib_PML.PML_updateH_px( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappax, self.PMLbx, self.PMLax, \
-                                                    self.mu_Hy, self.mu_Hz, \
-                                                    self.mcon_Hy, self.mcon_Hz, \
-                                                    self.Hy, 
-                                                    self.Hz, 
-                                                    self.diffxEy, 
-                                                    self.diffxEz, 
-                                                    self.psi_hyx_p, 
-                                                    self.psi_hzx_p
-                                                )
-
+                if '+' in self.PMLregion.get('x'): self._PML_updateH_px()
                 if '-' in self.PMLregion.get('x'): pass
-
-            if 'y' in self.PMLregion.keys():
-
-                if '+' in self.PMLregion.get('y'):
-
-                    self.clib_PML.PML_updateH_py( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappay, self.PMLby, self.PMLay, \
-                                                    self.mu_Hx, self.mu_Hz, \
-                                                    self.mcon_Hx, self.mcon_Hz, \
-                                                    self.Hx, 
-                                                    self.Hz, 
-                                                    self.diffyEx, 
-                                                    self.diffyEz, 
-                                                    self.psi_hxy_p, 
-                                                    self.psi_hzy_p
-                                                )
-
-                if '-' in self.PMLregion.get('y'):
-
-                    self.clib_PML.PML_updateH_my( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappay, self.PMLby, self.PMLay, \
-                                                    self.mu_Hx, self.mu_Hz, \
-                                                    self.mcon_Hx, self.mcon_Hz, \
-                                                    self.Hx, 
-                                                    self.Hz, 
-                                                    self.diffyEx, 
-                                                    self.diffyEz, 
-                                                    self.psi_hxy_m, 
-                                                    self.psi_hzy_m
-                                                )
-
-            if 'z' in self.PMLregion.keys():
-
-                if '+' in self.PMLregion.get('z'):
-
-                    self.clib_PML.PML_updateH_pz( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappaz, self.PMLbz, self.PMLaz, \
-                                                    self.mu_Hx, self.mu_Hy, \
-                                                    self.mcon_Hx, self.mcon_Hy, \
-                                                    self.Hx, 
-                                                    self.Hy, 
-                                                    self.diffzEx, 
-                                                    self.diffzEy, 
-                                                    self.psi_hxz_p, 
-                                                    self.psi_hyz_p
-                                                )
-
-                if '-' in self.PMLregion.get('z'):
-
-                    self.clib_PML.PML_updateH_mz( \
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt, \
-                                                    self.PMLkappaz, self.PMLbz, self.PMLaz, \
-                                                    self.mu_Hx, self.mu_Hy, \
-                                                    self.mcon_Hx, self.mcon_Hy, \
-                                                    self.Hx, 
-                                                    self.Hy, 
-                                                    self.diffzEx, 
-                                                    self.diffzEy, 
-                                                    self.psi_hxz_m, 
-                                                    self.psi_hyz_m
-                                                )
 
         #-----------------------------------------------------------#
         #------------ Apply PBC along y when it is given -----------#
