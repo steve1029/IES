@@ -7,7 +7,7 @@ from mpl_toolkits.mplot3d import axes3d
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.constants import c, mu_0, epsilon_0
 
-class Basic3D(object):
+class Basic3D:
     
     def __init__(self, grid, gridgap, dt, tsteps, dtype, **kwargs):
         """Create Simulation Space.
@@ -105,9 +105,6 @@ class Basic3D(object):
         self.myPBCregion_x = False
         self.myPBCregion_y = False
         self.myPBCregion_z = False
-        self.myBBCregion_x = False
-        self.myBBCregion_y = False
-        self.myBBCregion_z = False
 
         assert self.dt < self.maxdt, "Time interval is too big so that causality is broken. Lower the courant number."
         assert float(self.Nx) % self.MPIsize == 0., "Nx must be a multiple of the number of nodes."
@@ -455,63 +452,6 @@ class Basic3D(object):
         self.MPIcomm.Barrier()
         #print("PBC region of rank: {}, x: {}, y: {}, z: {}" \
         #       .format(self.MPIrank, self.myPBCregion_x, self.myPBCregion_y, self.myPBCregion_z))
-
-    def apply_BBC(self, region):
-        """Specify the boundary to apply Bloch Boundary Condition.
-
-        PARAMETERS
-        ----------
-        region : dictionary
-            ex) {'x':'','y':'+-','z':'+-'}
-
-        RETURNS
-        -------
-        None
-        """
-
-        value = region.get('x')
-        if value == '+-' or value == '-+':
-            if self.MPIsize > 1:
-                if   self.MPIrank == 0               : self.myBBCregion_x = '-'
-                elif self.MPIrank == (self.MPIsize-1): self.myBBCregion_x = '+'
-        elif value == None: pass
-        else: raise ValueError("The value of key 'x' should be None or '+-' or '-+'.")
-
-        value = region.get('y')
-        if   value == True:  self.myBBCregion_y = True
-        elif value == False: self.myBBCregion_y = False
-        else: raise ValueError("Choose True or False")
-
-        value = region.get('z')
-        if   value == True:  self.myBBCregion_z = True
-        elif value == False: self.myBBCregion_z = False
-        else: raise ValueError("Choose True or False")
-
-        """
-        for key, value in region.items():
-
-            if   key == 'x':
-
-                if   value == '+': raise ValueError("input '+-' or '-+'.")
-                elif value == '-': raise ValueError("input '+-' or '-+'.")
-                elif value == '+-' or value == '-+':
-
-                    if   self.MPIrank == 0               : self.myBBCregion_x = '-'
-                    elif self.MPIrank == (self.MPIsize-1): self.myBBCregion_x = '+'
-
-            elif key == 'y':
-
-                if value == True: self.myBBCregion_y = True
-                elif value == False: self.myBBCregion_y = False
-                else: raise ValueError("Choose True or False")
-
-            elif key == 'z':
-    
-                if value == True: self.myBBCregion_z = True
-                elif value == False: self.myBBCregion_z = False
-                else: raise ValueError("Choose True or False")
-        """
-        self.MPIcomm.Barrier()
 
     def set_src_pos(self, src_srt, src_end):
         """Set the position, type of the source and field.
@@ -865,6 +805,7 @@ class Basic3D(object):
         #------------ Apply PBC along y when it is given -----------#
         #-----------------------------------------------------------#
 
+        """
         if self.myPBCregion_y == True:
 
             # Ranks except the last rank.
@@ -1004,7 +945,7 @@ class Basic3D(object):
                                                 )
 
         else: pass
-
+        """
 
     def updateE(self, tstep):
         """Update E field.
@@ -1074,15 +1015,19 @@ class Basic3D(object):
             zshifter = xp.exp(1j*self.kz*self.dz/2)[:,:,nax]
 
 	    # Get derivatives of Hy and Hz to update Ex
+        #self.diffyHz[:,1:,1:] = (self.Hz[:,1:,1:] - self.Hz[:,:-1,1:]) / self.dy
+        #self.diffzHy[:,1:,1:] = (self.Hy[:,1:,1:] - self.Hy[:,1:,:-1]) / self.dz
         self.diffyHz = xp.fft.ifftn(iky*xp.fft.fftn(self.Hz, axes=(1,)), axes=(1,))
         self.diffzHy = xp.fft.ifftn(ikz*xp.fft.fftn(self.Hy, axes=(2,)), axes=(2,))
 
 	    # Get derivatives of Hx and Hz to update Ex
+        #self.diffzHx[1:,:,1:] = (self.Hx[1:,:,1:] - self.Hx[1:,:,:-1]) / self.dz
         self.diffzHx = xp.fft.ifftn(ikz*yshifter*xp.fft.fftn(self.Hx, axes=(1,2)), axes=(1,2))
         self.diffxHz[1:,:,1:] = (self.Hz[1:,:,1:] - self.Hz[:-1,:,1:]) / self.dz
 
 	    # Get derivatives of Hx and Hy to update Ex
         self.diffxHy[1:,1:,:] = (self.Hy[1:,1:,:] - self.Hy[:-1,1:,:]) / self.dx
+        #self.diffyHx[1:,1:,:] = (self.Hx[1:,1:,:] - self.Hx[1:,:-1,:]) / self.dy
         self.diffyHx = xp.fft.ifftn(iky*zshifter*xp.fft.fftn(self.Hx, axes=(1,2)), axes=(1,2))
 
         if self.MPIrank == 0: pass
@@ -1464,6 +1409,7 @@ class Basic3D(object):
         #------------ Apply PBC along y when it is given -----------#
         #-----------------------------------------------------------#
 
+        """
         if self.myPBCregion_y == True:
 
             # The first rank.
@@ -1604,6 +1550,7 @@ class Basic3D(object):
                                                 )
 
         else: pass
+        """
 
     def _PML_updateH_px(self):
 
@@ -1836,9 +1783,9 @@ class Basic3D(object):
     def _PML_updateE_pz(self):
     def _PML_updateE_mz(self):
 
-class Empty3D(object):
+class Empty3D:
     
-    def __init__(self, grid, gridgap, courant, dt, tsteps, dtype, **kwargs):
+    def __init__(self, grid, gridgap, dt, tsteps, dtype, **kwargs):
         """Create Simulation Space.
 
             ex) Space.grid((128,128,600), (50*nm,50*nm,5*nm), dtype=xp.float64)
@@ -1910,10 +1857,12 @@ class Empty3D(object):
 
         self.MPIcomm.Barrier()
 
-        self.courant = courant
+        self.courant = 1./4
 
-        for key, value in kwargs.items():
-            if key == 'courant': self.courant = value
+        if kwargs.get('engine') != None: self.engine = kwargs.get('engine')
+        if kwargs.get('courant') != None: self.courant = kwargs.get('courant')
+
+        assert self.engine == np or self.engine == cp
 
         self.dt = dt
         self.maxdt = 1. / c / xp.sqrt( (1./self.dx)**2 + (1./self.dy)**2 + (1./self.dz)**2 )
@@ -1932,9 +1881,6 @@ class Empty3D(object):
         self.myPBCregion_x = False
         self.myPBCregion_y = False
         self.myPBCregion_z = False
-        self.myBBCregion_x = False
-        self.myBBCregion_y = False
-        self.myBBCregion_z = False
 
         assert self.dt < self.maxdt, "Time interval is too big so that causality is broken. Lower the courant number."
         assert float(self.Nx) % self.MPIsize == 0., "Nx must be a multiple of the number of nodes."
