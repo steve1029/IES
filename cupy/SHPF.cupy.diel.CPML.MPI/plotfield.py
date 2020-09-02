@@ -1,4 +1,5 @@
 import numpy as np
+import cupy as cp
 import os, datetime, sys
 from scipy.constants import c
 
@@ -32,12 +33,34 @@ class Graphtool(object):
         ###################### Gather field data from all slave nodes #####################
         ###################################################################################
         
-        if   what == 'Ex': gathered = self.Space.MPIcomm.gather(self.Space.Ex_re, root=0)
-        elif what == 'Ey': gathered = self.Space.MPIcomm.gather(self.Space.Ey_re, root=0)
-        elif what == 'Ez': gathered = self.Space.MPIcomm.gather(self.Space.Ez_re, root=0)
-        elif what == 'Hx': gathered = self.Space.MPIcomm.gather(self.Space.Hx_re, root=0)
-        elif what == 'Hy': gathered = self.Space.MPIcomm.gather(self.Space.Hy_re, root=0)
-        elif what == 'Hz': gathered = self.Space.MPIcomm.gather(self.Space.Hz_re, root=0)
+        if self.Space.engine == 'cupy':
+
+            if   what == 'Ex': 
+                Ex = cp.asnumpy(self.Space.Ex)
+                gathered = self.Space.MPIcomm.gather(Ex, root=0)
+            elif what == 'Ey': 
+                Ey = cp.asnumpy(self.Space.Ey)
+                gathered = self.Space.MPIcomm.gather(Ey, root=0)
+            elif what == 'Ez': 
+                Ez = cp.asnumpy(self.Space.Ez)
+                gathered = self.Space.MPIcomm.gather(Ez, root=0)
+            elif what == 'Hx': 
+                Hx = cp.asnumpy(self.Space.Hx)
+                gathered = self.Space.MPIcomm.gather(Hx, root=0)
+            elif what == 'Hy': 
+                Hy = cp.asnumpy(self.Space.Hy)
+                gathered = self.Space.MPIcomm.gather(Hy, root=0)
+            elif what == 'Hz': 
+                Hz = cp.asnumpy(self.Space.Hz)
+                gathered = self.Space.MPIcomm.gather(Hz, root=0)
+
+        else:
+            if   what == 'Ex': gathered = self.Space.MPIcomm.gather(self.Space.Ex_re, root=0)
+            elif what == 'Ey': gathered = self.Space.MPIcomm.gather(self.Space.Ey_re, root=0)
+            elif what == 'Ez': gathered = self.Space.MPIcomm.gather(self.Space.Ez_re, root=0)
+            elif what == 'Hx': gathered = self.Space.MPIcomm.gather(self.Space.Hx_re, root=0)
+            elif what == 'Hy': gathered = self.Space.MPIcomm.gather(self.Space.Hy_re, root=0)
+            elif what == 'Hz': gathered = self.Space.MPIcomm.gather(self.Space.Hz_re, root=0)
 
         self.what = what
 
@@ -194,5 +217,5 @@ class Graphtool(object):
 
             if os.path.exists(save_dir) == False: os.mkdir(save_dir)
             plt.tight_layout()
-            fig.savefig('%s%s_%s_%s_%s_%s.png' %(save_dir, str(today), self.name,self.what, plane, tstep), format='png', bbox_inches='tight')
+            fig.savefig('%s%s_%s_%s_%s_%s.png' %(save_dir, str(today), self.name, self.what, plane, tstep), format='png', bbox_inches='tight')
             plt.close('all')

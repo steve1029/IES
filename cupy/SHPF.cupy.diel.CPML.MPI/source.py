@@ -2,10 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.constants import c, mu_0, epsilon_0
 
-class Gaussian(object):
+class Gaussian:
     
     def __init__(self, dt, center_wv, spread, pick_pos, dtype):
-        
+
         self.dt    = dt
         self.dtype = dtype
         self.wvlenc = center_wv
@@ -20,20 +20,20 @@ class Gaussian(object):
 
     def pulse_re(self,step,pick_pos):
         
-        pulse_re = np.exp((-.5) * (((step*self.dt-self.tc)*self.ws)**2)) * np.cos(self.w0*(step*self.dt-self.tc))
+        pulse_re = np.exp((-.5) * (((step*self.dt-self.tc)*self.ws)**2)) * \
+                    np.cos(self.w0*(step*self.dt-self.tc))
 
         return pulse_re
 
     def pulse_im(self,step,pick_pos):
         
-        pulse_im = np.exp((-.5) * (((step*self.dt-self.tc)*self.ws)**2)) * np.sin(self.w0*(step*self.dt-self.tc))
+        pulse_im = np.exp((-.5) * (((step*self.dt-self.tc)*self.ws)**2)) * \
+                    np.sin(self.w0*(step*self.dt-self.tc))
 
         return pulse_im
 
     def plot_pulse(self, tsteps, freqs, savedir):
         
-        nax = np.newaxis
-
         time_domain = np.arange(tsteps, dtype=self.dtype)
         t = time_domain * self.dt
 
@@ -43,8 +43,8 @@ class Gaussian(object):
         pulse_re = np.exp((-.5) * (((t-self.tc)*self.ws)**2)) * np.cos(self.w0*(t-self.tc))
         pulse_im = np.exp((-.5) * (((t-self.tc)*self.ws)**2)) * np.sin(self.w0*(t-self.tc))
 
-        pulse_re_ft = (self.dt * pulse_re[nax,:]* np.exp(1j*2*np.pi*self.freqs[:,nax]*t[nax,:])).sum(1) / np.sqrt(2*np.pi)
-        pulse_im_ft = (self.dt * pulse_im[nax,:]* np.exp(1j*2*np.pi*self.freqs[:,nax]*t[nax,:])).sum(1) / np.sqrt(2*np.pi)
+        pulse_re_ft = (self.dt * pulse_re[None,:] * np.exp(1j*2*np.pi*self.freqs[:,None]*t[None,:])).sum(1) / np.sqrt(2*np.pi)
+        pulse_im_ft = (self.dt * pulse_im[None,:] * np.exp(1j*2*np.pi*self.freqs[:,None]*t[None,:])).sum(1) / np.sqrt(2*np.pi)
 
         pulse_re_ft_amp = abs(pulse_re_ft)**2
         pulse_im_ft_amp = abs(pulse_im_ft)**2
@@ -81,10 +81,10 @@ class Gaussian(object):
         ax3.grid(True)
         ax3.set_ylim(0,None)
 
-        fig.savefig(savedir+"/graph/src_input.png")
+        fig.savefig(savedir+"graph/src_input.png")
 
 
-class Sine(object):
+class Sine:
 
     def __init__(self, dt, dtype):
 
@@ -112,10 +112,10 @@ class Sine(object):
         return pulse_re
 
 
-class Cosine(object):
+class Cosine:
 
     def __init__(self, dt, dtype):
-
+        
         self.dt = dt
         self.dtype = dtype
 
