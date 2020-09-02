@@ -1,3 +1,0 @@
-Node	Nx  	Ny  	Nz  	dx  		dy  		dz  		tsteps  	Time				VM/Node(GB) 	RM/Node(GB) 
-
- 8		1024	1024	0512	3.00e-08	3.00e-08	3.00e-08	002048		2:20:44.585046		09.448			09.071
