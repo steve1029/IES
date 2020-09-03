@@ -66,7 +66,7 @@ class Graphtool(object):
 
         if self.Space.MPIrank == 0: 
         
-            self.integrated = np.zeros((self.Space.grid), dtype=self.Space.dtype)
+            self.integrated = np.zeros((self.Space.grid), dtype=self.Space.rdtype)
 
             for MPIrank in range(self.Space.MPIsize):
                 self.integrated[self.Space.myNx_slices[MPIrank],:,:] = gathered[MPIrank]
@@ -116,7 +116,7 @@ class Graphtool(object):
                 plane = 'yz'
                 col = np.arange(self.Space.Ny)
                 row = np.arange(self.Space.Nz)
-                plane_to_plot = np.zeros((len(col),len(row)), dtype=self.Space.dtype)
+                plane_to_plot = np.zeros((len(col),len(row)), dtype=self.Space.rdtype)
 
             elif yidx != None :
                 assert type(yidx) == int
@@ -125,7 +125,7 @@ class Graphtool(object):
                 plane = 'xz'
                 col = np.arange(self.Space.Nx)
                 row = np.arange(self.Space.Nz)
-                plane_to_plot = np.zeros((len(col), len(row)), dtype=self.Space.dtype)
+                plane_to_plot = np.zeros((len(col), len(row)), dtype=self.Space.rdtype)
 
             elif zidx != None :
                 assert type(zidx) == int
@@ -134,7 +134,7 @@ class Graphtool(object):
                 plane = 'xy'
                 col = np.arange(self.Space.Nx)
                 row = np.arange(self.Space.Ny)
-                plane_to_plot = np.zeros((len(col),len(row)), dtype=self.Space.dtype)
+                plane_to_plot = np.zeros((len(col),len(row)), dtype=self.Space.rdtype)
         
             elif (xidx,yidx,zidx) == (None,None,None):
                 raise ValueError("Plane is not defined. Please insert one of x,y or z index of the plane.")

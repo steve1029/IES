@@ -13,7 +13,7 @@ import cupy as cp
 #----------------------- Paramter settings ------------------------#
 #------------------------------------------------------------------#
 
-savedir = '/home/ldg/2nd_paper/cupy/SHPF.cupy.diel.CPML.MPI/'
+savedir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/'
 
 nm = 1e-9
 um = 1e-6
@@ -24,12 +24,12 @@ dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz
 
 courant = 1./4
 dt = courant * min(dx,dy,dz) / c
-Tstep = 3001
+Tstep = 2001
 
 wvc = 300*um
 interval = 2
 spread   = 0.3
-pick_pos = 2000
+pick_pos = 1000
 plot_per = 100
 
 wvlens = np.arange(200, 600, interval) * um
@@ -54,14 +54,14 @@ Box1_end = (round(272*um/dx), round(96*um/dy), round( 96*um/dz))
 #-------------------------- Call objects --------------------------#
 #------------------------------------------------------------------#
 
-Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tstep, np.float32, engine='cupy')
+Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tstep, np.float32, np.complex64, engine='cupy')
 Space.malloc()
 
 # Put structures
 #Box = structure.Box(Space, Box1_srt, Box1_end, 4., 1.)
 
 # Set PML and PBC
-Space.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
+Space.set_PML({'x':'','y':'','z':''}, 10)
 
 # Save eps, mu and PML data.
 #Space.save_PML_parameters('./')
@@ -74,10 +74,13 @@ src_xpos = int(Nx/2)
 #Space.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Space.Ny, Space.Nz)) # Plane wave for Ey, x-direction.
 
 # Line source along y axis.
-Space.set_src_pos((src_xpos, 0, Space.Nzc), (src_xpos+1, Space.Ny, Space.Nzc+1))
+#Space.set_src_pos((src_xpos, 0, Space.Nzc), (src_xpos+1, Space.Ny, Space.Nzc+1))
+
+# Line source along z axis.
+Space.set_src_pos((src_xpos, Space.Nyc, 0), (src_xpos+1, Space.Nyc+1, Space.Nz))
 
 # Set plotfield options
-graphtool = plotfield.Graphtool(Space, '', savedir)
+graphtool = plotfield.Graphtool(Space, 'TF', savedir)
 
 # Save what time the simulation begins.
 start_time = datetime.datetime.now()
@@ -96,7 +99,8 @@ for tstep in range(Space.tsteps):
     pulse_re = Src.pulse_re(tstep, pick_pos)
     #pulse_im = Src.pulse_im(tstep, pick_pos)
 
-    Space.put_src('Ey', pulse_re, 'soft')
+    #Space.put_src('Ey', pulse_re, 'soft')
+    Space.put_src('Ez', pulse_re, 'soft')
 
     #Space.get_src('Ey', tstep)
     #Space.get_ref('Ey', tstep)
@@ -109,9 +113,11 @@ for tstep in range(Space.tsteps):
     if tstep % plot_per == 0:
         #graphtool.plot2D3D('Ex', tstep, xidx=Space.Nxc, colordeep=6., stride=2, zlim=6.)
 
-        Ey = graphtool.gather('Ey')
-        graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=1., stride=2, zlim=1.)
-        #graphtool.plot2D3D(Ez, tstep, zidx=Space.Nzc, colordeep=2., stride=2, zlim=2.)
+        #Ey = graphtool.gather('Ey')
+        #graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=1., stride=2, zlim=1.)
+        
+        Ez = graphtool.gather('Ez')
+        graphtool.plot2D3D(Ez, tstep, zidx=Space.Nzc, colordeep=1., stride=2, zlim=1.)
 
         if Space.MPIrank == 0:
 
