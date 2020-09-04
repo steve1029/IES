@@ -620,23 +620,23 @@ class Basic3D:
         #-----------------------------------------------------------#
 
         # To update Hx
-        #self.diffyEz[:,:-1,:-1] = (self.Ez[:,1:,:-1] - self.Ez[:,:-1,:-1]) / self.dy
-        #self.diffzEy[:,:-1,:-1] = (self.Ey[:,:-1,1:] - self.Ey[:,:-1,:-1]) / self.dz
-        self.diffyEz = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ez, axes=(1,)), axes=(1,))
-        self.diffzEy = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ey, axes=(2,)), axes=(2,))
+        self.diffyEz[:,:-1,:-1] = (self.Ez[:,1:,:-1] - self.Ez[:,:-1,:-1]) / self.dy
+        self.diffzEy[:,:-1,:-1] = (self.Ey[:,:-1,1:] - self.Ey[:,:-1,:-1]) / self.dz
+        #self.diffyEz = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ez, axes=(1,)), axes=(1,))
+        #self.diffzEy = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ey, axes=(2,)), axes=(2,))
         #self.diffyEz = self.xp.fft.irfftn(self.iky*self.xp.fft.rfftn(self.Ez, axes=(1,)), axes=(1,))
         #self.diffzEy = self.xp.fft.irfftn(self.ikz*self.xp.fft.rfftn(self.Ey, axes=(2,)), axes=(2,))
 
         # To update Hy
-        #self.diffzEx[:-1,:,:-1] = (self.Ex[:-1,:,1:] - self.Ex[:-1,:,:-1]) / self.dz
+        self.diffzEx[:-1,:,:-1] = (self.Ex[:-1,:,1:] - self.Ex[:-1,:,:-1]) / self.dz
         self.diffxEz[:-1,:,:-1] = (self.Ez[1:,:,:-1] - self.Ez[:-1,:,:-1]) / self.dx
-        self.diffzEx = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ex, axes=(2,)), axes=(2,))
+        #self.diffzEx = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ex, axes=(2,)), axes=(2,))
         #self.diffzEx = self.xp.fft.irfftn(self.ikz*self.xp.fft.rfftn(self.Ex, axes=(2,)), axes=(2,))
 
         # To update Hz
         self.diffxEy[:-1,:-1,:] = (self.Ey[1:,:-1,:] - self.Ey[:-1,:-1,:]) / self.dx
-        #self.diffyEx[:-1,:-1,:] = (self.Ex[:-1,1:,:] - self.Ex[:-1,:-1,:]) / self.dy
-        self.diffyEx = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ex, axes=(1,)), axes=(1,))
+        self.diffyEx[:-1,:-1,:] = (self.Ex[:-1,1:,:] - self.Ex[:-1,:-1,:]) / self.dy
+        #self.diffyEx = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ex, axes=(1,)), axes=(1,))
         #self.diffyEx = self.xp.fft.irfftn(self.iky*self.xp.fft.rfftn(self.Ex, axes=(1,)), axes=(1,))
 
         if self.MPIrank != (self.MPIsize-1):
@@ -905,23 +905,23 @@ class Basic3D:
         #-----------------------------------------------------------#
 
 	    # Get derivatives of Hy and Hz to update Ex
-        #self.diffyHz[:,1:,1:] = (self.Hz[:,1:,1:] - self.Hz[:,:-1,1:]) / self.dy
-        #self.diffzHy[:,1:,1:] = (self.Hy[:,1:,1:] - self.Hy[:,1:,:-1]) / self.dz
-        self.diffyHz = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hz, axes=(1,)), axes=(1,))
-        self.diffzHy = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hy, axes=(2,)), axes=(2,))
+        self.diffyHz[:,1:,1:] = (self.Hz[:,1:,1:] - self.Hz[:,:-1,1:]) / self.dy
+        self.diffzHy[:,1:,1:] = (self.Hy[:,1:,1:] - self.Hy[:,1:,:-1]) / self.dz
+        #self.diffyHz = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hz, axes=(1,)), axes=(1,))
+        #self.diffzHy = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hy, axes=(2,)), axes=(2,))
         #self.diffyHz = self.xp.fft.irfftn(self.iky*self.xp.fft.rfftn(self.Hz, axes=(1,)), axes=(1,))
         #self.diffzHy = self.xp.fft.irfftn(self.ikz*self.xp.fft.rfftn(self.Hy, axes=(2,)), axes=(2,))
 
 	    # Get derivatives of Hx and Hz to update Ey
-        #self.diffzHx[1:,:,1:] = (self.Hx[1:,:,1:] - self.Hx[1:,:,:-1]) / self.dz
-        self.diffzHx = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hx, axes=(2,)), axes=(2,))
+        self.diffzHx[1:,:,1:] = (self.Hx[1:,:,1:] - self.Hx[1:,:,:-1]) / self.dz
+        #self.diffzHx = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hx, axes=(2,)), axes=(2,))
         #self.diffzHx = self.xp.fft.irfftn(self.ikz*self.xp.fft.rfftn(self.Hx, axes=(2,)), axes=(2,))
         self.diffxHz[1:,:,1:] = (self.Hz[1:,:,1:] - self.Hz[:-1,:,1:]) / self.dx
 
 	    # Get derivatives of Hx and Hy to update Ez
         self.diffxHy[1:,1:,:] = (self.Hy[1:,1:,:] - self.Hy[:-1,1:,:]) / self.dx
-        #self.diffyHx[1:,1:,:] = (self.Hx[1:,1:,:] - self.Hx[1:,:-1,:]) / self.dy
-        self.diffyHx = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hx, axes=(1,)), axes=(1,))
+        self.diffyHx[1:,1:,:] = (self.Hx[1:,1:,:] - self.Hx[1:,:-1,:]) / self.dy
+        #self.diffyHx = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hx, axes=(1,)), axes=(1,))
         #self.diffyHx = self.xp.fft.irfftn(self.iky*self.xp.fft.rfftn(self.Hx, axes=(1,)), axes=(1,))
 
         if self.MPIrank != 0:
@@ -1148,7 +1148,7 @@ class Basic3D:
 
     def _PML_updateH_px(self):
 
-        odd = [slice(1,-1,2), None, None]
+        odd = [slice(1,None,2), None, None]
 
         # Update Hy at x+.
         psiidx = [slice(0,-1), slice(0,None), slice(0,-1)]
@@ -1254,19 +1254,20 @@ class Basic3D:
 
         # Update Hx at y+.
         CHx2 = (-2.*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt)
-
-        self.psi_hxy_p[psiidx] = (self.PMLby[odd]*self.psi_hxy_p[psiidx]) \
-                                + (self.PMLay[odd]*self.diffyEz[myidx])
-        self.Hx[myidx] += CHx2 * (+((1./self.PMLkappay[odd] - 1.) * \
-                            self.diffyEz[myidx])+self.psi_hxy_p[psiidx])
+        self.psi_hxy_p[psiidx] = (self.PMLby[odd]*self.psi_hxy_p[psiidx]) + (self.PMLay[odd]*self.diffyEz[myidx])
+        self.Hx[myidx] += CHx2*(+((1./self.PMLkappay[odd] - 1.)*self.diffyEz[myidx])+self.psi_hxy_p[psiidx])
 
         # Update Hz at y+.
-        CHz2 = (-2.*self.dt) / (2.*self.mu_Hz[myidx] + self.mcon_Hz[myidx]*self.dt)
-
-        self.psi_hzy_p[psiidx] = (self.PMLby[odd] * self.psi_hzy_p[psiidx]) \
-                                + (self.PMLay[odd] * self.diffyEx[myidx])
-        self.Hz[myidx] += CHz2 * (-((1./self.PMLkappay[odd]-1.) * \
-                            self.diffyEx[myidx])-self.psi_hzy_p[psiidx])
+        if self.MPIrank < (self.MPIsize-1):
+            CHz2 = (-2.*self.dt) / (2.*self.mu_Hz[myidx] + self.mcon_Hz[myidx]*self.dt)
+            self.psi_hzy_p[psiidx] = (self.PMLby[odd] * self.psi_hzy_p[psiidx]) + (self.PMLay[odd] * self.diffyEx[myidx])
+            self.Hz[myidx] += CHz2*(-((1./self.PMLkappay[odd]-1.)*self.diffyEx[myidx]) - self.psi_hzy_p[psiidx])
+        else:
+            psiidx = [slice(0,-1), slice(0,self.npml), slice(0,None)]
+            myidx = [slice(0,-1), slice(-self.npml,None), slice(0,None)]
+            CHz2 = (-2.*self.dt) / (2.*self.mu_Hz[myidx] + self.mcon_Hz[myidx]*self.dt)
+            self.psi_hzy_p[psiidx] = (self.PMLby[odd] * self.psi_hzy_p[psiidx]) + (self.PMLay[odd] * self.diffyEx[myidx])
+            self.Hz[myidx] += CHz2*(-((1./self.PMLkappay[odd]-1.)*self.diffyEx[myidx]) - self.psi_hzy_p[psiidx])
 
     def _PML_updateE_py(self):
 
@@ -1276,19 +1277,20 @@ class Basic3D:
 
         # Update Ex at y+.
         CEx2 = (2*self.dt) / (2.*self.eps_Ex[myidx] + self.econ_Ex[myidx]*self.dt)
-
-        self.psi_exy_p[psiidx] = (self.PMLby[even] * self.psi_exy_p[psiidx]) + \
-                                    (self.PMLay[even] * self.diffyHz[myidx])
-        self.Ex[myidx] += CEx2 * (+((1./self.PMLkappay[even] - 1.) * \
-                            self.diffyHz[myidx]) + self.psi_exy_p[psiidx])
+        self.psi_exy_p[psiidx] = (self.PMLby[even]*self.psi_exy_p[psiidx]) + (self.PMLay[even]*self.diffyHz[myidx])
+        self.Ex[myidx] += CEx2*(+((1./self.PMLkappay[even]-1.)*self.diffyHz[myidx]) + self.psi_exy_p[psiidx])
 
         # Update Ez at y+.
-        CEz2 = (2.*self.dt) / (2.*self.eps_Ez[myidx] + self.econ_Ez[myidx]*self.dt)
-
-        self.psi_ezy_p[psiidx] = (self.PMLby[even] * self.psi_ezy_p[psiidx]) + \
-                                    (self.PMLay[even] * self.diffyHx[myidx])
-        self.Ez[myidx] += CEz2 * (-(1./self.PMLkappay[even] - 1.) * \
-                            self.diffyHx[myidx] - self.psi_ezy_p[psiidx])
+        if self.MPIrank > 0:
+            CEz2 = (2.*self.dt) / (2.*self.eps_Ez[myidx] + self.econ_Ez[myidx]*self.dt)
+            self.psi_ezy_p[psiidx] = (self.PMLby[even]*self.psi_ezy_p[psiidx]) + (self.PMLay[even]*self.diffyHx[myidx])
+            self.Ez[myidx] += CEz2*(-((1./self.PMLkappay[even]-1.)*self.diffyHx[myidx]) - self.psi_ezy_p[psiidx])
+        else:
+            psiidx = [slice(1,None), slice(0,self.npml), slice(0,None)]
+            myidx = [slice(1,None), slice(-self.npml,None), slice(0,None)]
+            CEz2 = (2.*self.dt) / (2.*self.eps_Ez[myidx] + self.econ_Ez[myidx]*self.dt)
+            self.psi_ezy_p[psiidx] = (self.PMLby[even]*self.psi_ezy_p[psiidx]) + (self.PMLay[even]*self.diffyHx[myidx])
+            self.Ez[myidx] += CEz2*(-((1./self.PMLkappay[even]-1.)*self.diffyHx[myidx]) - self.psi_ezy_p[psiidx])
 
     def _PML_updateH_my(self):
 
@@ -1383,19 +1385,19 @@ class Basic3D:
         myidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
 
         # Update Hx at z-.
-        CHx2 =	(-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt);
+        CHx2 =	(-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt)
         
         self.psi_hxz_m[psiidx] = (self.PMLbz[even] * self.psi_hxz_m[psiidx]) + \
-                                    (self.PMLaz[even] * self.diffzEy[myidx]);
+                                    (self.PMLaz[even] * self.diffzEy[myidx])
         self.Hx[myidx] += CHx2 * (-((1./self.PMLkappaz[even] - 1.) * \
-                            self.diffzEy[myidx]) - self.psi_hxz_m[psiidx]);
+                            self.diffzEy[myidx]) - self.psi_hxz_m[psiidx])
         # Update Hy at z-.
-        CHy2 =	(-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt);
+        CHy2 =	(-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
         
         self.psi_hyz_m[psiidx] = (self.PMLbz[even] * self.psi_hyz_m[psiidx]) + \
-                                    (self.PMLaz[even] * self.diffzEx[myidx]);
+                                    (self.PMLaz[even] * self.diffzEx[myidx])
         self.Hy[myidx] += CHy2 * (+((1./self.PMLkappaz[even] - 1.) * \
-                            self.diffzEx[myidx]) + self.psi_hyz_m[psiidx]);
+                            self.diffzEx[myidx]) + self.psi_hyz_m[psiidx])
 
     def _PML_updateE_mz(self):
 
@@ -1404,19 +1406,18 @@ class Basic3D:
         myidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
 
         # Update Ex at z-.
-        CEx2 =	(2*self.dt) / (2.*self.eps_Ex[myidx] + self.econ_Ex[myidx]*self.dt);
+        CEx2 =	(2*self.dt) / (2.*self.eps_Ex[myidx] + self.econ_Ex[myidx]*self.dt)
 
         self.psi_exz_m[psiidx] = (self.PMLbz[odd] * self.psi_exz_m[psiidx]) + \
-                                    (self.PMLaz[odd] * self.diffzHy[myidx]);
-        self.Ex[myidx] += CEx2 * (-((1./self.PMLkappaz[odd] - 1.) * self.diffzHy[myidx]) - self.psi_exz_m[psiidx]);
+                                    (self.PMLaz[odd] * self.diffzHy[myidx])
+        self.Ex[myidx] += CEx2 * (-((1./self.PMLkappaz[odd] - 1.)*self.diffzHy[myidx]) - self.psi_exz_m[psiidx])
 
         # Update Ey at z-.
-        CEy2 =	(2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt);
+        CEy2 =	(2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
 
         self.psi_eyz_m[psiidx] = (self.PMLbz[odd] * self.psi_eyz_m[psiidx]) + \
-                                    (self.PMLaz[odd] * self.diffzHx[myidx]);
-        self.Ey[myidx] += CEy2 * (+((1./self.PMLkappaz[odd] - 1.) * \
-                            self.diffzHx[myidx]) + self.psi_eyz_m[psiidx]);
+                                    (self.PMLaz[odd] * self.diffzHx[myidx])
+        self.Ey[myidx] += CEy2 * (+((1./self.PMLkappaz[odd] - 1.)*self.diffzHx[myidx]) + self.psi_eyz_m[psiidx])
 
 
 class Empty3D(Basic3D):
