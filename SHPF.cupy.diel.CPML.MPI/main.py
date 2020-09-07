@@ -61,7 +61,7 @@ Space.malloc()
 #Box = structure.Box(Space, Box1_srt, Box1_end, 4., 1.)
 
 # Set PML and PBC
-Space.set_PML({'x':'','y':'+','z':''}, 10)
+Space.set_PML({'x':'+-','y':'+-','z':''}, 10)
 
 # Save eps, mu and PML data.
 #Space.save_PML_parameters('./')
