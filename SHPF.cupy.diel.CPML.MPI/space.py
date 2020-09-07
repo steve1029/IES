@@ -1328,20 +1328,21 @@ class Basic3D:
         myidx = [slice(0,None), slice(0,None), slice(-self.npml, None)]
 
         # Update Hx at z+.
-        CHx2 =	(-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt);
-        
-        self.psi_hxz_p[psiidx] = (self.PMLbz[odd] * self.psi_hxz_p[psiidx]) +\
-                                    (self.PMLaz[odd] * self.diffzEy[myidx]);
-        self.Hx[myidx] += CHx2 * (-((1./self.PMLkappaz[odd] - 1.) * \
-                            self.diffzEy[myidx]) - self.psi_hxz_p[psiidx]);
+        CHx2 =	(-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt)
+        self.psi_hxz_p[psiidx] = (self.PMLbz[odd]*self.psi_hxz_p[psiidx]) + (self.PMLaz[odd]*self.diffzEy[myidx])
+        self.Hx[myidx] += CHx2*(-((1./self.PMLkappaz[odd]-1.)*self.diffzEy[myidx]) - self.psi_hxz_p[psiidx])
 
         # Update Hy at z+.
-        CHy2 =	(-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt);
-        
-        self.psi_hyz_p[psiidx] = (self.PMLbz[odd] * self.psi_hyz_p[psiidx]) + \
-                                    (self.PMLaz[odd] * self.diffzEx[myidx]);
-        self.Hy[myidx] += CHy2 * (+((1./self.PMLkappaz[odd] - 1.) * \
-                            self.diffzEx[myidx]) + self.psi_hyz_p[psiidx]);
+        if self.MPIrank < (self.MPIsize-1):
+            CHy2 =	(-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
+            self.psi_hyz_p[psiidx] = (self.PMLbz[odd]*self.psi_hyz_p[psiidx]) + (self.PMLaz[odd]*self.diffzEx[myidx])
+            self.Hy[myidx] += CHy2*(+((1./self.PMLkappaz[odd]-1.)*self.diffzEx[myidx]) + self.psi_hyz_p[psiidx])
+        else:
+            psiidx = [slice(0,-1), slice(0,None), slice(0,self.npml)]
+            myidx = [slice(0,-1), slice(0,None), slice(-self.npml, None)]
+            CHy2 =	(-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
+            self.psi_hyz_p[psiidx] = (self.PMLbz[odd]*self.psi_hyz_p[psiidx]) + (self.PMLaz[odd]*self.diffzEx[myidx])
+            self.Hy[myidx] += CHy2*(+((1./self.PMLkappaz[odd]-1.)*self.diffzEx[myidx]) + self.psi_hyz_p[psiidx])
 
     def _PML_updateE_pz(self):
         even = [None, None, slice(0,None,2)]
@@ -1350,19 +1351,20 @@ class Basic3D:
 
         # Update Ex at z+.
         CEx2 = (2*self.dt) / (2.*self.eps_Ex[myidx] + self.econ_Ex[myidx]*self.dt)
-
-        self.psi_exz_p[psiidx] = (self.PMLbz[even] * self.psi_exz_p[psiidx]) + \
-                                    (self.PMLaz[even] * self.diffzHy[myidx])
-        self.Ex[myidx] += CEx2 * (-((1./self.PMLkappaz[even] - 1.) * \
-                            self.diffzHy[myidx]) - self.psi_exz_p[psiidx])
+        self.psi_exz_p[psiidx] = (self.PMLbz[even]*self.psi_exz_p[psiidx]) + (self.PMLaz[even]*self.diffzHy[myidx])
+        self.Ex[myidx] += CEx2*(-((1./self.PMLkappaz[even]-1.)*self.diffzHy[myidx]) - self.psi_exz_p[psiidx])
 
         # Update Ey at z+.
-        CEy2 =	(2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
-
-        self.psi_eyz_p[psiidx] = (self.PMLbz[even] * self.psi_eyz_p[psiidx]) + \
-                                    (self.PMLaz[even] * self.diffzHx[myidx])
-        self.Ey[myidx] += CEy2 * (+((1./self.PMLkappaz[even] - 1.) * \
-                            self.diffzHx[myidx]) + self.psi_eyz_p[psiidx])
+        if self.MPIrank > 0:
+            CEy2 =	(2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
+            self.psi_eyz_p[psiidx] = (self.PMLbz[even]*self.psi_eyz_p[psiidx]) + (self.PMLaz[even]*self.diffzHx[myidx])
+            self.Ey[myidx] += CEy2*(+((1./self.PMLkappaz[even]-1.)*self.diffzHx[myidx]) + self.psi_eyz_p[psiidx])
+        else:
+            psiidx = [slice(1,None), slice(0,None), slice(0,self.npml)]
+            myidx = [slice(1,None), slice(0,None), slice(-self.npml,None)]
+            CEy2 =	(2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
+            self.psi_eyz_p[psiidx] = (self.PMLbz[even]*self.psi_eyz_p[psiidx]) + (self.PMLaz[even]*self.diffzHx[myidx])
+            self.Ey[myidx] += CEy2*(+((1./self.PMLkappaz[even]-1.)*self.diffzHx[myidx]) + self.psi_eyz_p[psiidx])
 
     def _PML_updateH_mz(self):
 
@@ -1371,19 +1373,21 @@ class Basic3D:
         myidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
 
         # Update Hx at z-.
-        CHx2 =	(-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt)
-        
-        self.psi_hxz_m[psiidx] = (self.PMLbz[even] * self.psi_hxz_m[psiidx]) + \
-                                    (self.PMLaz[even] * self.diffzEy[myidx])
-        self.Hx[myidx] += CHx2 * (-((1./self.PMLkappaz[even] - 1.) * \
-                            self.diffzEy[myidx]) - self.psi_hxz_m[psiidx])
+        CHx2 = (-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt)
+        self.psi_hxz_m[psiidx] = (self.PMLbz[even]*self.psi_hxz_m[psiidx]) + (self.PMLaz[even]*self.diffzEy[myidx])
+        self.Hx[myidx] += CHx2*(-((1./self.PMLkappaz[even]-1.)*self.diffzEy[myidx]) - self.psi_hxz_m[psiidx])
+
         # Update Hy at z-.
-        CHy2 =	(-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
-        
-        self.psi_hyz_m[psiidx] = (self.PMLbz[even] * self.psi_hyz_m[psiidx]) + \
-                                    (self.PMLaz[even] * self.diffzEx[myidx])
-        self.Hy[myidx] += CHy2 * (+((1./self.PMLkappaz[even] - 1.) * \
-                            self.diffzEx[myidx]) + self.psi_hyz_m[psiidx])
+        if self.MPIrank < (self.MPIsize-1):
+            CHy2 = (-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
+            self.psi_hyz_m[psiidx] = (self.PMLbz[even]*self.psi_hyz_m[psiidx]) + (self.PMLaz[even]*self.diffzEx[myidx])
+            self.Hy[myidx] += CHy2*(+((1./self.PMLkappaz[even]-1.)*self.diffzEx[myidx]) + self.psi_hyz_m[psiidx])
+        else:
+            psiidx = [slice(0,-1), slice(0,None), slice(0,self.npml)]
+            myidx = [slice(0,-1), slice(0,None), slice(0,self.npml)]
+            CHy2 = (-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
+            self.psi_hyz_m[psiidx] = (self.PMLbz[even]*self.psi_hyz_m[psiidx]) + (self.PMLaz[even]*self.diffzEx[myidx])
+            self.Hy[myidx] += CHy2*(+((1./self.PMLkappaz[even]-1.)*self.diffzEx[myidx]) + self.psi_hyz_m[psiidx])
 
     def _PML_updateE_mz(self):
 
@@ -1393,17 +1397,20 @@ class Basic3D:
 
         # Update Ex at z-.
         CEx2 =	(2*self.dt) / (2.*self.eps_Ex[myidx] + self.econ_Ex[myidx]*self.dt)
-
-        self.psi_exz_m[psiidx] = (self.PMLbz[odd] * self.psi_exz_m[psiidx]) + \
-                                    (self.PMLaz[odd] * self.diffzHy[myidx])
-        self.Ex[myidx] += CEx2 * (-((1./self.PMLkappaz[odd] - 1.)*self.diffzHy[myidx]) - self.psi_exz_m[psiidx])
+        self.psi_exz_m[psiidx] = (self.PMLbz[odd] * self.psi_exz_m[psiidx]) + (self.PMLaz[odd] * self.diffzHy[myidx])
+        self.Ex[myidx] += CEx2*(-((1./self.PMLkappaz[odd]-1.)*self.diffzHy[myidx]) - self.psi_exz_m[psiidx])
 
         # Update Ey at z-.
-        CEy2 =	(2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
-
-        self.psi_eyz_m[psiidx] = (self.PMLbz[odd] * self.psi_eyz_m[psiidx]) + \
-                                    (self.PMLaz[odd] * self.diffzHx[myidx])
-        self.Ey[myidx] += CEy2 * (+((1./self.PMLkappaz[odd] - 1.)*self.diffzHx[myidx]) + self.psi_eyz_m[psiidx])
+        if (self.MPIrank > 0):
+            CEy2 =	(2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
+            self.psi_eyz_m[psiidx] = (self.PMLbz[odd] * self.psi_eyz_m[psiidx]) + (self.PMLaz[odd] * self.diffzHx[myidx])
+            self.Ey[myidx] += CEy2*(+((1./self.PMLkappaz[odd]-1.)*self.diffzHx[myidx]) + self.psi_eyz_m[psiidx])
+        else:
+            psiidx = [slice(1,None), slice(0,None), slice(0,self.npml)]
+            myidx = [slice(1,None), slice(0,None), slice(0,self.npml)]
+            CEy2 =	(2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
+            self.psi_eyz_m[psiidx] = (self.PMLbz[odd] * self.psi_eyz_m[psiidx]) + (self.PMLaz[odd] * self.diffzHx[myidx])
+            self.Ey[myidx] += CEy2*(+((1./self.PMLkappaz[odd]-1.)*self.diffzHx[myidx]) + self.psi_eyz_m[psiidx])
 
 
 class Empty3D(Basic3D):

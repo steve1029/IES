@@ -3,12 +3,12 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from mpi4py import MPI
-import source, space, plotfield, structure
 from mpl_toolkits.mplot3d import axes3d
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.constants import c, mu_0, epsilon_0
 import numpy as np
 import cupy as cp
+import source, space, plotfield, structure, rft
 
 #------------------------------------------------------------------#
 #----------------------- Paramter settings ------------------------#
@@ -61,7 +61,7 @@ Space.malloc()
 #Box = structure.Box(Space, Box1_srt, Box1_end, 4., 1.)
 
 # Set PML and PBC
-Space.set_PML({'x':'+-','y':'+-','z':''}, 10)
+Space.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
 
 # Save eps, mu and PML data.
 #Space.save_PML_parameters('./')
@@ -74,10 +74,17 @@ src_xpos = int(Nx/2)
 #Space.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Space.Ny, Space.Nz)) # Plane wave for Ey, x-direction.
 
 # Line source along y axis.
-#Space.set_src_pos((src_xpos, 0, Space.Nzc), (src_xpos+1, Space.Ny, Space.Nzc+1))
+Space.set_src_pos((src_xpos, 0, Space.Nzc), (src_xpos+1, Space.Ny, Space.Nzc+1))
 
 # Line source along z axis.
-Space.set_src_pos((src_xpos, Space.Nyc, 0), (src_xpos+1, Space.Nyc+1, Space.Nz))
+#Space.set_src_pos((src_xpos, Space.Nyc, 0), (src_xpos+1, Space.Nyc+1, Space.Nz))
+
+# Set Poynting vector calculator.
+leftx, rightx = int(Nx/4), int(Nx*3/4)
+lefty, righty = int(Ny/4), int(Ny*3/4)
+leftz, rightz = int(Nz/4), int(Nz*3/4)
+
+Sx_R_calculator = rft.Sx("SF_R", "./graph/Sx", Space, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, 'cupy')
 
 # Set plotfield options
 graphtool = plotfield.Graphtool(Space, 'TF', savedir)
@@ -99,8 +106,8 @@ for tstep in range(Space.tsteps):
     pulse_re = Src.pulse_re(tstep, pick_pos)
     #pulse_im = Src.pulse_im(tstep, pick_pos)
 
-    #Space.put_src('Ey', pulse_re, 'soft')
-    Space.put_src('Ez', pulse_re, 'soft')
+    Space.put_src('Ey', pulse_re, 'soft')
+    #Space.put_src('Ez', pulse_re, 'soft')
 
     #Space.get_src('Ey', tstep)
     #Space.get_ref('Ey', tstep)
@@ -109,20 +116,24 @@ for tstep in range(Space.tsteps):
     Space.updateH(tstep)
     Space.updateE(tstep)
 
+    Sx_R_calculator.do_RFT(tstep)
+
     # Plot the field profile
     if tstep % plot_per == 0:
         #graphtool.plot2D3D('Ex', tstep, xidx=Space.Nxc, colordeep=6., stride=2, zlim=6.)
 
-        #Ey = graphtool.gather('Ey')
-        #graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=1., stride=2, zlim=1.)
+        Ey = graphtool.gather('Ey')
+        graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=1., stride=2, zlim=1.)
         
-        Ez = graphtool.gather('Ez')
-        graphtool.plot2D3D(Ez, tstep, zidx=Space.Nzc, colordeep=1., stride=2, zlim=1.)
+        #Ez = graphtool.gather('Ez')
+        #graphtool.plot2D3D(Ez, tstep, zidx=Space.Nzc, colordeep=1., stride=2, zlim=1.)
 
         if Space.MPIrank == 0:
 
             interval_time = datetime.datetime.now()
             print(("time: %s, step: %05d, %5.2f%%" %(interval_time-start_time, tstep, 100.*tstep/Space.tsteps)))
+
+Sx_R_calculator.get_Sx()
 
 if Space.MPIrank == 0:
 
