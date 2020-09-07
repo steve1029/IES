@@ -1,6 +1,8 @@
 import time, os, datetime, sys, ctypes, psutil
-from mpi4py import MPI
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from mpi4py import MPI
 import source, space, plotfield, structure
 from mpl_toolkits.mplot3d import axes3d
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -11,7 +13,6 @@ import cupy as cp
 #------------------------------------------------------------------#
 #----------------------- Paramter settings ------------------------#
 #------------------------------------------------------------------#
-
 savedir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/'
 
 nm = 1e-9
