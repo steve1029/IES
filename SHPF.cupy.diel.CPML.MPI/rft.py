@@ -4,7 +4,50 @@ import numpy as np
 import cupy as cp
 import matplotlib.pyplot as plt
 
-class Sx(object):
+class S_calculator:
+
+    def __init__(self, name, path, Space, srt, end, freqs, engine):
+
+        self.engine = engine
+        if self.engine == 'cupy' : self.xp = cp
+        else: self.xp = np
+
+        assert type(srt) == tuple
+        assert type(end) == tuple
+        
+        assert len(srt) == 3
+        assert len(end) == 3
+
+        self.name = name
+        self.Nf = len(freqs)
+        self.Space = Space
+        self.path = path
+
+        if self.engine == 'cupy': self.freqs = cp.asarray(freqs)
+        else: self.freqs = freqs
+
+        # Make a directory to save data.
+        if self.Space.MPIrank == 0:
+
+            if os.path.exists(self.path) == True: pass
+            else: os.mkdir(self.path)
+
+        # Start index of the structure.
+        self.xsrt = srt[0]
+        self.ysrt = srt[1]
+        self.zsrt = srt[2]
+
+        # End index of the structure.
+        self.xend = end[0]
+        self.yend = end[1]
+        self.zend = end[2]
+
+        # Initial global/local location.
+        self.gloc = None
+        self.lloc = None
+
+ 
+class Sx(S_calculator):
 
     def __init__(self, name, path, Space, srt, end, freqs, engine):
         """Sx collector object.
@@ -27,42 +70,8 @@ class Sx(object):
             None
         """
 
-        self.engine = engine
-        if self.engine == 'cupy' : self.xp = cp
-        else: self.xp = np
-
-        xp = self.xp
-
-        assert type(srt) == tuple
-        assert type(end) == tuple
-        
-        assert len(srt) == 3
-        assert len(end) == 3
-
         assert (end[0]-srt[0]) == 1, "Sx Collector must have 2D shape with x-thick = 1."
-
-        self.name = name
-        self.Nf = len(freqs)
-        self.freqs = cp.asarray(freqs)
-
-        self.Space = Space
-        self.path = path
-
-        # Make a directory to save data.
-        if self.Space.MPIrank == 0:
-
-            if os.path.exists(self.path) == True: pass
-            else: os.mkdir(self.path)
-
-        # Start index of the structure.
-        self.xsrt = srt[0]
-        self.ysrt = srt[1]
-        self.zsrt = srt[2]
-
-        # End index of the structure.
-        self.xend = end[0]
-        self.yend = end[1]
-        self.zend = end[2]
+        S_calculator.__init__(self, name, path, Space, srt, end, freqs, engine)
 
         # Local variables for readable code.
         xsrt = self.xsrt
@@ -72,12 +81,9 @@ class Sx(object):
         yend = self.yend
         zend = self.zend
 
-        # Global x index of each node.
+       # Global x index of each node.
         node_xsrt = self.Space.myNx_indice[self.Space.MPIrank][0]
         node_xend = self.Space.myNx_indice[self.Space.MPIrank][1]
-
-        self.gloc = None
-        self.lloc = None
 
         if xend <  node_xsrt:
             self.gloc = None
@@ -103,11 +109,11 @@ class Sx(object):
             #print("rank {:>2}: loc of Sx collector >>> global \"{},{}\" and local \"{},{}\"" \
             #      .format(self.Space.MPIrank, self.gloc[0], self.gloc[1], self.lloc[0], self.lloc[1]))
 
-            self.DFT_Ey = xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
-            self.DFT_Ez = xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
+            self.DFT_Ey = self.xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
+            self.DFT_Ez = self.xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
 
-            self.DFT_Hy = xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
-            self.DFT_Hz = xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
+            self.DFT_Hy = self.xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
+            self.DFT_Hz = self.xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
 
         """
         # Load kernel.
@@ -142,7 +148,7 @@ class Sx(object):
 
         if self.gloc != None:
 
-            xp = self.xp
+            dt = self.Space.dt
             xsrt = self.lloc[0][0]
             xend = self.lloc[1][0]
             ysrt = self.ysrt
@@ -150,16 +156,15 @@ class Sx(object):
             zsrt = self.zsrt
             zend = self.zend
 
-            dt = self.Space.dt
-
             f = [slice(0,None), None, None]
             Fidx = [slice(xsrt,xsrt+1), slice(ysrt, yend), slice(zsrt, zend)]
 
-            self.DFT_Ey += self.Space.Ey[Fidx] * xp.exp(2.*xp.pi*self.freqs[f]*tstep*dt) * dt
-            self.DFT_Hz += self.Space.Hz[Fidx] * xp.exp(2.*xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Ey += self.Space.Ey[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Hz += self.Space.Hz[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
-            self.DFT_Ez += self.Space.Ez[Fidx] * xp.exp(2.*xp.pi*self.freqs[f]*tstep*dt) * dt
-            self.DFT_Hy += self.Space.Hy[Fidx] * xp.exp(2.*xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Ez += self.Space.Ez[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Hy += self.Space.Hy[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+
             """
             self.clib_rftkernel.do_RFT_to_get_Sx(
                                                     self.Space.MPIrank,
@@ -197,11 +202,11 @@ class Sx(object):
                 self.DFT_Hz = cp.asnumpy(self.DFT_Hz)
                 self.Sx_area = cp.asnumpy(self.Sx_area)
 
-            np.save("{}/{}_DFT_Ey_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ey)
-            np.save("{}/{}_DFT_Ez_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ez)
-            np.save("{}/{}_DFT_Hy_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hy)
-            np.save("{}/{}_DFT_Hz_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hz)
-            np.save("./graph/%s_area" %self.name, self.Sx_area)
+            self.xp.save("{}/{}_DFT_Ey_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ey)
+            self.xp.save("{}/{}_DFT_Ez_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ez)
+            self.xp.save("{}/{}_DFT_Hy_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hy)
+            self.xp.save("{}/{}_DFT_Hz_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hz)
+            self.xp.save("./graph/%s_area" %self.name, self.Sx_area)
 
             """
             np.save("{}/{}_DFT_Ey_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ey_im)
@@ -211,10 +216,9 @@ class Sx(object):
             """
 
 
+class Sy(S_calculator):
 
-class Sy(object):
-
-    def __init__(self, name, path, Space, srt, end, freqs, omp_on):
+    def __init__(self, name, path, Space, srt, end, freqs, engine):
         """Sy collector object.
 
         Args:
@@ -222,53 +226,20 @@ class Sy(object):
 
             Space: Space object.
 
-            srt: tuple
+            srt: tuple.
 
-            end: tuple
+            end: tuple.
 
-            freqs: ndarray
+            freqs: ndarray.
 
-            omp_on: boolean
+            engine: string.
 
         Returns:
             None
         """
 
-        assert type(srt) == tuple
-        assert type(end) == tuple
-        
-        assert len(srt) == 3
-        assert len(end) == 3
-
-        assert (end[1]-srt[1]) == 1, "Sy Collector must have 2D shape with y-thick = 1."
-
-        self.name = name
-        self.freqs = freqs
-
-        if type(self.freqs) == np.ndarray: self.Nf = len(self.freqs)
-        else: self.Nf = 1
-
-        self.Space = Space
-        self.path = path
-
-        # Make save directory.
-        if self.Space.MPIrank == 0:
-
-            if os.path.exists(self.path) == True: pass
-            else: os.mkdir(self.path)
-
-        # Turn on/off OpenMP parallelization.
-        self.omp_on = omp_on
-
-        # Start index of the structure.
-        self.xsrt = srt[0]
-        self.ysrt = srt[1]
-        self.zsrt = srt[2]
-
-        # End index of the structure.
-        self.xend = end[0]
-        self.yend = end[1]
-        self.zend = end[2]
+        assert (end[1]-srt[1]) == 1, "Sx Collector must have 2D shape with x-thick = 1."
+        S_calculator.__init__(self, name, path, Space, srt, end, freqs, engine)
 
         # Local variables for readable code.
         xsrt = self.xsrt
@@ -280,9 +251,6 @@ class Sy(object):
 
         self.who_get_Sy_gloc = {} # global locations
         self.who_get_Sy_lloc = {} # local locations
-
-        self.gloc = None
-        self.lloc = None
 
         # Every node has to know who collects Sy.
         for MPIrank in range(self.Space.MPIsize):
@@ -325,6 +293,7 @@ class Sy(object):
         #if self.Space.MPIrank == 0: print("{} collectors: rank{}" .format(self.name, list(self.who_get_Sy_gloc)))
 
         self.Space.MPIcomm.barrier()
+
         if self.Space.MPIrank in self.who_get_Sy_lloc:
 
             self.gloc = self.who_get_Sy_gloc[self.Space.MPIrank]
@@ -344,18 +313,13 @@ class Sy(object):
             xsrt = self.lloc[0][0]
             xend = self.lloc[1][0]
 
-            self.DFT_Ex_re = np.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.dtype)
-            self.DFT_Ex_im = np.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.dtype)
+            self.DFT_Ex = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.cdtype)
+            self.DFT_Ez = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.cdtype)
 
-            self.DFT_Ez_re = np.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.dtype)
-            self.DFT_Ez_im = np.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.dtype)
-
-            self.DFT_Hx_re = np.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.dtype)
-            self.DFT_Hx_im = np.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.dtype)
-
-            self.DFT_Hz_re = np.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.dtype)
-            self.DFT_Hz_im = np.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.dtype)
+            self.DFT_Hx = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.cdtype)
+            self.DFT_Hz = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.cdtype)
         
+        """
         # Load kernel.
         if   self.omp_on == False: self.clib_rftkernel = ctypes.cdll.LoadLibrary("./rftkernel.so")
         elif self.omp_on == True : self.clib_rftkernel = ctypes.cdll.LoadLibrary("./rftkernel.omp.so")
@@ -382,6 +346,7 @@ class Sy(object):
                                                             ptr3d, ptr3d,
                                                             ptr3d, ptr3d
                                                          ]
+        """
 
         #print(self.who_get_Sy_gloc)
         #print(self.who_get_Sy_lloc)
@@ -390,6 +355,24 @@ class Sy(object):
 
         if self.Space.MPIrank in self.who_get_Sy_lloc:
 
+            dt = self.Space.dt
+            xsrt = self.lloc[0][0]
+            xend = self.lloc[1][0]
+            ysrt = self.lloc[0][1]
+            yend = self.lloc[1][1]
+            zsrt = self.lloc[0][2]
+            zend = self.lloc[1][2]
+
+            f = [slice(0,None), None, None]
+            Fidx = [slice(xsrt,xend), ysrt, slice(zsrt, zend)]
+
+            self.DFT_Ex += self.Space.Ex[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Hz += self.Space.Hz[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+
+            self.DFT_Ez += self.Space.Ez[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Hx += self.Space.Hx[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+
+            """
             self.clib_rftkernel.do_RFT_to_get_Sy(
                                                     self.Space.MPIrank,
                                                     self.Nf, tstep,
@@ -406,6 +389,7 @@ class Sy(object):
                                                     self.Space.Ex_re, self.Space.Ez_re,
                                                     self.Space.Hx_re, self.Space.Hz_re
                                                 )
+            """
 
     def get_Sy(self):
 
@@ -413,69 +397,50 @@ class Sy(object):
 
         if self.Space.MPIrank in self.who_get_Sy_lloc:
 
-            np.save("{}/{}_DFT_Ex_re_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ex_re)
-            np.save("{}/{}_DFT_Ez_re_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ez_re)
-            np.save("{}/{}_DFT_Hx_re_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hx_re)
-            np.save("{}/{}_DFT_Hz_re_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hz_re)
+            self.xp.save("{}/{}_DFT_Ex_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ex)
+            self.xp.save("{}/{}_DFT_Ez_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ez)
+            self.xp.save("{}/{}_DFT_Hx_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hx)
+            self.xp.save("{}/{}_DFT_Hz_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hz)
 
-            np.save("{}/{}_DFT_Ex_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ex_im)
-            np.save("{}/{}_DFT_Ez_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ez_im)
-            np.save("{}/{}_DFT_Hx_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hx_im)
-            np.save("{}/{}_DFT_Hz_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hz_im)
+            """
+            self.xp.save("{}/{}_DFT_Ex_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ex_im)
+            self.xp.save("{}/{}_DFT_Ez_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ez_im)
+            self.xp.save("{}/{}_DFT_Hx_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hx_im)
+            self.xp.save("{}/{}_DFT_Hz_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hz_im)
+            """
 
         self.Space.MPIcomm.barrier()
 
         if self.Space.MPIrank == 0:
 
-            DFT_Sy_Ex_res = []
-            DFT_Sy_Ex_ims = []
+            DFT_Sy_Exs = []
+            DFT_Sy_Ezs = []
 
-            DFT_Sy_Ez_res = []
-            DFT_Sy_Ez_ims = []
-
-            DFT_Sy_Hx_res = []
-            DFT_Sy_Hx_ims = []
-
-            DFT_Sy_Hz_res = []
-            DFT_Sy_Hz_ims = []
+            DFT_Sy_Hxs = []
+            DFT_Sy_Hzs = []
 
             for rank in self.who_get_Sy_lloc:
 
-                DFT_Sy_Ex_res.append(np.load("{}/{}_DFT_Ex_re_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sy_Ex_ims.append(np.load("{}/{}_DFT_Ex_im_rank{:02d}.npy" .format(self.path, self.name, rank)))
+                DFT_Sy_Exs.append(np.load("{}/{}_DFT_Ex_rank{:02d}.npy" .format(self.path, self.name, rank)))
+                DFT_Sy_Ezs.append(np.load("{}/{}_DFT_Ez_rank{:02d}.npy" .format(self.path, self.name, rank)))
+                DFT_Sy_Hxs.append(np.load("{}/{}_DFT_Hx_rank{:02d}.npy" .format(self.path, self.name, rank)))
+                DFT_Sy_Hzs.append(np.load("{}/{}_DFT_Hz_rank{:02d}.npy" .format(self.path, self.name, rank)))
 
-                DFT_Sy_Ez_res.append(np.load("{}/{}_DFT_Ez_re_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sy_Ez_ims.append(np.load("{}/{}_DFT_Ez_im_rank{:02d}.npy" .format(self.path, self.name, rank)))
+            DFT_Ex = np.concatenate(DFT_Sy_Exs, axis=1)
+            DFT_Ez = np.concatenate(DFT_Sy_Ezs, axis=1)
+            DFT_Hx = np.concatenate(DFT_Sy_Hxs, axis=1)
+            DFT_Hz = np.concatenate(DFT_Sy_Hzs, axis=1)
 
-                DFT_Sy_Hx_res.append(np.load("{}/{}_DFT_Hx_re_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sy_Hx_ims.append(np.load("{}/{}_DFT_Hx_im_rank{:02d}.npy" .format(self.path, self.name, rank)))
-
-                DFT_Sy_Hz_res.append(np.load("{}/{}_DFT_Hz_re_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sy_Hz_ims.append(np.load("{}/{}_DFT_Hz_im_rank{:02d}.npy" .format(self.path, self.name, rank)))
-
-            DFT_Ex_re = np.concatenate(DFT_Sy_Ex_res, axis=1)
-            DFT_Ex_im = np.concatenate(DFT_Sy_Ex_ims, axis=1)
-
-            DFT_Ez_re = np.concatenate(DFT_Sy_Ez_res, axis=1)
-            DFT_Ez_im = np.concatenate(DFT_Sy_Ez_ims, axis=1)
-
-            DFT_Hx_re = np.concatenate(DFT_Sy_Hx_res, axis=1)
-            DFT_Hx_im = np.concatenate(DFT_Sy_Hx_ims, axis=1)
-
-            DFT_Hz_re = np.concatenate(DFT_Sy_Hz_res, axis=1)
-            DFT_Hz_im = np.concatenate(DFT_Sy_Hz_ims, axis=1)
-
-            self.Sy = 0.5 * ( -(DFT_Ex_re*DFT_Hz_re) - (DFT_Ex_im*DFT_Hz_im)
-                              +(DFT_Ez_re*DFT_Hx_re) + (DFT_Ez_im*DFT_Hx_im)  )
+            self.Sy = 0.5 * ( -(DFT_Ex.real*DFT_Hz.real) - (DFT_Ex.imag*DFT_Hz.imag)
+                              +(DFT_Ez.real*DFT_Hx.real) + (DFT_Ez.imag*DFT_Hx.imag)  )
 
             self.Sy_area = self.Sy.sum(axis=(1,2)) * self.Space.dx * self.Space.dz
             np.save("./graph/%s_area" %self.name, self.Sy_area)
 
 
+class Sz(S_calculator):
 
-class Sz(object):
-
-    def __init__(self, name, path, Space, srt, end, freqs, omp_on):
+    def __init__(self, name, path, Space, srt, end, freqs, engine):
         """Sy collector object.
 
         Args:
@@ -491,46 +456,14 @@ class Sz(object):
 
             freqs: ndarray
 
-            omp_on: boolean
+            engine: string
 
         Returns:
             None
         """
 
-        assert type(srt) == tuple
-        assert type(end) == tuple
-        
-        assert len(srt) == 3
-        assert len(end) == 3
-
-        assert (end[2]-srt[2]) == 1, "Sz Collector must have 2D shape with z-thick = 1."
-
-        self.name = name
-        self.freqs = freqs
-        if type(self.freqs) == np.ndarray: self.Nf = len(self.freqs)
-        else: self.Nf = 1
-
-        self.Space = Space
-        self.path = path
-
-        # Make save directory.
-        if self.Space.MPIrank == 0:
-
-            if os.path.exists(self.path) == True: pass
-            else: os.mkdir(self.path)
-
-        # Turn on/off OpenMP parallelization.
-        self.omp_on = omp_on
-
-        # Start index of the structure.
-        self.xsrt = srt[0]
-        self.ysrt = srt[1]
-        self.zsrt = srt[2]
-
-        # End index of the structure.
-        self.xend = end[0]
-        self.yend = end[1]
-        self.zend = end[2]
+        assert (end[2]-srt[2]) == 1, "Sx Collector must have 2D shape with x-thick = 1."
+        S_calculator.__init__(self, name, path, Space, srt, end, freqs, engine)
 
         # Local variables for readable code.
         xsrt = self.xsrt
@@ -542,9 +475,6 @@ class Sz(object):
 
         self.who_get_Sz_gloc = {} # global locations
         self.who_get_Sz_lloc = {} # local locations
-
-        self.gloc = None
-        self.lloc = None
 
         # Every node has to know who collects Sy.
         for MPIrank in range(self.Space.MPIsize):
@@ -604,18 +534,12 @@ class Sz(object):
             xsrt = self.lloc[0][0]
             xend = self.lloc[1][0]
 
-            self.DFT_Ex_re = np.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.dtype)
-            self.DFT_Ex_im = np.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.dtype)
-
-            self.DFT_Ey_re = np.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.dtype)
-            self.DFT_Ey_im = np.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.dtype)
-
-            self.DFT_Hx_re = np.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.dtype)
-            self.DFT_Hx_im = np.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.dtype)
-
-            self.DFT_Hy_re = np.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.dtype)
-            self.DFT_Hy_im = np.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.dtype)
+            self.DFT_Ex = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.cdtype)
+            self.DFT_Ey = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.cdtype)
+            self.DFT_Hx = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.cdtype)
+            self.DFT_Hy = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.cdtype)
         
+        """
         # Load kernel.
         if   self.omp_on == False: self.clib_rftkernel = ctypes.cdll.LoadLibrary("./rftkernel.so")
         elif self.omp_on == True : self.clib_rftkernel = ctypes.cdll.LoadLibrary("./rftkernel.omp.so")
@@ -642,11 +566,30 @@ class Sz(object):
                                                             ptr3d, ptr3d,
                                                             ptr3d, ptr3d
                                                          ]
+        """
 
     def do_RFT(self, tstep):
 
         if self.Space.MPIrank in self.who_get_Sz_lloc:
 
+            dt = self.Space.dt
+            xsrt = self.lloc[0][0]
+            xend = self.lloc[1][0]
+            ysrt = self.lloc[0][1]
+            yend = self.lloc[1][1]
+            zsrt = self.lloc[0][2]
+            zend = self.lloc[1][2]
+
+            f = [slice(0,None), None, None]
+            Fidx = [slice(xsrt,xend), slice(ysrt, yend), zsrt]
+
+            self.DFT_Ex += self.Space.Ex[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Hy += self.Space.Hy[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+
+            self.DFT_Ey += self.Space.Ey[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Hx += self.Space.Hx[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+
+            """
             self.clib_rftkernel.do_RFT_to_get_Sz(
                                                     self.Space.MPIrank,
                                                     len(self.freqs), tstep,
@@ -663,6 +606,7 @@ class Sz(object):
                                                     self.Space.Ex_re, self.Space.Ey_re,
                                                     self.Space.Hx_re, self.Space.Hy_re
                                                 )
+            """
 
     def get_Sz(self):
 
@@ -670,60 +614,41 @@ class Sz(object):
 
         if self.Space.MPIrank in self.who_get_Sz_lloc:
 
-            np.save("{}/{}_DFT_Ex_re_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ex_re)
-            np.save("{}/{}_DFT_Ey_re_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ey_re)
-            np.save("{}/{}_DFT_Hx_re_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hx_re)
-            np.save("{}/{}_DFT_Hy_re_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hy_re)
+            self.xp.save("{}/{}_DFT_Ex_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ex)
+            self.xp.save("{}/{}_DFT_Ey_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ey)
+            self.xp.save("{}/{}_DFT_Hx_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hx)
+            self.xp.save("{}/{}_DFT_Hy_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hy)
 
-            np.save("{}/{}_DFT_Ex_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ex_im)
-            np.save("{}/{}_DFT_Ey_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ey_im)
-            np.save("{}/{}_DFT_Hx_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hx_im)
-            np.save("{}/{}_DFT_Hy_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hy_im)
+            """
+            self.xp.save("{}/{}_DFT_Ex_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ex_im)
+            self.xp.save("{}/{}_DFT_Ey_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ey_im)
+            self.xp.save("{}/{}_DFT_Hx_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hx_im)
+            self.xp.save("{}/{}_DFT_Hy_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hy_im)
+            """
 
         self.Space.MPIcomm.barrier()
 
         if self.Space.MPIrank == 0:
 
-            DFT_Sz_Ex_res = []
-            DFT_Sz_Ex_ims = []
-
-            DFT_Sz_Ey_res = []
-            DFT_Sz_Ey_ims = []
-
-            DFT_Sz_Hx_res = []
-            DFT_Sz_Hx_ims = []
-
-            DFT_Sz_Hy_res = []
-            DFT_Sz_Hy_ims = []
+            DFT_Sz_Exs = []
+            DFT_Sz_Eys = []
+            DFT_Sz_Hxs = []
+            DFT_Sz_Hys = []
 
             for rank in self.who_get_Sz_lloc:
 
-                DFT_Sz_Ex_res.append(np.load("{}/{}_DFT_Ex_re_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sz_Ex_ims.append(np.load("{}/{}_DFT_Ex_im_rank{:02d}.npy" .format(self.path, self.name, rank)))
+                DFT_Sz_Exs.append(self.xp.load("{}/{}_DFT_Ex_rank{:02d}.npy" .format(self.path, self.name, rank)))
+                DFT_Sz_Eys.append(self.xp.load("{}/{}_DFT_Ey_rank{:02d}.npy" .format(self.path, self.name, rank)))
+                DFT_Sz_Hxs.append(self.xp.load("{}/{}_DFT_Hx_rank{:02d}.npy" .format(self.path, self.name, rank)))
+                DFT_Sz_Hys.append(self.xp.load("{}/{}_DFT_Hy_rank{:02d}.npy" .format(self.path, self.name, rank)))
 
-                DFT_Sz_Ey_res.append(np.load("{}/{}_DFT_Ey_re_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sz_Ey_ims.append(np.load("{}/{}_DFT_Ey_im_rank{:02d}.npy" .format(self.path, self.name, rank)))
+            DFT_Ex = self.xp.concatenate(DFT_Sz_Exs, axis=1)
+            DFT_Ey = self.xp.concatenate(DFT_Sz_Eys, axis=1)
+            DFT_Hx = self.xp.concatenate(DFT_Sz_Hxs, axis=1)
+            DFT_Hy = self.xp.concatenate(DFT_Sz_Hys, axis=1)
 
-                DFT_Sz_Hx_res.append(np.load("{}/{}_DFT_Hx_re_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sz_Hx_ims.append(np.load("{}/{}_DFT_Hx_im_rank{:02d}.npy" .format(self.path, self.name, rank)))
-
-                DFT_Sz_Hy_res.append(np.load("{}/{}_DFT_Hy_re_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sz_Hy_ims.append(np.load("{}/{}_DFT_Hy_im_rank{:02d}.npy" .format(self.path, self.name, rank)))
-
-            DFT_Ex_re = np.concatenate(DFT_Sz_Ex_res, axis=1)
-            DFT_Ex_im = np.concatenate(DFT_Sz_Ex_ims, axis=1)
-
-            DFT_Ey_re = np.concatenate(DFT_Sz_Ey_res, axis=1)
-            DFT_Ey_im = np.concatenate(DFT_Sz_Ey_ims, axis=1)
-
-            DFT_Hx_re = np.concatenate(DFT_Sz_Hx_res, axis=1)
-            DFT_Hx_im = np.concatenate(DFT_Sz_Hx_ims, axis=1)
-
-            DFT_Hy_re = np.concatenate(DFT_Sz_Hy_res, axis=1)
-            DFT_Hy_im = np.concatenate(DFT_Sz_Hy_ims, axis=1)
-
-            self.Sz = 0.5 * ( -(DFT_Ey_re*DFT_Hx_re) - (DFT_Ey_im*DFT_Hx_im)
-                              +(DFT_Ex_re*DFT_Hy_re) + (DFT_Ex_im*DFT_Hy_im)  )
+            self.Sz = 0.5 * ( -(DFT_Ey.real*DFT_Hx.real) - (DFT_Ey.imag*DFT_Hx.imag)
+                              +(DFT_Ex.real*DFT_Hy.real) + (DFT_Ex.imag*DFT_Hy.imag)  )
 
             self.Sz_area = self.Sz.sum(axis=(1,2)) * self.Space.dx * self.Space.dy
-            np.save("./graph/%s_area" %self.name, self.Sz_area)
+            self.xp.save("./graph/%s_area" %self.name, self.Sz_area)

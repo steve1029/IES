@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.constants import c, mu_0, epsilon_0
 
-class Structure(object):
+class Structure:
 
     def __init__(self,Space):
         

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import os, time, datetime, sys, psutil
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 from mpi4py import MPI
 import matplotlib.pyplot as plt
@@ -10,12 +12,12 @@ import source, space, plotfield, structure, rft
 #----------------------- Paramter settings ------------------------#
 #------------------------------------------------------------------#
 
-savedir = '/home/ldg/script/pyctypes/FDTD.real.diel.CPML.MPI/'
+savedir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/'
 
 nm = 1e-9
 um = 1e-6
 
-Nx, Ny, Nz = 512, 512, 512
+Nx, Ny, Nz = 128, 128, 128
 dx, dy, dz = 10*um, 10*um, 10*um
 Lx, Ly, Lz = Nx*dx, Ny*dy, Nz*dz
 
@@ -33,7 +35,7 @@ wvlens = np.arange(200,600, interval)*um
 freqs = c / wvlens
 
 # Set the type of input source.
-Src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float64)
+Src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
 #Src.plot_pulse(Tsteps, freqs, savedir)
 #Src = source.Sine(dt, np.float64)
 #Src.set_wvlen( 20 * um)
@@ -44,9 +46,13 @@ Src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float64)
 #-------------------------- Call objects --------------------------#
 #------------------------------------------------------------------#
 
-TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), courant, dt, Tsteps, np.float64) # Total field
-IF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), courant, dt, Tsteps, np.float64) # Incident field
-SF = space.Empty3D((Nx, Ny, Nz), (dx, dy, dz), courant, dt, Tsteps, np.float64) # Scattered field
+TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64) # Total field
+IF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64) # Incident field
+SF = space.Empty3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64) # Scattered field
+
+TF.malloc()
+IF.malloc()
+SF.malloc()
 
 # Put structures
 #Box = structure.Box(TF, Box1_srt, Box1_end, 4., 1.)
@@ -90,16 +96,16 @@ leftx, rightx = int(Nx/4), int(Nx*3/4)
 lefty, righty = int(Ny/4), int(Ny*3/4)
 leftz, rightz = int(Nz/4), int(Nz*3/4)
 
-IF_Sx_R_calculator = rft.Sx("Sx_IF_R", "./graph/Sx", IF, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, True)
+IF_Sx_R_calculator = rft.Sx("Sx_IF_R", "./graph/Sx", IF, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, 'cupy')
 
-SF_Sx_L_calculator = rft.Sx("Sx_SF_L", "./graph/Sx", SF, (leftx , lefty, leftz), (leftx +1, righty, rightz), freqs, True)
-SF_Sx_R_calculator = rft.Sx("Sx_SF_R", "./graph/Sx", SF, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, True)
+SF_Sx_L_calculator = rft.Sx("Sx_SF_L", "./graph/Sx", SF, (leftx , lefty, leftz), (leftx +1, righty, rightz), freqs, 'cupy')
+SF_Sx_R_calculator = rft.Sx("Sx_SF_R", "./graph/Sx", SF, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, 'cupy')
 
-SF_Sy_L_calculator = rft.Sy("Sy_SF_L", "./graph/Sy", SF, (leftx, lefty , leftz), (rightx, lefty +1, rightz), freqs, True)
-SF_Sy_R_calculator = rft.Sy("Sy_SF_R", "./graph/Sy", SF, (leftx, righty, leftz), (rightx, righty+1, rightz), freqs, True)
+SF_Sy_L_calculator = rft.Sy("Sy_SF_L", "./graph/Sy", SF, (leftx, lefty , leftz), (rightx, lefty +1, rightz), freqs, 'cupy')
+SF_Sy_R_calculator = rft.Sy("Sy_SF_R", "./graph/Sy", SF, (leftx, righty, leftz), (rightx, righty+1, rightz), freqs, 'cupy')
 
-SF_Sz_L_calculator = rft.Sz("Sz_SF_L", "./graph/Sz", SF, (leftx, lefty, leftz ), (rightx, righty, leftz +1), freqs, True)
-SF_Sz_R_calculator = rft.Sz("Sz_SF_R", "./graph/Sz", SF, (leftx, lefty, rightz), (rightx, righty, rightz+1), freqs, True)
+SF_Sz_L_calculator = rft.Sz("Sz_SF_L", "./graph/Sz", SF, (leftx, lefty, leftz ), (rightx, righty, leftz +1), freqs, 'cupy')
+SF_Sz_R_calculator = rft.Sz("Sz_SF_R", "./graph/Sz", SF, (leftx, lefty, rightz), (rightx, righty, rightz+1), freqs, 'cupy')
 
 """
 TF_Sx_L_calculator = rft.Sx("Sx_TF_L", "./graph/Sx", TF, (leftx , lefty, leftz), (leftx +1, righty, rightz), Src.freq, True)
@@ -116,10 +122,6 @@ TF_Sz_R_calculator = rft.Sz("Sz_TF_R", "./graph/Sz", TF, (leftx, lefty, rightz),
 TFgraphtool = plotfield.Graphtool(TF, 'TF', savedir)
 IFgraphtool = plotfield.Graphtool(IF, 'IF', savedir)
 SFgraphtool = plotfield.Graphtool(SF, 'SF', savedir)
-
-# initialize the core
-TF.init_update_equations(omp_on=True)
-IF.init_update_equations(omp_on=True)
 
 # Save what time the simulation begins.
 start_time = datetime.datetime.now()
@@ -139,12 +141,8 @@ for tstep in range(Tsteps):
     pulse_re = Src.pulse_re(tstep, pick_pos=pick_pos)
     pulse_im = Src.pulse_im(tstep, pick_pos=pick_pos)
 
-    #TF.put_src('Ex_re', 'Ex_im', pulse_re, 0, 'soft')
-    TF.put_src('Ey_re', pulse_re, 'soft')
-    #TF.put_src('Ez_re', 'Ez_im', pulse_re, 0, 'soft')
-
-    IF.put_src('Ey_re', pulse_re, 'soft')
-    #IF.put_src('Ez_re', 'Ez_im', pulse_re, 0, 'soft')
+    TF.put_src('Ey', pulse_re, 'soft')
+    IF.put_src('Ey', pulse_re, 'soft')
 
     TF.updateH(tstep)
     IF.updateH(tstep)
@@ -176,22 +174,26 @@ for tstep in range(Tsteps):
     """
     # Plot the field profile
     if tstep % plot_per == 0:
+
+        Ey = TFgraphtool.gather('Ey')
         #TFgraphtool.plot2D3D('Ex', tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
-        TFgraphtool.plot2D3D('Ey', tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
+        TFgraphtool.plot2D3D(Ey, tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
         #TFgraphtool.plot2D3D('Ez', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D('Hx', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D('Hy', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D('Hz', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
 
+        Ey = IFgraphtool.gather('Ey')
         #IFgraphtool.plot2D3D('Ex', tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
-        IFgraphtool.plot2D3D('Ey', tstep, yidx=IF.Nyc, colordeep=2, stride=1, zlim=2)
+        IFgraphtool.plot2D3D(Ey, tstep, yidx=IF.Nyc, colordeep=2, stride=1, zlim=2)
         #IFgraphtool.plot2D3D('Ez', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #IFgraphtool.plot2D3D('Hx', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #IFgraphtool.plot2D3D('Hy', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #IFgraphtool.plot2D3D('Hz', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
 
+        Ey = SFgraphtool.gather('Ey')
         #SFgraphtool.plot2D3D('Ex', tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
-        SFgraphtool.plot2D3D('Ey', tstep, yidx=SF.Nyc, colordeep=2, stride=1, zlim=2)
+        SFgraphtool.plot2D3D(Ey, tstep, yidx=SF.Nyc, colordeep=2, stride=1, zlim=2)
         #SFgraphtool.plot2D3D('Ez', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #SFgraphtool.plot2D3D('Hx', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #SFgraphtool.plot2D3D('Hy', tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)

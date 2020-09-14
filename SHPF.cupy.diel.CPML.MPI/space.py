@@ -1415,9 +1415,9 @@ class Basic3D:
 
 class Empty3D(Basic3D):
     
-    def __init__(self, grid, gridgap, dt, tsteps, dtype, **kwargs):
+    def __init__(self, grid, gridgap, dt, tsteps, rdtype, cdtype, **kwargs):
 
-        Basic3D.__init__(grid, gridgap, dt, tsteps, dtype, **kwargs)
+        Basic3D.__init__(self, grid, gridgap, dt, tsteps, rdtype, cdtype, **kwargs)
 
     def get_SF(self, TF, IF):
         """Get scattered field

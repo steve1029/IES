@@ -84,7 +84,7 @@ leftx, rightx = int(Nx/4), int(Nx*3/4)
 lefty, righty = int(Ny/4), int(Ny*3/4)
 leftz, rightz = int(Nz/4), int(Nz*3/4)
 
-Sx_R_calculator = rft.Sx("SF_R", "./graph/Sx", Space, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, 'cupy')
+#Sx_R_calculator = rft.Sx("SF_R", "./graph/Sx", Space, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, 'cupy')
 
 # Set plotfield options
 graphtool = plotfield.Graphtool(Space, 'TF', savedir)
@@ -116,7 +116,7 @@ for tstep in range(Space.tsteps):
     Space.updateH(tstep)
     Space.updateE(tstep)
 
-    Sx_R_calculator.do_RFT(tstep)
+    #Sx_R_calculator.do_RFT(tstep)
 
     # Plot the field profile
     if tstep % plot_per == 0:
@@ -133,7 +133,7 @@ for tstep in range(Space.tsteps):
             interval_time = datetime.datetime.now()
             print(("time: %s, step: %05d, %5.2f%%" %(interval_time-start_time, tstep, 100.*tstep/Space.tsteps)))
 
-Sx_R_calculator.get_Sx()
+#Sx_R_calculator.get_Sx()
 
 if Space.MPIrank == 0:
 
