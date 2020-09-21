@@ -153,8 +153,8 @@ class Basic3D:
         if self.engine == 'cupy':
             self.iky = (1j*self.ky[None,:,None]).astype(self.cdtype)
             self.ikz = (1J*self.kz[None,None,:]).astype(self.cdtype)
-            self.ypshift = self.xp.exp(self.iky*self.dy/2).astype(self.cdtype)
-            self.zpshift = self.xp.exp(self.ikz*self.dz/2).astype(self.cdtype)
+            self.ypshift = self.xp.exp(self.iky* self.dy/2).astype(self.cdtype)
+            self.zpshift = self.xp.exp(self.ikz* self.dz/2).astype(self.cdtype)
             self.ymshift = self.xp.exp(self.iky*-self.dy/2).astype(self.cdtype)
             self.zmshift = self.xp.exp(self.ikz*-self.dz/2).astype(self.cdtype)
         else:
@@ -258,15 +258,6 @@ class Basic3D:
                 self.psi_hyx_m = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.rdtype)
                 self.psi_hzx_m = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.rdtype)
 
-                """
-                for i in range(self.PMLgrading):
-
-                    loc  = self.xp.float64(i) * self.dx / self.bdw_x
-
-                    self.PMLsigmax[i] = self.PMLsigmamaxx * (loc **self.gO)
-                    self.PMLkappax[i] = 1 + ((self.PMLkappamaxx-1) * (loc **self.gO))
-                    self.PMLalphax[i] = self.PMLalphamaxx * ((1-loc) **self.sO)
-                """
                 loc = self.xp.arange(self.PMLgrading) * self.dx / self.bdw_x
                 self.PMLsigmax = self.PMLsigmamaxx * (loc **self.gO)
                 self.PMLkappax = 1 + ((self.PMLkappamaxx-1) * (loc **self.gO))
@@ -283,15 +274,6 @@ class Basic3D:
                 self.psi_ezy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.rdtype)
                 self.psi_hxy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.rdtype)
                 self.psi_hzy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.rdtype)
-                """
-                for i in range(self.PMLgrading):
-
-                    loc  = self.xp.float64(i) * self.dy / self.bdw_y
-
-                    self.PMLsigmay[i] = self.PMLsigmamaxy * (loc **self.gO)
-                    self.PMLkappay[i] = 1 + ((self.PMLkappamaxy-1) * (loc **self.gO))
-                    self.PMLalphay[i] = self.PMLalphamaxy * ((1-loc) **self.sO)
-                """
 
                 loc  = self.xp.arange(self.PMLgrading) * self.dy / self.bdw_y
                 self.PMLsigmay = self.PMLsigmamaxy * (loc **self.gO)
@@ -309,16 +291,6 @@ class Basic3D:
                 self.psi_eyz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.rdtype)
                 self.psi_hxz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.rdtype)
                 self.psi_hyz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.rdtype)
-
-                """
-                for i in range(self.PMLgrading):
-
-                    loc  = self.xp.float64(i) * self.dz / self.bdw_z
-
-                    self.PMLsigmaz[i] = self.PMLsigmamaxz * (loc **self.gO)
-                    self.PMLkappaz[i] = 1 + ((self.PMLkappamaxz-1) * (loc **self.gO))
-                    self.PMLalphaz[i] = self.PMLalphamaxz * ((1-loc) **self.sO)
-                """
 
                 loc  = self.xp.arange(self.PMLgrading) * self.dz / self.bdw_z
                 self.PMLsigmaz = self.PMLsigmamaxz * (loc **self.gO)
@@ -620,23 +592,23 @@ class Basic3D:
         #-----------------------------------------------------------#
 
         # To update Hx
-        self.diffyEz[:,:-1,:-1] = (self.Ez[:,1:,:-1] - self.Ez[:,:-1,:-1]) / self.dy
-        self.diffzEy[:,:-1,:-1] = (self.Ey[:,:-1,1:] - self.Ey[:,:-1,:-1]) / self.dz
-        #self.diffyEz = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ez, axes=(1,)), axes=(1,))
-        #self.diffzEy = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ey, axes=(2,)), axes=(2,))
+        #self.diffyEz[:,:-1,:-1] = (self.Ez[:,1:,:-1] - self.Ez[:,:-1,:-1]) / self.dy
+        #self.diffzEy[:,:-1,:-1] = (self.Ey[:,:-1,1:] - self.Ey[:,:-1,:-1]) / self.dz
+        self.diffyEz = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ez, axes=(1,)), axes=(1,))
+        self.diffzEy = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ey, axes=(2,)), axes=(2,))
         #self.diffyEz = self.xp.fft.irfftn(self.iky*self.xp.fft.rfftn(self.Ez, axes=(1,)), axes=(1,))
         #self.diffzEy = self.xp.fft.irfftn(self.ikz*self.xp.fft.rfftn(self.Ey, axes=(2,)), axes=(2,))
 
         # To update Hy
-        self.diffzEx[:-1,:,:-1] = (self.Ex[:-1,:,1:] - self.Ex[:-1,:,:-1]) / self.dz
+        #self.diffzEx[:-1,:,:-1] = (self.Ex[:-1,:,1:] - self.Ex[:-1,:,:-1]) / self.dz
         self.diffxEz[:-1,:,:-1] = (self.Ez[1:,:,:-1] - self.Ez[:-1,:,:-1]) / self.dx
-        #self.diffzEx = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ex, axes=(2,)), axes=(2,))
+        self.diffzEx = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ex, axes=(2,)), axes=(2,))
         #self.diffzEx = self.xp.fft.irfftn(self.ikz*self.xp.fft.rfftn(self.Ex, axes=(2,)), axes=(2,))
 
         # To update Hz
         self.diffxEy[:-1,:-1,:] = (self.Ey[1:,:-1,:] - self.Ey[:-1,:-1,:]) / self.dx
-        self.diffyEx[:-1,:-1,:] = (self.Ex[:-1,1:,:] - self.Ex[:-1,:-1,:]) / self.dy
-        #self.diffyEx = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ex, axes=(1,)), axes=(1,))
+        #self.diffyEx[:-1,:-1,:] = (self.Ex[:-1,1:,:] - self.Ex[:-1,:-1,:]) / self.dy
+        self.diffyEx = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ex, axes=(1,)), axes=(1,))
         #self.diffyEx = self.xp.fft.irfftn(self.iky*self.xp.fft.rfftn(self.Ex, axes=(1,)), axes=(1,))
 
         if self.MPIrank != (self.MPIsize-1):
@@ -672,7 +644,7 @@ class Basic3D:
 
         if self.MPIrank != (self.MPIsize-1):
 
-	        # Update Hy and Hz at x=myNx-1
+            # Update Hy and Hz at x=myNx-1
             sli1 = [-1,slice(0,None),slice(0,-1)]
             sli2 = [-1,slice(0,-1),slice(0,None)]
             self.Hy[sli1] = CHy1[-1,:,:]*self.Hy[sli1] + CHy2[-1,:,:]*(self.diffzEx[sli1]-self.diffxEz[sli1])
@@ -706,152 +678,6 @@ class Basic3D:
             if 'x' in self.PMLregion.keys():
                 if '+' in self.PMLregion.get('x'): self._PML_updateH_px()
                 if '-' in self.PMLregion.get('x'): pass
-
-        #-----------------------------------------------------------#
-        #------------ Apply PBC along y when it is given -----------#
-        #-----------------------------------------------------------#
-
-        """
-        if self.myPBCregion_y == True:
-
-            # Ranks except the last rank.
-            if self.MPIsize == 0 or self.MPIrank < (self.MPIsize-1):
-
-                self.clib_PBC.py_rankFM (\
-                                            self.myNx, self.Ny, self.Nz, \
-                                            self.dt, self.dx, self.dy, self.dz, \
-                                            self.mu_Hx, self.mu_Hz, \
-                                            self.mcon_Hx, self.mcon_Hz, \
-                                            recvEylast, 
-                                            self.Hx, 
-                                            self.Hz, 
-                                            self.Ex, 
-                                            self.Ey, 
-                                            self.Ez, 
-                                            self.diffxEy, 
-                                            self.diffyEx, 
-                                            self.diffyEz, 
-                                            self.diffzEy
-                                        )
-
-                # The first rank apply PBC on PML region.
-                if self.MPIrank == 0 and '-' in self.PMLregion.get('x'):
-
-                    self.clib_PBC.mxPML_pyPBC   (\
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt,\
-                                                    self.PMLkappax, self.PMLbx, self.PMLax,\
-                                                    self.mu_Hz, self.mcon_Hz,\
-                                                    self.Hz, 
-                                                    self.diffxEy, 
-                                                    self.psi_hzx_m
-                                                )
-
-            # The last rank.
-            elif self.MPIrank == (self.MPIsize-1):
-                self.clib_PBC.py_rank_L (\
-                                            self.myNx, self.Ny, self.Nz, \
-                                            self.dt, self.dx, self.dy, self.dz, \
-                                            self.mu_Hx, self.mu_Hz, \
-                                            self.mcon_Hx, self.mcon_Hz, \
-                                            self.Hx, 
-                                            self.Hz, 
-                                            self.Ex, 
-                                            self.Ey, 
-                                            self.Ez, 
-                                            self.diffxEy, 
-                                            self.diffyEx, 
-                                            self.diffyEz, 
-                                            self.diffzEy
-                                        )
-
-                # The last rank apply PBC on PML region.
-                if '-' in self.PMLregion.get('x'):
-
-                    self.clib_PBC.pxPML_pyPBC   (\
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt,\
-                                                    self.PMLkappax, self.PMLbx, self.PMLax,\
-                                                    self.mu_Hz, self.mcon_Hz,\
-                                                    self.Hz, 
-                                                    self.diffxEy, 
-                                                    self.psi_hzx_p
-                                                )
-
-
-        else: pass
-
-        #-----------------------------------------------------------#
-        #------------ Apply PBC along z when it is given -----------#
-        #-----------------------------------------------------------#
-
-        if self.myPBCregion_z == True:
-
-            # Ranks except the last rank.
-            if self.MPIsize == 0 or self.MPIrank < (self.MPIsize-1):
-                self.clib_PBC.pz_rankFM (\
-                                            self.myNx, self.Ny, self.Nz, \
-                                            self.dt, self.dx, self.dy, self.dz, \
-                                            self.mu_Hx, self.mu_Hy, \
-                                            self.mcon_Hx, self.mcon_Hy, \
-                                            recvEzlast, 
-                                            self.Hx, 
-                                            self.Hy, 
-                                            self.Ex, 
-                                            self.Ey, 
-                                            self.Ez, 
-                                            self.diffxEz, 
-                                            self.diffyEz, 
-                                            self.diffzEx, 
-                                            self.diffzEy
-                                        )
-
-                # The first rank apply PBC on PML region.
-                if self.MPIrank == 0 and '-' in self.PMLregion.get('x'):
-
-                    self.clib_PBC.mxPML_pzPBC   (\
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt,\
-                                                    self.PMLkappax, self.PMLbx, self.PMLax,\
-                                                    self.mu_Hy, self.mcon_Hy,\
-                                                    self.Hy, 
-                                                    self.diffxEz, 
-                                                    self.psi_hyx_m
-                                                )
-
-            # The last rank.
-            else:
-                self.clib_PBC.pz_rank_L (\
-                                            self.myNx, self.Ny, self.Nz, \
-                                            self.dt, self.dx, self.dy, self.dz, \
-                                            self.mu_Hx, self.mu_Hy, \
-                                            self.mcon_Hx, self.mcon_Hy, \
-                                            self.Hx, 
-                                            self.Hy, 
-                                            self.Ex, 
-                                            self.Ey, 
-                                            self.Ez, 
-                                            self.diffxEz, 
-                                            self.diffyEz, 
-                                            self.diffzEx, 
-                                            self.diffzEy
-                                        )
-
-                # The last rank apply PBC on PML region.
-                if '-' in self.PMLregion.get('x'):
-
-                    self.clib_PBC.pxPML_pzPBC   (\
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt,\
-                                                    self.PMLkappax, self.PMLbx, self.PMLax,\
-                                                    self.mu_Hy, self.mcon_Hy,\
-                                                    self.Hy, 
-                                                    self.diffxEz, 
-                                                    self.psi_hyx_p
-                                                )
-
-        else: pass
-        """
 
     def updateE(self, tstep):
         """Update E field.
@@ -904,24 +730,24 @@ class Basic3D:
         #---------------------- Get derivatives --------------------#
         #-----------------------------------------------------------#
 
-	    # Get derivatives of Hy and Hz to update Ex
-        self.diffyHz[:,1:,1:] = (self.Hz[:,1:,1:] - self.Hz[:,:-1,1:]) / self.dy
-        self.diffzHy[:,1:,1:] = (self.Hy[:,1:,1:] - self.Hy[:,1:,:-1]) / self.dz
-        #self.diffyHz = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hz, axes=(1,)), axes=(1,))
-        #self.diffzHy = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hy, axes=(2,)), axes=(2,))
+        # Get derivatives of Hy and Hz to update Ex
+        #self.diffyHz[:,1:,1:] = (self.Hz[:,1:,1:] - self.Hz[:,:-1,1:]) / self.dy
+        #self.diffzHy[:,1:,1:] = (self.Hy[:,1:,1:] - self.Hy[:,1:,:-1]) / self.dz
+        self.diffyHz = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hz, axes=(1,)), axes=(1,))
+        self.diffzHy = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hy, axes=(2,)), axes=(2,))
         #self.diffyHz = self.xp.fft.irfftn(self.iky*self.xp.fft.rfftn(self.Hz, axes=(1,)), axes=(1,))
         #self.diffzHy = self.xp.fft.irfftn(self.ikz*self.xp.fft.rfftn(self.Hy, axes=(2,)), axes=(2,))
 
-	    # Get derivatives of Hx and Hz to update Ey
-        self.diffzHx[1:,:,1:] = (self.Hx[1:,:,1:] - self.Hx[1:,:,:-1]) / self.dz
-        #self.diffzHx = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hx, axes=(2,)), axes=(2,))
+        # Get derivatives of Hx and Hz to update Ey
+        #self.diffzHx[1:,:,1:] = (self.Hx[1:,:,1:] - self.Hx[1:,:,:-1]) / self.dz
+        self.diffzHx = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hx, axes=(2,)), axes=(2,))
         #self.diffzHx = self.xp.fft.irfftn(self.ikz*self.xp.fft.rfftn(self.Hx, axes=(2,)), axes=(2,))
         self.diffxHz[1:,:,1:] = (self.Hz[1:,:,1:] - self.Hz[:-1,:,1:]) / self.dx
 
-	    # Get derivatives of Hx and Hy to update Ez
+        # Get derivatives of Hx and Hy to update Ez
         self.diffxHy[1:,1:,:] = (self.Hy[1:,1:,:] - self.Hy[:-1,1:,:]) / self.dx
-        self.diffyHx[1:,1:,:] = (self.Hx[1:,1:,:] - self.Hx[1:,:-1,:]) / self.dy
-        #self.diffyHx = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hx, axes=(1,)), axes=(1,))
+        #self.diffyHx[1:,1:,:] = (self.Hx[1:,1:,:] - self.Hx[1:,:-1,:]) / self.dy
+        self.diffyHx = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hx, axes=(1,)), axes=(1,))
         #self.diffyHx = self.xp.fft.irfftn(self.iky*self.xp.fft.rfftn(self.Hx, axes=(1,)), axes=(1,))
 
         if self.MPIrank != 0:
@@ -998,153 +824,6 @@ class Basic3D:
             if 'x' in self.PMLregion.keys():
                 if '+' in self.PMLregion.get('x'): self._PML_updateE_px()
                 if '-' in self.PMLregion.get('x'): pass
-
-        #-----------------------------------------------------------#
-        #------------ Apply PBC along y when it is given -----------#
-        #-----------------------------------------------------------#
-
-        """
-        if self.myPBCregion_y == True:
-
-            # The first rank.
-            if self.MPIrank == 0 :
-
-                self.clib_PBC.my_rank_F( \
-                                            self.myNx, self.Ny, self.Nz, \
-                                            self.dt, self.dx, self.dy, self.dz,\
-                                            self.eps_Ex, self.eps_Ez, \
-                                            self.econ_Ex, self.econ_Ez, \
-                                            self.Ex, 
-                                            self.Ez, 
-                                            self.Hx, 
-                                            self.Hy, 
-                                            self.Hz, 
-                                            self.diffxHy, 
-                                            self.diffyHx, 
-                                            self.diffyHz, 
-                                            self.diffzHy
-                                        )
-
-                # The first rank apply PBC on PML region.
-                if '-' in self.PMLregion.get('x'):
-
-                    self.clib_PBC.mxPML_myPBC   (\
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt,\
-                                                    self.PMLkappax, self.PMLbx, self.PMLax,\
-                                                    self.eps_Ez, self.econ_Ez,\
-                                                    self.Ez, 
-                                                    self.diffxHy, 
-                                                    self.psi_ezx_m
-                                                )
-
-            # Ranks except the first rank.
-            else:   
-                self.clib_PBC.my_rankML( \
-                                            self.myNx, self.Ny, self.Nz, \
-                                            self.dt, self.dx, self.dy, self.dz,\
-                                            self.eps_Ex, self.eps_Ez, \
-                                            self.econ_Ex, self.econ_Ez, \
-                                            recvHyfirst,
-                                            self.Ex,
-                                            self.Ez, 
-                                            self.Hx, 
-                                            self.Hy, 
-                                            self.Hz,
-                                            self.diffxHy, 
-                                            self.diffyHx, 
-                                            self.diffyHz, 
-                                            self.diffzHy
-                                        )
-
-                # The last rank apply PBC on PML region.
-                if self.MPIrank == (self.MPIsize-1) and '-' in self.PMLregion.get('x'):
-
-                    self.clib_PBC.pxPML_myPBC   (\
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt,\
-                                                    self.PMLkappax, self.PMLbx, self.PMLax,\
-                                                    self.eps_Ez, self.econ_Ez,\
-                                                    self.Ez, 
-                                                    self.diffxHy,
-                                                    self.psi_ezx_p
-                                                )
-
-        else: pass
-
-        #-----------------------------------------------------------#
-        #------------ Apply PBC along z when it is given -----------#
-        #-----------------------------------------------------------#
-
-        if self.myPBCregion_z == True:
-
-            # The first rank.
-            if self.MPIrank == 0:
-
-                self.clib_PBC.mz_rank_F (\
-                                            self.myNx, self.Ny, self.Nz, \
-                                            self.dt, self.dx, self.dy, self.dz,\
-                                            self.eps_Ex, self.eps_Ez, \
-                                            self.econ_Ex, self.econ_Ez, \
-                                            self.Ex, 
-                                            self.Ey, 
-                                            self.Hx, 
-                                            self.Hy, 
-                                            self.Hz, 
-                                            self.diffxHz, 
-                                            self.diffyHz, 
-                                            self.diffzHx, 
-                                            self.diffzHy
-                                        )
-
-                # The first rank applies PBC on PML region.
-                if '-' in self.PMLregion.get('x'):
-
-                    self.clib_PBC.mxPML_mzPBC   (\
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt,\
-                                                    self.PMLkappax, self.PMLbx, self.PMLax,\
-                                                    self.eps_Ey, self.econ_Ey,\
-                                                    self.Ey, 
-                                                    self.diffxHz, 
-                                                    self.psi_eyx_m
-                                                )
-
-            # Ranks except the first rank.
-            else:
-
-                self.clib_PBC.mz_rankML (\
-                                            self.myNx, self.Ny, self.Nz, \
-                                            self.dt, self.dx, self.dy, self.dz,\
-                                            self.eps_Ex, self.eps_Ez, \
-                                            self.econ_Ex, self.econ_Ez, \
-                                            recvHzfirst, 
-                                            self.Ex, 
-                                            self.Ey, 
-                                            self.Hx, 
-                                            self.Hy, 
-                                            self.Hz, 
-                                            self.diffxHz, 
-                                            self.diffyHz, 
-                                            self.diffzHx, 
-                                            self.diffzHy
-                                        )
-
-                # The last rank applies PBC on PML region.
-                if self.MPIrank == (self.MPIsize-1) and '-' in self.PMLregion.get('x'):
-
-                    self.clib_PBC.pxPML_mzPBC   (\
-                                                    self.myNx, self.Ny, self.Nz, self.npml,\
-                                                    self.dt,\
-                                                    self.PMLkappax, self.PMLbx, self.PMLax,\
-                                                    self.eps_Ey, self.econ_Ey,\
-                                                    self.Ey, 
-                                                    self.diffxHz, 
-                                                    self.psi_eyx_p
-                                                )
-
-        else: pass
-        """
 
     def _PML_updateH_px(self):
 
@@ -1230,23 +909,25 @@ class Basic3D:
 
     def _PML_updateH_py(self):
 
-        odd = [None, slice(1,None,2), None]
-        psiidx = [slice(0,None), slice(0,self.npml), slice(0,None)]
-        myidx = [slice(0,None), slice(-self.npml,None), slice(0,None)]
+        odd = [None, slice(1,-1,2), None]
 
         # Update Hx at y+.
+        psiidx = [slice(0,None), slice(0,-1), slice(0,-1)]
+        myidx = [slice(0,None), slice(-self.npml,-1), slice(0,-1)]
         CHx2 = (-2.*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt)
         self.psi_hxy_p[psiidx] = (self.PMLby[odd]*self.psi_hxy_p[psiidx]) + (self.PMLay[odd]*self.diffyEz[myidx])
         self.Hx[myidx] += CHx2*(+((1./self.PMLkappay[odd] - 1.)*self.diffyEz[myidx])+self.psi_hxy_p[psiidx])
 
         # Update Hz at y+.
         if self.MPIrank < (self.MPIsize-1):
+            psiidx = [slice(0,None), slice(0,-1), slice(0,None)]
+            myidx = [slice(0,None), slice(-self.npml,-1), slice(0,None)]
             CHz2 = (-2.*self.dt) / (2.*self.mu_Hz[myidx] + self.mcon_Hz[myidx]*self.dt)
             self.psi_hzy_p[psiidx] = (self.PMLby[odd] * self.psi_hzy_p[psiidx]) + (self.PMLay[odd] * self.diffyEx[myidx])
             self.Hz[myidx] += CHz2*(-((1./self.PMLkappay[odd]-1.)*self.diffyEx[myidx]) - self.psi_hzy_p[psiidx])
         else:
-            psiidx = [slice(0,-1), slice(0,self.npml), slice(0,None)]
-            myidx = [slice(0,-1), slice(-self.npml,None), slice(0,None)]
+            psiidx = [slice(0,-1), slice(0,-1), slice(0,None)]
+            myidx = [slice(0,-1), slice(-self.npml,-1), slice(0,None)]
             CHz2 = (-2.*self.dt) / (2.*self.mu_Hz[myidx] + self.mcon_Hz[myidx]*self.dt)
             self.psi_hzy_p[psiidx] = (self.PMLby[odd] * self.psi_hzy_p[psiidx]) + (self.PMLay[odd] * self.diffyEx[myidx])
             self.Hz[myidx] += CHz2*(-((1./self.PMLkappay[odd]-1.)*self.diffyEx[myidx]) - self.psi_hzy_p[psiidx])
@@ -1254,16 +935,18 @@ class Basic3D:
     def _PML_updateE_py(self):
 
         even = [None,slice(0,None,2),None]
-        psiidx = [slice(0,None), slice(0,self.npml), slice(0,None)]
-        myidx = [slice(0,None), slice(-self.npml,None), slice(0,None)]
 
         # Update Ex at y+.
+        psiidx = [slice(0,None), slice(0,self.npml), slice(1,None)]
+        myidx = [slice(0,None), slice(-self.npml,None), slice(1,None)]
         CEx2 = (2*self.dt) / (2.*self.eps_Ex[myidx] + self.econ_Ex[myidx]*self.dt)
         self.psi_exy_p[psiidx] = (self.PMLby[even]*self.psi_exy_p[psiidx]) + (self.PMLay[even]*self.diffyHz[myidx])
         self.Ex[myidx] += CEx2*(+((1./self.PMLkappay[even]-1.)*self.diffyHz[myidx]) + self.psi_exy_p[psiidx])
 
         # Update Ez at y+.
         if self.MPIrank > 0:
+            psiidx = [slice(0,None), slice(0,self.npml), slice(0,None)]
+            myidx = [slice(0,None), slice(-self.npml,None), slice(0,None)]
             CEz2 = (2.*self.dt) / (2.*self.eps_Ez[myidx] + self.econ_Ez[myidx]*self.dt)
             self.psi_ezy_p[psiidx] = (self.PMLby[even]*self.psi_ezy_p[psiidx]) + (self.PMLay[even]*self.diffyHx[myidx])
             self.Ez[myidx] += CEz2*(-((1./self.PMLkappay[even]-1.)*self.diffyHx[myidx]) - self.psi_ezy_p[psiidx])
@@ -1277,138 +960,150 @@ class Basic3D:
     def _PML_updateH_my(self):
 
         even = [None, slice(-2,None,-2), None]
-        psiidx = [slice(0,None), slice(0, self.npml), slice(0,None)]
-        myidx = [slice(0,None), slice(0,self.npml), slice(0,None)]
 
         # Update Hx at y-.
+        psiidx = [slice(0,None), slice(0,self.npml), slice(0,-1)]
+        myidx = [slice(0,None), slice(0,self.npml), slice(0,-1)]
         CHx2 =  (-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt)
         self.psi_hxy_m[psiidx] = (self.PMLby[even]*self.psi_hxy_m[psiidx]) + (self.PMLay[even]*self.diffyEz[myidx])
         self.Hx[myidx] += CHx2*(+((1./self.PMLkappay[even]-1.)*self.diffyEz[myidx]) + self.psi_hxy_m[psiidx])
 
         # Update Hz at y-.
         if self.MPIrank < (self.MPIsize-1):
+            psiidx = [slice(0,None), slice(0,self.npml), slice(0,None)]
+            myidx = [slice(0,None), slice(0,self.npml), slice(0,None)]
             CHz2 =  (-2*self.dt) / (2.*self.mu_Hz[myidx] + self.mcon_Hz[myidx]*self.dt)
             self.psi_hzy_m[psiidx] = (self.PMLby[even]*self.psi_hzy_m[psiidx]) + (self.PMLay[even]*self.diffyEx[myidx])
             self.Hz[myidx] += CHz2*(-((1./self.PMLkappay[even]-1.)*self.diffyEx[myidx]) - self.psi_hzy_m[psiidx])
         else:
-            psiidx = [slice(0,-1), slice(0, self.npml), slice(0,None)]
+            psiidx = [slice(0,-1), slice(0,self.npml), slice(0,None)]
             myidx = [slice(0,-1), slice(0,self.npml), slice(0,None)]
             CHz2 =  (-2*self.dt) / (2.*self.mu_Hz[myidx] + self.mcon_Hz[myidx]*self.dt)
             self.psi_hzy_m[psiidx] = (self.PMLby[even]*self.psi_hzy_m[psiidx]) + (self.PMLay[even]*self.diffyEx[myidx])
             self.Hz[myidx] += CHz2*(-((1./self.PMLkappay[even]-1.)*self.diffyEx[myidx]) - self.psi_hzy_m[psiidx])
 
     def _PML_updateE_my(self):
-        odd = [None, slice(-1,None,-2), None]
-        psiidx = [slice(0,None), slice(0,self.npml), slice(0,None)]
-        myidx = [slice(0,None), slice(0,self.npml), slice(0,None)]
+
+        odd = [None, slice(-3,None,-2), None]
 
         # Update Ex at y-.
+        psiidx = [slice(0,None), slice(1,self.npml), slice(1,None)]
+        myidx = [slice(0,None), slice(1,self.npml), slice(1,None)]
         CEx2 = (2.*self.dt) / (2.*self.eps_Ex[myidx] + self.econ_Ex[myidx]*self.dt)
         self.psi_exy_m[psiidx] = (self.PMLby[odd]*self.psi_exy_m[psiidx]) + (self.PMLay[odd]*self.diffyHz[myidx])
         self.Ex[myidx] += CEx2*(+((1./self.PMLkappay[odd]-1.)*self.diffyHz[myidx]) + self.psi_exy_m[psiidx])
 
         # Update Ez at y-.
         if self.MPIrank > 0:
-            psiidx = [slice(0,None), slice(0,self.npml), slice(0,None)]
-            myidx = [slice(0,None), slice(0,self.npml), slice(0,None)]
+            psiidx = [slice(0,None), slice(1,self.npml), slice(0,None)]
+            myidx = [slice(0,None), slice(1,self.npml), slice(0,None)]
             CEz2 = (2*self.dt) / (2.*self.eps_Ez[myidx] + self.econ_Ez[myidx]*self.dt)
             self.psi_ezy_m[psiidx] = (self.PMLby[odd]*self.psi_ezy_m[psiidx]) + (self.PMLay[odd]*self.diffyHx[myidx])
             self.Ez[myidx] += CEz2*(-((1./self.PMLkappay[odd]-1.)*self.diffyHx[myidx]) - self.psi_ezy_m[psiidx])
         else:
-            psiidx = [slice(1,None), slice(0,self.npml), slice(0,None)]
-            myidx = [slice(1,None), slice(0,self.npml), slice(0,None)]
+            psiidx = [slice(1,None), slice(1,self.npml), slice(0,None)]
+            myidx = [slice(1,None), slice(1,self.npml), slice(0,None)]
             CEz2 = (2*self.dt) / (2.*self.eps_Ez[myidx] + self.econ_Ez[myidx]*self.dt)
             self.psi_ezy_m[psiidx] = (self.PMLby[odd]*self.psi_ezy_m[psiidx]) + (self.PMLay[odd]*self.diffyHx[myidx])
             self.Ez[myidx] += CEz2*(-((1./self.PMLkappay[odd]-1.)*self.diffyHx[myidx]) - self.psi_ezy_m[psiidx])
 
     def _PML_updateH_pz(self):
 
-        odd = [None, None, slice(1,None,2)]
-        psiidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
-        myidx = [slice(0,None), slice(0,None), slice(-self.npml, None)]
+        odd = [None, None, slice(1,-1,2)]
 
         # Update Hx at z+.
-        CHx2 =	(-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt)
+        psiidx = [slice(0,None), slice(0,-1), slice(0,self.npml-1)]
+        myidx = [slice(0,None), slice(0,-1), slice(-self.npml,-1)]
+        CHx2 = (-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt)
         self.psi_hxz_p[psiidx] = (self.PMLbz[odd]*self.psi_hxz_p[psiidx]) + (self.PMLaz[odd]*self.diffzEy[myidx])
         self.Hx[myidx] += CHx2*(-((1./self.PMLkappaz[odd]-1.)*self.diffzEy[myidx]) - self.psi_hxz_p[psiidx])
 
         # Update Hy at z+.
         if self.MPIrank < (self.MPIsize-1):
-            CHy2 =	(-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
+            psiidx = [slice(0,None), slice(0,None), slice(0,self.npml-1)]
+            myidx = [slice(0,None), slice(0,None), slice(-self.npml,-1)]
+            CHy2 = (-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
             self.psi_hyz_p[psiidx] = (self.PMLbz[odd]*self.psi_hyz_p[psiidx]) + (self.PMLaz[odd]*self.diffzEx[myidx])
             self.Hy[myidx] += CHy2*(+((1./self.PMLkappaz[odd]-1.)*self.diffzEx[myidx]) + self.psi_hyz_p[psiidx])
         else:
-            psiidx = [slice(0,-1), slice(0,None), slice(0,self.npml)]
-            myidx = [slice(0,-1), slice(0,None), slice(-self.npml, None)]
-            CHy2 =	(-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
+            psiidx = [slice(0,-1), slice(0,None), slice(0,self.npml-1)]
+            myidx = [slice(0,-1), slice(0,None), slice(-self.npml,-1)]
+            CHy2 = (-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
             self.psi_hyz_p[psiidx] = (self.PMLbz[odd]*self.psi_hyz_p[psiidx]) + (self.PMLaz[odd]*self.diffzEx[myidx])
             self.Hy[myidx] += CHy2*(+((1./self.PMLkappaz[odd]-1.)*self.diffzEx[myidx]) + self.psi_hyz_p[psiidx])
 
     def _PML_updateE_pz(self):
+
         even = [None, None, slice(0,None,2)]
-        psiidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
-        myidx = [slice(0,None), slice(0,None), slice(-self.npml,None)]
 
         # Update Ex at z+.
+        psiidx = [slice(0,None), slice(1,None), slice(0,self.npml)]
+        myidx = [slice(0,None), slice(1,None), slice(-self.npml,None)]
         CEx2 = (2*self.dt) / (2.*self.eps_Ex[myidx] + self.econ_Ex[myidx]*self.dt)
         self.psi_exz_p[psiidx] = (self.PMLbz[even]*self.psi_exz_p[psiidx]) + (self.PMLaz[even]*self.diffzHy[myidx])
         self.Ex[myidx] += CEx2*(-((1./self.PMLkappaz[even]-1.)*self.diffzHy[myidx]) - self.psi_exz_p[psiidx])
 
         # Update Ey at z+.
         if self.MPIrank > 0:
-            CEy2 =	(2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
+            psiidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
+            myidx = [slice(0,None), slice(0,None), slice(-self.npml,None)]
+            CEy2 = (2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
             self.psi_eyz_p[psiidx] = (self.PMLbz[even]*self.psi_eyz_p[psiidx]) + (self.PMLaz[even]*self.diffzHx[myidx])
             self.Ey[myidx] += CEy2*(+((1./self.PMLkappaz[even]-1.)*self.diffzHx[myidx]) + self.psi_eyz_p[psiidx])
         else:
             psiidx = [slice(1,None), slice(0,None), slice(0,self.npml)]
             myidx = [slice(1,None), slice(0,None), slice(-self.npml,None)]
-            CEy2 =	(2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
+            CEy2 = (2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
             self.psi_eyz_p[psiidx] = (self.PMLbz[even]*self.psi_eyz_p[psiidx]) + (self.PMLaz[even]*self.diffzHx[myidx])
             self.Ey[myidx] += CEy2*(+((1./self.PMLkappaz[even]-1.)*self.diffzHx[myidx]) + self.psi_eyz_p[psiidx])
 
     def _PML_updateH_mz(self):
 
         even = [None, None, slice(-2,None,-2)]
-        psiidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
-        myidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
 
         # Update Hx at z-.
+        psiidx = [slice(0,None), slice(0,-1), slice(0,self.npml)]
+        myidx = [slice(0,None), slice(0,-1), slice(0,self.npml)]
         CHx2 = (-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt)
         self.psi_hxz_m[psiidx] = (self.PMLbz[even]*self.psi_hxz_m[psiidx]) + (self.PMLaz[even]*self.diffzEy[myidx])
         self.Hx[myidx] += CHx2*(-((1./self.PMLkappaz[even]-1.)*self.diffzEy[myidx]) - self.psi_hxz_m[psiidx])
 
         # Update Hy at z-.
         if self.MPIrank < (self.MPIsize-1):
+            psiidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
+            myidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
             CHy2 = (-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
             self.psi_hyz_m[psiidx] = (self.PMLbz[even]*self.psi_hyz_m[psiidx]) + (self.PMLaz[even]*self.diffzEx[myidx])
             self.Hy[myidx] += CHy2*(+((1./self.PMLkappaz[even]-1.)*self.diffzEx[myidx]) + self.psi_hyz_m[psiidx])
         else:
-            psiidx = [slice(0,-1), slice(0,None), slice(0,self.npml)]
-            myidx = [slice(0,-1), slice(0,None), slice(0,self.npml)]
+            psiidx = [slice(0,-1), slice(0,-1), slice(0,self.npml)]
+            myidx = [slice(0,-1), slice(0,-1), slice(0,self.npml)]
             CHy2 = (-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
             self.psi_hyz_m[psiidx] = (self.PMLbz[even]*self.psi_hyz_m[psiidx]) + (self.PMLaz[even]*self.diffzEx[myidx])
             self.Hy[myidx] += CHy2*(+((1./self.PMLkappaz[even]-1.)*self.diffzEx[myidx]) + self.psi_hyz_m[psiidx])
 
     def _PML_updateE_mz(self):
 
-        odd = [None, None, slice(-1,None,-2)]
-        psiidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
-        myidx = [slice(0,None), slice(0,None), slice(0,self.npml)]
+        odd = [None, None, slice(-3,None,-2)]
 
         # Update Ex at z-.
+        psiidx = [slice(0,None), slice(1,None), slice(1,self.npml)]
+        myidx = [slice(0,None), slice(1,None), slice(1,self.npml)]
         CEx2 =	(2*self.dt) / (2.*self.eps_Ex[myidx] + self.econ_Ex[myidx]*self.dt)
         self.psi_exz_m[psiidx] = (self.PMLbz[odd] * self.psi_exz_m[psiidx]) + (self.PMLaz[odd] * self.diffzHy[myidx])
         self.Ex[myidx] += CEx2*(-((1./self.PMLkappaz[odd]-1.)*self.diffzHy[myidx]) - self.psi_exz_m[psiidx])
 
         # Update Ey at z-.
         if (self.MPIrank > 0):
-            CEy2 =	(2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
+            psiidx = [slice(0,None), slice(0,None), slice(1,self.npml)]
+            myidx = [slice(0,None), slice(0,None), slice(1,self.npml)]
+            CEy2 = (2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
             self.psi_eyz_m[psiidx] = (self.PMLbz[odd] * self.psi_eyz_m[psiidx]) + (self.PMLaz[odd] * self.diffzHx[myidx])
             self.Ey[myidx] += CEy2*(+((1./self.PMLkappaz[odd]-1.)*self.diffzHx[myidx]) + self.psi_eyz_m[psiidx])
         else:
-            psiidx = [slice(1,None), slice(0,None), slice(0,self.npml)]
-            myidx = [slice(1,None), slice(0,None), slice(0,self.npml)]
-            CEy2 =	(2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
+            psiidx = [slice(1,None), slice(0,None), slice(1,self.npml)]
+            myidx = [slice(1,None), slice(0,None), slice(1,self.npml)]
+            CEy2 = (2*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
             self.psi_eyz_m[psiidx] = (self.PMLbz[odd] * self.psi_eyz_m[psiidx]) + (self.PMLaz[odd] * self.diffzHx[myidx])
             self.Ey[myidx] += CEy2*(+((1./self.PMLkappaz[odd]-1.)*self.diffzHx[myidx]) + self.psi_eyz_m[psiidx])
 

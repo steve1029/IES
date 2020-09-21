@@ -159,11 +159,11 @@ class Sx(S_calculator):
             f = [slice(0,None), None, None]
             Fidx = [slice(xsrt,xsrt+1), slice(ysrt, yend), slice(zsrt, zend)]
 
-            self.DFT_Ey += self.Space.Ey[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
-            self.DFT_Hz += self.Space.Hz[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Ey += self.Space.Ey[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Hz += self.Space.Hz[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
-            self.DFT_Ez += self.Space.Ez[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
-            self.DFT_Hy += self.Space.Hy[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Ez += self.Space.Ez[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Hy += self.Space.Hy[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
             """
             self.clib_rftkernel.do_RFT_to_get_Sx(
@@ -366,11 +366,11 @@ class Sy(S_calculator):
             f = [slice(0,None), None, None]
             Fidx = [slice(xsrt,xend), ysrt, slice(zsrt, zend)]
 
-            self.DFT_Ex += self.Space.Ex[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
-            self.DFT_Hz += self.Space.Hz[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Ex += self.Space.Ex[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Hz += self.Space.Hz[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
-            self.DFT_Ez += self.Space.Ez[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
-            self.DFT_Hx += self.Space.Hx[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Ez += self.Space.Ez[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Hx += self.Space.Hx[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
             """
             self.clib_rftkernel.do_RFT_to_get_Sy(
@@ -436,6 +436,7 @@ class Sy(S_calculator):
 
             self.Sy_area = self.Sy.sum(axis=(1,2)) * self.Space.dx * self.Space.dz
             np.save("./graph/%s_area" %self.name, self.Sy_area)
+
 
 
 class Sz(S_calculator):
@@ -583,11 +584,11 @@ class Sz(S_calculator):
             f = [slice(0,None), None, None]
             Fidx = [slice(xsrt,xend), slice(ysrt, yend), zsrt]
 
-            self.DFT_Ex += self.Space.Ex[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
-            self.DFT_Hy += self.Space.Hy[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Ex += self.Space.Ex[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Hy += self.Space.Hy[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
-            self.DFT_Ey += self.Space.Ey[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
-            self.DFT_Hx += self.Space.Hx[Fidx] * self.xp.exp(2.*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Ey += self.Space.Ey[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
+            self.DFT_Hx += self.Space.Hx[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
             """
             self.clib_rftkernel.do_RFT_to_get_Sz(

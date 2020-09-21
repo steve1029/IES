@@ -23,7 +23,7 @@ Lx, Ly, Lz = Nx*dx, Ny*dy, Nz*dz
 
 courant = 1./4
 dt = courant * min(dx,dy,dz) / c
-Tsteps = 5001
+Tsteps = int(sys.argv[1])
 
 wvc = 300*um
 interval = 2
@@ -33,6 +33,7 @@ plot_per = 100
 
 wvlens = np.arange(200,600, interval)*um
 freqs = c / wvlens
+np.save("./graph/freqs", freqs)
 
 # Set the type of input source.
 Src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
@@ -56,7 +57,7 @@ SF.malloc()
 
 # Put structures
 #Box = structure.Box(TF, Box1_srt, Box1_end, 4., 1.)
-Ball = structure.Sphere(TF, (int(Nx/2)+1, int(Ny/2), int(Nz/2)), 10*dx, 4., 1.)
+Ball = structure.Sphere(TF, (int(Nx/2), int(Ny/2), int(Nz/2)), 10*dx, 4., 1.)
 
 # Set PML and PBC
 TF.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
@@ -72,12 +73,10 @@ IF.apply_PBC({'y':False, 'z':False})
 # Set position of Src.
 #src_xpos = int(Nx/2)
 src_xpos = 20
-src_ypos = int(Ny/2)
-src_zpos = int(Nz/2)
 
 # plane wave normal to x-axis.
-TF.set_src_pos((src_xpos, 1, 1), (src_xpos+1, Ny, Nz))
-IF.set_src_pos((src_xpos, 1, 1), (src_xpos+1, Ny, Nz))
+TF.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Ny, Nz))
+IF.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Ny, Nz))
 
 # line src along y-axis.
 #TF.set_src_pos((src_xpos, 0, src_zpos), (src_xpos+1, Ny, src_zpos+1))
