@@ -61,10 +61,7 @@ Ball = structure.Sphere(TF, (int(Nx/2), int(Ny/2), int(Nz/2)), 10*dx, 4., 1.)
 
 # Set PML and PBC
 TF.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
-TF.apply_PBC({'y':False, 'z':False})
-
 IF.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
-IF.apply_PBC({'y':False, 'z':False})
 
 # Save eps, mu and PML data.
 #TF.save_pml_parameters('./')
