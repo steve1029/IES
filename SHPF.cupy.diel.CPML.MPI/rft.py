@@ -115,35 +115,6 @@ class Sx(S_calculator):
             self.DFT_Hy = self.xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
             self.DFT_Hz = self.xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
 
-        """
-        # Load kernel.
-        if   self.omp_on == False: self.clib_rftkernel = ctypes.cdll.LoadLibrary("./rftkernel.so")
-        elif self.omp_on == True : self.clib_rftkernel = ctypes.cdll.LoadLibrary("./rftkernel.omp.so")
-        else: raise ValueError("Choose True or False")
-
-        ptr1d = np.ctypeslib.ndpointer(dtype=self.Space.dtype, ndim=1, flags='C_CONTIGUOUS')
-        ptr2d = np.ctypeslib.ndpointer(dtype=self.Space.dtype, ndim=2, flags='C_CONTIGUOUS')
-        ptr3d = np.ctypeslib.ndpointer(dtype=self.Space.dtype, ndim=3, flags='C_CONTIGUOUS')
-
-        self.clib_rftkernel.do_RFT_to_get_Sx.restype    = None
-        self.clib_rftkernel.do_RFT_to_get_Sx.argtypes = [
-                                                            ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_double, ctypes.c_double, ctypes.c_double,
-                                                            ptr1d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d
-                                                         ]
-        """
-
     def do_RFT(self, tstep):
 
         if self.gloc != None:
@@ -164,25 +135,6 @@ class Sx(S_calculator):
 
             self.DFT_Ez += self.Space.Ez[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
             self.DFT_Hy += self.Space.Hy[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
-
-            """
-            self.clib_rftkernel.do_RFT_to_get_Sx(
-                                                    self.Space.MPIrank,
-                                                    self.Nf, tstep,
-                                                    self.Space.Ny, self.Space.Nz,
-                                                    self.lloc[0][0], self.lloc[1][0],
-                                                    self.ysrt, self.yend,
-                                                    self.zsrt, self.zend,
-                                                    self.Space.dt, self.Space.dy, self.Space.dz,
-                                                    self.freqs,
-                                                    self.DFT_Ey_re, self.DFT_Ez_re,
-                                                    self.DFT_Ey_im, self.DFT_Ez_im,
-                                                    self.DFT_Hy_re, self.DFT_Hz_re,
-                                                    self.DFT_Hy_im, self.DFT_Hz_im,
-                                                    self.Space.Ey_re, self.Space.Ez_re,
-                                                    self.Space.Hy_re, self.Space.Hz_re
-                                                )
-            """
 
     def get_Sx(self):
 
@@ -207,13 +159,6 @@ class Sx(S_calculator):
             self.xp.save("{}/{}_DFT_Hy_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hy)
             self.xp.save("{}/{}_DFT_Hz_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hz)
             self.xp.save("./graph/%s_area" %self.name, self.Sx_area)
-
-            """
-            np.save("{}/{}_DFT_Ey_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ey_im)
-            np.save("{}/{}_DFT_Ez_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ez_im)
-            np.save("{}/{}_DFT_Hy_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hy_im)
-            np.save("{}/{}_DFT_Hz_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hz_im)
-            """
 
 
 class Sy(S_calculator):
@@ -319,35 +264,6 @@ class Sy(S_calculator):
             self.DFT_Hx = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.cdtype)
             self.DFT_Hz = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.Space.cdtype)
         
-        """
-        # Load kernel.
-        if   self.omp_on == False: self.clib_rftkernel = ctypes.cdll.LoadLibrary("./rftkernel.so")
-        elif self.omp_on == True : self.clib_rftkernel = ctypes.cdll.LoadLibrary("./rftkernel.omp.so")
-        else: raise ValueError("Choose True or False")
-
-        ptr1d = np.ctypeslib.ndpointer(dtype=self.Space.dtype, ndim=1, flags='C_CONTIGUOUS')
-        ptr2d = np.ctypeslib.ndpointer(dtype=self.Space.dtype, ndim=2, flags='C_CONTIGUOUS')
-        ptr3d = np.ctypeslib.ndpointer(dtype=self.Space.dtype, ndim=3, flags='C_CONTIGUOUS')
-
-        self.clib_rftkernel.do_RFT_to_get_Sy.restype  = None
-        self.clib_rftkernel.do_RFT_to_get_Sy.argtypes = [
-                                                            ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_double, ctypes.c_double, ctypes.c_double,
-                                                            ptr1d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d
-                                                         ]
-        """
-
         #print(self.who_get_Sy_gloc)
         #print(self.who_get_Sy_lloc)
 
@@ -372,25 +288,6 @@ class Sy(S_calculator):
             self.DFT_Ez += self.Space.Ez[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
             self.DFT_Hx += self.Space.Hx[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
-            """
-            self.clib_rftkernel.do_RFT_to_get_Sy(
-                                                    self.Space.MPIrank,
-                                                    self.Nf, tstep,
-                                                    self.Space.Ny, self.Space.Nz,
-                                                    self.lloc[0][0], self.lloc[1][0],
-                                                    self.lloc[0][1], self.lloc[1][1],
-                                                    self.lloc[0][2], self.lloc[1][2],
-                                                    self.Space.dt, self.Space.dy, self.Space.dz,
-                                                    self.freqs,
-                                                    self.DFT_Ex_re, self.DFT_Ez_re,
-                                                    self.DFT_Ex_im, self.DFT_Ez_im,
-                                                    self.DFT_Hx_re, self.DFT_Hz_re,
-                                                    self.DFT_Hx_im, self.DFT_Hz_im,
-                                                    self.Space.Ex_re, self.Space.Ez_re,
-                                                    self.Space.Hx_re, self.Space.Hz_re
-                                                )
-            """
-
     def get_Sy(self):
 
         self.Space.MPIcomm.barrier()
@@ -401,13 +298,6 @@ class Sy(S_calculator):
             self.xp.save("{}/{}_DFT_Ez_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ez)
             self.xp.save("{}/{}_DFT_Hx_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hx)
             self.xp.save("{}/{}_DFT_Hz_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hz)
-
-            """
-            self.xp.save("{}/{}_DFT_Ex_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ex_im)
-            self.xp.save("{}/{}_DFT_Ez_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ez_im)
-            self.xp.save("{}/{}_DFT_Hx_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hx_im)
-            self.xp.save("{}/{}_DFT_Hz_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hz_im)
-            """
 
         self.Space.MPIcomm.barrier()
 
@@ -436,7 +326,6 @@ class Sy(S_calculator):
 
             self.Sy_area = self.Sy.sum(axis=(1,2)) * self.Space.dx * self.Space.dz
             np.save("./graph/%s_area" %self.name, self.Sy_area)
-
 
 
 class Sz(S_calculator):
@@ -477,7 +366,7 @@ class Sz(S_calculator):
         self.who_get_Sz_gloc = {} # global locations
         self.who_get_Sz_lloc = {} # local locations
 
-        # Every node has to know who collects Sy.
+        # Every node has to know who collects Sz.
         for MPIrank in range(self.Space.MPIsize):
 
             # Global x index of each node.
@@ -518,6 +407,7 @@ class Sz(S_calculator):
         #if self.Space.MPIrank == 0: print("{} collectors: rank{}" .format(self.name, list(self.who_get_Sz_gloc)))
 
         self.Space.MPIcomm.barrier()
+
         if self.Space.MPIrank in self.who_get_Sz_lloc:
 
             self.gloc = self.who_get_Sz_gloc[self.Space.MPIrank]
@@ -540,35 +430,6 @@ class Sz(S_calculator):
             self.DFT_Hx = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.cdtype)
             self.DFT_Hy = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.Space.cdtype)
         
-        """
-        # Load kernel.
-        if   self.omp_on == False: self.clib_rftkernel = ctypes.cdll.LoadLibrary("./rftkernel.so")
-        elif self.omp_on == True : self.clib_rftkernel = ctypes.cdll.LoadLibrary("./rftkernel.omp.so")
-        else: raise ValueError("Choose True or False")
-
-        ptr1d = np.ctypeslib.ndpointer(dtype=self.Space.dtype, ndim=1, flags='C_CONTIGUOUS')
-        ptr2d = np.ctypeslib.ndpointer(dtype=self.Space.dtype, ndim=2, flags='C_CONTIGUOUS')
-        ptr3d = np.ctypeslib.ndpointer(dtype=self.Space.dtype, ndim=3, flags='C_CONTIGUOUS')
-
-        self.clib_rftkernel.do_RFT_to_get_Sz.restype  = None
-        self.clib_rftkernel.do_RFT_to_get_Sz.argtypes = [
-                                                            ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_int, ctypes.c_int,
-                                                            ctypes.c_double, ctypes.c_double, ctypes.c_double,
-                                                            ptr1d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d,
-                                                            ptr3d, ptr3d
-                                                         ]
-        """
-
     def do_RFT(self, tstep):
 
         if self.Space.MPIrank in self.who_get_Sz_lloc:
@@ -590,25 +451,6 @@ class Sz(S_calculator):
             self.DFT_Ey += self.Space.Ey[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
             self.DFT_Hx += self.Space.Hx[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
-            """
-            self.clib_rftkernel.do_RFT_to_get_Sz(
-                                                    self.Space.MPIrank,
-                                                    len(self.freqs), tstep,
-                                                    self.Space.Ny, self.Space.Nz,
-                                                    self.lloc[0][0], self.lloc[1][0],
-                                                    self.lloc[0][1], self.lloc[1][1],
-                                                    self.lloc[0][2], self.lloc[1][2],
-                                                    self.Space.dt, self.Space.dx, self.Space.dy,
-                                                    self.freqs,
-                                                    self.DFT_Ex_re, self.DFT_Ey_re,
-                                                    self.DFT_Ex_im, self.DFT_Ey_im,
-                                                    self.DFT_Hx_re, self.DFT_Hy_re,
-                                                    self.DFT_Hx_im, self.DFT_Hy_im,
-                                                    self.Space.Ex_re, self.Space.Ey_re,
-                                                    self.Space.Hx_re, self.Space.Hy_re
-                                                )
-            """
-
     def get_Sz(self):
 
         self.Space.MPIcomm.barrier()
@@ -619,13 +461,6 @@ class Sz(S_calculator):
             self.xp.save("{}/{}_DFT_Ey_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ey)
             self.xp.save("{}/{}_DFT_Hx_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hx)
             self.xp.save("{}/{}_DFT_Hy_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hy)
-
-            """
-            self.xp.save("{}/{}_DFT_Ex_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ex_im)
-            self.xp.save("{}/{}_DFT_Ey_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ey_im)
-            self.xp.save("{}/{}_DFT_Hx_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hx_im)
-            self.xp.save("{}/{}_DFT_Hy_im_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Hy_im)
-            """
 
         self.Space.MPIcomm.barrier()
 

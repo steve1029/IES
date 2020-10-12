@@ -47,9 +47,9 @@ Src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
 #-------------------------- Call objects --------------------------#
 #------------------------------------------------------------------#
 
-TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64) # Total field
-IF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64) # Incident field
-SF = space.Empty3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64) # Scattered field
+TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64, engine='cupy') # Total field
+IF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64, engine='cupy') # Incident field
+SF = space.Empty3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64, engine='cupy') # Scattered field
 
 TF.malloc()
 IF.malloc()

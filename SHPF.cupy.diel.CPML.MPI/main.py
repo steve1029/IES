@@ -54,7 +54,7 @@ Box1_end = (round(272*um/dx), round(96*um/dy), round( 96*um/dz))
 #-------------------------- Call objects --------------------------#
 #------------------------------------------------------------------#
 
-Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tstep, np.float32, np.complex64, engine='cupy')
+Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tstep, np.float32, np.complex64, method='SHPF', engine='cupy')
 Space.malloc()
 
 # Put structures

@@ -79,11 +79,13 @@ class Basic3D:
             print("Number of grid points: {:5d} x {:5d} x {:5d}" .format(self.Nx, self.Ny, self.Nz))
             print("Grid spacing: {:.3f} nm, {:.3f} nm, {:.3f} nm" .format(self.dx/self.nm, self.dy/self.nm, self.dz/self.nm))
 
+        self.method = 'SHPF'
         self.engine = 'cupy'
         self.courant = 1./4
 
         if kwargs.get('engine') != None: self.engine = kwargs.get('engine')
         if kwargs.get('courant') != None: self.courant = kwargs.get('courant')
+        if kwargs.get('method') != None: self.courant = kwargs.get('courant')
 
         assert self.engine == 'numpy' or self.engine == 'cupy'
 
@@ -592,23 +594,29 @@ class Basic3D:
         #-----------------------------------------------------------#
 
         # To update Hx
-        #self.diffyEz[:,:-1,:-1] = (self.Ez[:,1:,:-1] - self.Ez[:,:-1,:-1]) / self.dy
-        #self.diffzEy[:,:-1,:-1] = (self.Ey[:,:-1,1:] - self.Ey[:,:-1,:-1]) / self.dz
-        self.diffyEz = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ez, axes=(1,)), axes=(1,))
-        self.diffzEy = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ey, axes=(2,)), axes=(2,))
+        if self.method == 'SHPF':
+            self.diffyEz = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ez, axes=(1,)), axes=(1,))
+            self.diffzEy = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ey, axes=(2,)), axes=(2,))
+        elif self.method == 'FDTD':
+            self.diffyEz[:,:-1,:-1] = (self.Ez[:,1:,:-1] - self.Ez[:,:-1,:-1]) / self.dy
+            self.diffzEy[:,:-1,:-1] = (self.Ey[:,:-1,1:] - self.Ey[:,:-1,:-1]) / self.dz
         #self.diffyEz = self.xp.fft.irfftn(self.iky*self.xp.fft.rfftn(self.Ez, axes=(1,)), axes=(1,))
         #self.diffzEy = self.xp.fft.irfftn(self.ikz*self.xp.fft.rfftn(self.Ey, axes=(2,)), axes=(2,))
 
         # To update Hy
-        #self.diffzEx[:-1,:,:-1] = (self.Ex[:-1,:,1:] - self.Ex[:-1,:,:-1]) / self.dz
         self.diffxEz[:-1,:,:-1] = (self.Ez[1:,:,:-1] - self.Ez[:-1,:,:-1]) / self.dx
-        self.diffzEx = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ex, axes=(2,)), axes=(2,))
+        if self.method == 'SHPF':
+            self.diffzEx = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ex, axes=(2,)), axes=(2,))
+        elif self.method == 'FDTD':
+            self.diffzEx[:-1,:,:-1] = (self.Ex[:-1,:,1:] - self.Ex[:-1,:,:-1]) / self.dz
         #self.diffzEx = self.xp.fft.irfftn(self.ikz*self.xp.fft.rfftn(self.Ex, axes=(2,)), axes=(2,))
 
         # To update Hz
         self.diffxEy[:-1,:-1,:] = (self.Ey[1:,:-1,:] - self.Ey[:-1,:-1,:]) / self.dx
-        #self.diffyEx[:-1,:-1,:] = (self.Ex[:-1,1:,:] - self.Ex[:-1,:-1,:]) / self.dy
-        self.diffyEx = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ex, axes=(1,)), axes=(1,))
+        if self.method == 'SHPF':
+            self.diffyEx = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ex, axes=(1,)), axes=(1,))
+        elif self.method == 'FDTD':
+            self.diffyEx[:-1,:-1,:] = (self.Ex[:-1,1:,:] - self.Ex[:-1,:-1,:]) / self.dy
         #self.diffyEx = self.xp.fft.irfftn(self.iky*self.xp.fft.rfftn(self.Ex, axes=(1,)), axes=(1,))
 
         if self.MPIrank != (self.MPIsize-1):
@@ -731,23 +739,29 @@ class Basic3D:
         #-----------------------------------------------------------#
 
         # Get derivatives of Hy and Hz to update Ex
-        #self.diffyHz[:,1:,1:] = (self.Hz[:,1:,1:] - self.Hz[:,:-1,1:]) / self.dy
-        #self.diffzHy[:,1:,1:] = (self.Hy[:,1:,1:] - self.Hy[:,1:,:-1]) / self.dz
-        self.diffyHz = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hz, axes=(1,)), axes=(1,))
-        self.diffzHy = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hy, axes=(2,)), axes=(2,))
+        if self.method == 'SHPF':
+            self.diffyHz = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hz, axes=(1,)), axes=(1,))
+            self.diffzHy = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hy, axes=(2,)), axes=(2,))
+        elif self.method == 'FDTD':
+            self.diffyHz[:,1:,1:] = (self.Hz[:,1:,1:] - self.Hz[:,:-1,1:]) / self.dy
+            self.diffzHy[:,1:,1:] = (self.Hy[:,1:,1:] - self.Hy[:,1:,:-1]) / self.dz
         #self.diffyHz = self.xp.fft.irfftn(self.iky*self.xp.fft.rfftn(self.Hz, axes=(1,)), axes=(1,))
         #self.diffzHy = self.xp.fft.irfftn(self.ikz*self.xp.fft.rfftn(self.Hy, axes=(2,)), axes=(2,))
 
         # Get derivatives of Hx and Hz to update Ey
-        #self.diffzHx[1:,:,1:] = (self.Hx[1:,:,1:] - self.Hx[1:,:,:-1]) / self.dz
-        self.diffzHx = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hx, axes=(2,)), axes=(2,))
+        if self.method == 'SHPF':
+            self.diffzHx = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hx, axes=(2,)), axes=(2,))
+        elif self.method == 'FDTD':
+            self.diffzHx[1:,:,1:] = (self.Hx[1:,:,1:] - self.Hx[1:,:,:-1]) / self.dz
         #self.diffzHx = self.xp.fft.irfftn(self.ikz*self.xp.fft.rfftn(self.Hx, axes=(2,)), axes=(2,))
         self.diffxHz[1:,:,1:] = (self.Hz[1:,:,1:] - self.Hz[:-1,:,1:]) / self.dx
 
         # Get derivatives of Hx and Hy to update Ez
         self.diffxHy[1:,1:,:] = (self.Hy[1:,1:,:] - self.Hy[:-1,1:,:]) / self.dx
-        #self.diffyHx[1:,1:,:] = (self.Hx[1:,1:,:] - self.Hx[1:,:-1,:]) / self.dy
-        self.diffyHx = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hx, axes=(1,)), axes=(1,))
+        if self.method == 'SHPF':
+            self.diffyHx = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hx, axes=(1,)), axes=(1,))
+        elif self.method == 'FDTD':
+            self.diffyHx[1:,1:,:] = (self.Hx[1:,1:,:] - self.Hx[1:,:-1,:]) / self.dy
         #self.diffyHx = self.xp.fft.irfftn(self.iky*self.xp.fft.rfftn(self.Hx, axes=(1,)), axes=(1,))
 
         if self.MPIrank != 0:
