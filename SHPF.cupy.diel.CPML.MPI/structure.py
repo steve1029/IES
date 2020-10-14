@@ -13,69 +13,67 @@ class Structure:
     
         self.Space = Space
 
-class Box(Structure):
+    def _get_local_x_loc(self, gxsrts, gxends):
+        """Each node get the local x location of the structure.
 
-    def __init__(self, Space, srt, end, eps_r, mu_r):
-        """Set a rectangular box on a simulation space.
-        
-        PARAMETERS
+        Parameters
         ----------
+        gxsrts: float
+            global x start point of the structure.
 
-        eps_r : float
-            Relative electric constant or permitivity.
-
-        mu_ r : float
-            Relative magnetic constant or permeability.
-            
-        size  : a list or tuple (iterable object) of ints
-            x: height, y: width, z: thickness of a box.
-
-        loc   : a list or typle (iterable objext) of ints
-            x : x coordinate of bottom left upper coner
-            y : y coordinate of bottom left upper coner
-            z : z coordinate of bottom left upper coner
+        gxends: float
+            global x end point of the structure.
 
         Returns
         -------
-        None
+        gxloc: tuple.
+            global x location of the structure.
+        lxloc: tuple.
+            local x location of the structure in each node.
         """
 
-        self.eps_r = eps_r
-        self.mu_r = mu_r    
+        assert gxsrts >= 0
+        assert gxends < self.Space.Nx
 
-        Structure.__init__(self, Space)
+        # Global x index of the border of each node.
+        bxsrt = self.Space.myNx_indice[self.Space.MPIrank][0]
+        bxend = self.Space.myNx_indice[self.Space.MPIrank][1]
 
-        assert len(srt)  == 3, "Only 3D material is possible."
-        assert len(end  )  == 3, "Only 3D material is possible."
+        # Initialize global and local x locations of the structure.
+        gxloc = None # global x location.
+        lxloc = None # local x location.
 
-        assert type(eps_r) == float, "Only isotropic media is possible. eps_r must be a single float."  
-        assert type( mu_r) == float, "Only isotropic media is possible.  mu_r must be a single float."  
+        # Front nodes that contains no structures.
+        if gxsrts > bxend:
+            gxloc = None
+            lxloc = None
 
-        # Start index of the structure.
-        xsrt = srt[0]
-        ysrt = srt[1]
-        zsrt = srt[2]
+        # Rear nodes that contains no structures.
+        if gxends <  bxsrt:
+            gxloc = None
+            lxloc = None
 
-        # End index of the structure.
-        xend = end[0]
-        yend = end[1]
-        zend = end[2]
+        # First part when the structure is small.
+        if gxsrts >= bxsrt and gxsrts < bxend and gxends <= bxend:
+            gxloc = (gxsrts      , gxends      )
+            lxloc = (gxsrts-bxsrt, gxends-bxsrt)
 
-        assert xsrt < xend
-        assert ysrt < yend
-        assert zsrt < zend
+        # First part when the structure is big.
+        if gxsrts >= bxsrt and gxsrts < bxend and gxends > bxend:
+            gxloc = (gxsrts      , bxend      )
+            lxloc = (gxsrts-bxsrt, bxend-bxsrt)
 
-        um = 1e-6
-        nm = 1e-9
+        # Middle node but big.
+        if gxsrts < bxsrt and gxends > bxend:
+            gxloc = (bxsrt      , bxend      )
+            lxloc = (bxsrt-bxsrt, bxend-bxsrt)
 
-        Space.MPIcomm.barrier()
+        # Last part.
+        if gxsrts < bxsrt and gxends > bxsrt and gxends <= bxend:
+            gxloc = (bxsrt      , gxends    )
+            lxloc = (bxsrt-bxsrt, gxends-bxsrt)
 
-        if Space.MPIrank == 0:
-            print("Box size: x={} um, y={} um, z={:.3f} um" .format((xend-xsrt)*Space.dx/um, (yend-ysrt)*Space.dy/um, (zend-zsrt)*Space.dz/um))
-
-        MPIrank = self.Space.MPIrank
-        MPIsize = self.Space.MPIsize
-
+        """
         # Global x index of each node.
         node_xsrt = self.Space.myNx_indice[MPIrank][0]
         node_xend = self.Space.myNx_indice[MPIrank][1]
@@ -101,29 +99,84 @@ class Box(Structure):
         if xsrt >  node_xend:
             self.gloc = None 
             self.lloc = None 
+        """
 
-        self.Space.MPIcomm.Barrier()
+        return gxloc, lxloc
 
-        if self.gloc != None:
-            self.local_size = (self.lloc[1][0] - self.lloc[0][0], yend-ysrt, zend-zsrt)
+
+class Box(Structure):
+
+    def __init__(self, Space, srt, end, eps_r, mu_r):
+        """Set a rectangular box on a simulation space.
+        
+        PARAMETERS
+        ----------
+        Space: space object.
+
+        srt: tuple.
+
+        end: tuple.
+
+        eps_r : float
+            Relative electric constant or permitivity.
+
+        mu_ r : float
+            Relative magnetic constant or permeability.
+            
+        Returns
+        -------
+        None
+        """
+
+        self.eps_r = eps_r
+        self.mu_r = mu_r    
+
+        Structure.__init__(self, Space)
+
+        assert len(srt) == 3, "Only 3D material is possible."
+        assert len(end) == 3, "Only 3D material is possible."
+
+        assert type(eps_r) == float, "Only isotropic media is possible. eps_r must be a single float."  
+        assert type( mu_r) == float, "Only isotropic media is possible.  mu_r must be a single float."  
+
+        # Start index of the structure.
+        xsrt = round(srt[0]/self.Space.dx)
+        ysrt = round(srt[1]/self.Space.dy)
+        zsrt = round(srt[2]/self.Space.dz)
+
+        # End index of the structure.
+        xend = round(end[0]/self.Space.dx)
+        yend = round(end[1]/self.Space.dy)
+        zend = round(end[2]/self.Space.dz)
+
+        assert xsrt < xend
+        assert ysrt < yend
+        assert zsrt < zend
+
+        um = 1e-6
+        nm = 1e-9
+
+        if Space.MPIrank == 0:
+            print("Box size: x={:5.1f} um, y={:5.1f} um, z={:5.1f} um" \
+                .format((end[1]-srt[0])/um, (end[1]-srt[1])/um, (end[2]-srt[2])/um))
+
+        self.gxloc, self.lxloc = Structure._get_local_x_loc(self, xsrt, xend)
+
+        if self.gxloc != None:
+            #self.local_size = (self.lxloc[1] - self.lxloc[0], yend-ysrt, zend-zsrt)
             print("rank {:>2}: x idx of Box >>> global \"{:4d},{:4d}\" and local \"{:4d},{:4d}\"" \
-                    .format(MPIrank, self.gloc[0][0], self.gloc[1][0], self.lloc[0][0], self.lloc[1][0]))
+                    .format(self.Space.MPIrank, self.gxloc[0], self.gxloc[1], self.lxloc[0], self.lxloc[1]))
 
-            loc_xsrt = self.lloc[0][0]
-            loc_ysrt = self.lloc[0][1]
-            loc_zsrt = self.lloc[0][2]
+            loc_xsrt = self.lxloc[0]
+            loc_xend = self.lxloc[1]
 
-            loc_xend = self.lloc[1][0]
-            loc_yend = self.lloc[1][1]
-            loc_zend = self.lloc[1][2]
+            self.Space.eps_Ex[loc_xsrt:loc_xend, ysrt:yend, zsrt:zend] = self.eps_r * epsilon_0
+            self.Space.eps_Ey[loc_xsrt:loc_xend, ysrt:yend, zsrt:zend] = self.eps_r * epsilon_0
+            self.Space.eps_Ez[loc_xsrt:loc_xend, ysrt:yend, zsrt:zend] = self.eps_r * epsilon_0
 
-            self.Space.eps_Ex[loc_xsrt:loc_xend, loc_ysrt:loc_yend, loc_zsrt:loc_zend] = self.eps_r * epsilon_0
-            self.Space.eps_Ey[loc_xsrt:loc_xend, loc_ysrt:loc_yend, loc_zsrt:loc_zend] = self.eps_r * epsilon_0
-            self.Space.eps_Ez[loc_xsrt:loc_xend, loc_ysrt:loc_yend, loc_zsrt:loc_zend] = self.eps_r * epsilon_0
-
-            self.Space. mu_Hx[loc_xsrt:loc_xend, loc_ysrt:loc_yend, loc_zsrt:loc_zend] = self. mu_r * mu_0
-            self.Space. mu_Hy[loc_xsrt:loc_xend, loc_ysrt:loc_yend, loc_zsrt:loc_zend] = self. mu_r * mu_0
-            self.Space. mu_Hz[loc_xsrt:loc_xend, loc_ysrt:loc_yend, loc_zsrt:loc_zend] = self. mu_r * mu_0
+            self.Space. mu_Hx[loc_xsrt:loc_xend, ysrt:yend, zsrt:zend] = self. mu_r * mu_0
+            self.Space. mu_Hy[loc_xsrt:loc_xend, ysrt:yend, zsrt:zend] = self. mu_r * mu_0
+            self.Space. mu_Hz[loc_xsrt:loc_xend, ysrt:yend, zsrt:zend] = self. mu_r * mu_0
 
         return
 
@@ -326,7 +379,6 @@ class Cone(Structure):
         return
 
 
-
 class Sphere(Structure):
 
     def __init__(self, Space, center, radius, eps_r, mu_r):
@@ -421,5 +473,139 @@ class Sphere(Structure):
                             self.Space. mu_Hz[lxloc[i], j, k] = self. mu_r * mu_0
 
             #print(MPIrank, self.gxloc, self.lxloc, rx, rr)
+
+        return
+
+class Cylinder(Structure):
+
+    def __init__(self, space, radius, height, center, eps_r, mu_r):
+        """Cylinder object in Basic3D structure.
+
+        Parameters
+        ----------
+        radius: float.
+
+        height: float.
+            a tuple with shape (xsrt,xend) showing the height of the cylinder such that (xsrt, xend).
+
+        center: tuple.
+            a (y,z) coordinate of the center of the cylinder.
+
+        eps_r: float.
+
+        mu_r: float.
+
+        Returns
+        -------
+        None.
+   
+        """
+
+        Structure.__init__(self, space)
+
+        self.eps_r = eps_r
+        self. mu_r =  mu_r
+
+        dx = self.Space.dx
+        dy = self.Space.dy
+        dz = self.Space.dz
+
+        MPIrank = self.Space.MPIrank
+        MPIsize = self.Space.MPIsize
+
+        gxsrts = round(height[0]/dx) # Global srt index of the structure.
+        gxends = round(height[1]/dx) # Global end index of the structure.
+
+        self.gxloc, self.lxloc = Structure._get_local_x_loc(self, gxsrts, gxends)
+
+        if self.gxloc != None:      
+
+            for j in range(self.Space.Ny):
+                for k in range(self.Space.Nz):
+
+                    if (((j-center[1])*dy)**2 + ((k-center[2])*dz)**2) <= (radius**2):
+
+                        self.Space.eps_Ex[self.lxloc[0]:self.lxloc[1], j, k] = self.eps_r * epsilon_0
+                        self.Space.eps_Ey[self.lxloc[0]:self.lxloc[1], j, k] = self.eps_r * epsilon_0
+                        self.Space.eps_Ez[self.lxloc[0]:self.lxloc[1], j, k] = self.eps_r * epsilon_0
+
+                        self.Space. mu_Hx[self.lxloc[0]:self.lxloc[1], j, k] = self. mu_r * mu_0
+                        self.Space. mu_Hy[self.lxloc[0]:self.lxloc[1], j, k] = self. mu_r * mu_0
+                        self.Space. mu_Hz[self.lxloc[0]:self.lxloc[1], j, k] = self. mu_r * mu_0
+
+        return
+
+
+class Cylinder_slab(Structure):
+
+    def __init__(self, space, srt, end, radius, llm, dc, eps_r, mu_r):
+        """Cylinder object in Basic3D structure.
+
+        Parameters
+        ----------
+        radius: float.
+
+        srt: tuple.
+            (x,y,z) coordinate of the left, lower most point of the slab.
+
+        end: tuple.
+            (x,y,z) coorfinate of the right, upper most point of the slab.
+
+        llm: tuple.
+            (y,z) coordinate of the center of the left, lower most cylinder.
+
+        dc: tuple.
+            y,z distance between the center of each hole.
+
+        eps_r: float.
+
+        mu_r: float.
+
+        Returns
+        -------
+        None.
+   
+        """
+
+        Structure.__init__(self, space)
+
+        self.eps_r = eps_r
+        self. mu_r =  mu_r
+
+        dx = self.Space.dx
+        dy = self.Space.dy
+        dz = self.Space.dz
+
+        MPIrank = self.Space.MPIrank
+        MPIsize = self.Space.MPIsize
+
+        self.gxloc, self.lxloc = Structure._get_local_x_loc(self, srt[0], end[0])
+
+        if self.gxloc != None:      
+
+            Box(self.Space, srt, end, eps_r, mu_r)
+            hollows = []
+
+            Lx = self.Space.Lx
+            Ly = self.Space.Ly
+            Lz = self.Space.Lz
+            dy = self.Space.dy
+            dz = self.Space.dz
+
+            j = 0
+            k = 0
+            center = (0,0)
+
+            while (llm[0]*dy + dc[0]*j*dy + radius) < Ly:
+                while (llm[1]*dz + dc[1]*k*dz + radius) < Lz:
+
+                    center[0] = llm[0]*dy + dc[0]*j*dy
+                    center[1] = llm[1]*dz + dc[1]*k*dz
+
+                    Cylinder(self.Space, radius, height, center, eps_r, mu_r)
+
+                    k += 1
+
+                j += 1
 
         return
