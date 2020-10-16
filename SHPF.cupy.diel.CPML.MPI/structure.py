@@ -70,7 +70,7 @@ class Structure:
 
         # Last part.
         if gxsrts < bxsrt and gxends > bxsrt and gxends <= bxend:
-            gxloc = (bxsrt      , gxends    )
+            gxloc = (bxsrt      , gxends      )
             lxloc = (bxsrt-bxsrt, gxends-bxsrt)
 
         """
@@ -158,13 +158,13 @@ class Box(Structure):
 
         if Space.MPIrank == 0:
             print("Box size: x={:5.1f} um, y={:5.1f} um, z={:5.1f} um" \
-                .format((end[1]-srt[0])/um, (end[1]-srt[1])/um, (end[2]-srt[2])/um))
+                .format((end[0]-srt[0])/um, (end[1]-srt[1])/um, (end[2]-srt[2])/um))
 
         self.gxloc, self.lxloc = Structure._get_local_x_loc(self, xsrt, xend)
 
         if self.gxloc != None:
             #self.local_size = (self.lxloc[1] - self.lxloc[0], yend-ysrt, zend-zsrt)
-            print("rank {:>2}: x idx of Box >>> global \"{:4d},{:4d}\" and local \"{:4d},{:4d}\"" \
+            print("rank {:>2}: x idx of a Box >>> global \"{:4d},{:4d}\" and local \"{:4d},{:4d}\"" \
                     .format(self.Space.MPIrank, self.gxloc[0], self.gxloc[1], self.lxloc[0], self.lxloc[1]))
 
             loc_xsrt = self.lxloc[0]
@@ -523,7 +523,7 @@ class Cylinder(Structure):
             for j in range(self.Space.Ny):
                 for k in range(self.Space.Nz):
 
-                    if (((j-center[1])*dy)**2 + ((k-center[2])*dz)**2) <= (radius**2):
+                    if (((j-center[0])*dy)**2 + ((k-center[1])*dz)**2) <= (radius**2):
 
                         self.Space.eps_Ex[self.lxloc[0]:self.lxloc[1], j, k] = self.eps_r * epsilon_0
                         self.Space.eps_Ey[self.lxloc[0]:self.lxloc[1], j, k] = self.eps_r * epsilon_0

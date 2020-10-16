@@ -1,30 +1,29 @@
-import time, os, datetime, sys, ctypes, psutil
+#!/usr/bin/env python
+import os, time, datetime, sys, psutil
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from mpi4py import MPI
-from mpl_toolkits.mplot3d import axes3d
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from scipy.constants import c, mu_0, epsilon_0
 import numpy as np
-import cupy as cp
+from mpi4py import MPI
+import matplotlib.pyplot as plt
+from scipy.constants import c
 import source, space, plotfield, structure, rft
 
 #------------------------------------------------------------------#
 #----------------------- Paramter settings ------------------------#
 #------------------------------------------------------------------#
+
 savedir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/'
 
 nm = 1e-9
 um = 1e-6
 
-Lx, Ly, Lz = 128*10*um, 128*10*um, 128*10*um
 Nx, Ny, Nz = 128, 128, 128
-dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz
+dx, dy, dz = 10*um, 10*um, 10*um
+Lx, Ly, Lz = Nx*dx, Ny*dy, Nz*dz
 
 courant = 1./4
 dt = courant * min(dx,dy,dz) / c
-Tsteps = 2001
+Tsteps = int(sys.argv[1])
 
 wvc = 300*um
 interval = 2
@@ -32,15 +31,15 @@ spread   = 0.3
 pick_pos = 1000
 plot_per = 100
 
-wvlens = np.arange(200, 600, interval) * um
+wvlens = np.arange(200,600, interval)*um
 freqs = c / wvlens
 np.save("./graph/freqs", freqs)
 
 # Set the type of input source.
-Src = source.Gaussian(dt, wvc, spread, pick_pos, np.float64)
-Src.plot_pulse(Tsteps, freqs, savedir)
+Src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
+#Src.plot_pulse(Tsteps, freqs, savedir)
 #Src = source.Sine(dt, np.float64)
-#Src.set_wvlen( 50 * um)
+#Src.set_wvlen( 20 * um)
 
 #sys.exit()
 
@@ -57,44 +56,54 @@ IF.malloc()
 SF.malloc()
 
 # Put structures
-Box1_srt = (500*um,    0*um,    0*um)
-Box1_end = (700*um, 1280*um, 1280*um)
-box = structure.Box(TF, Box1_srt, Box1_end, 4., 1.)
-
-radius = 160*um
+radius = 200*um
 height = (500*um, 700*um)
 center = (640*um, 640*um)
-#cylinder = structure.Cylinder(TF, radius, height, center, 4., 1.)
+cylinder = structure.Cylinder(TF, radius, height, center, 4., 1.)
 
 # Set PML and PBC
 TF.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
 IF.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
 
 # Save eps, mu and PML data.
-#TF.save_PML_parameters('./')
+#TF.save_pml_parameters('./')
 #TF.save_eps_mu(savedir)
 
-# Set source position.
+# Set position of Src.
 #src_xpos = int(Nx/2)
-src_xpos = 40
+src_xpos = 20
 
-# plain wave normal to x.
+# plane wave normal to x-axis.
 TF.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Ny, Nz))
 IF.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Ny, Nz))
 
-# Line source along y axis.
-#TF.set_src_pos((src_xpos, 0, TF.Nzc), (src_xpos+1, TF.Ny, TF.Nzc+1))
+# line src along y-axis.
+#TF.set_src_pos((src_xpos, 0, src_zpos), (src_xpos+1, Ny, src_zpos+1))
+#IF.set_src_pos((src_xpos, 0, src_zpos), (src_xpos+1, Ny, src_zpos+1))
 
-# Line source along z axis.
-#TF.set_src_pos((src_xpos, TF.Nyc, 0), (src_xpos+1, TF.Nyc+1, TF.Nz))
+# line src along z-axis.
+#TF.set_src_pos((src_xpos, src_ypos, 0), (src_xpos+1, src_ypos+1, Nz))
+#IF.set_src_pos((src_xpos, src_ypos, 0), (src_xpos+1, src_ypos+1, Nz))
 
-# Set Poynting vector calculator.
-leftx, rightx = int(Nx/4), int(Nx*3/4)
-lefty, righty = 0, Ny
-leftz, rightz = 0, Nz
+# point src at the center.
+#TF.set_src_pos((src_xpos, src_ypos, src_zpos), (src_xpos+1, src_ypos+1, src_zpos+1))
+#IF.set_src_pos((src_xpos, src_ypos, src_zpos), (src_xpos+1, src_ypos+1, src_zpos+1))
 
-IF_Sx_R_getter = rft.Sx("SF_R", "./graph/Sx", IF, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, 'cupy')
-SF_Sx_R_getter = rft.Sx("SF_R", "./graph/Sx", SF, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, 'cupy')
+# Set S calculator
+leftx, rightx = 320*um, 960*um
+lefty, righty = 320*um, 960*um
+leftz, rightz = 320*um, 960*um
+
+IF_Sx_R_calculator = rft.Sx("Sx_IF_R", "./graph/Sx", IF, rightx, (lefty, leftz), (righty, rightz), freqs, 'cupy')
+
+SF_Sx_L_calculator = rft.Sx("Sx_SF_L", "./graph/Sx", SF,  leftx, (lefty, leftz), (righty, rightz), freqs, 'cupy')
+SF_Sx_R_calculator = rft.Sx("Sx_SF_R", "./graph/Sx", SF, rightx, (lefty, leftz), (righty, rightz), freqs, 'cupy')
+
+SF_Sy_L_calculator = rft.Sy("Sy_SF_L", "./graph/Sy", SF,  lefty, (leftx, leftz), (rightx, rightz), freqs, 'cupy')
+SF_Sy_R_calculator = rft.Sy("Sy_SF_R", "./graph/Sy", SF, righty, (leftx, leftz), (rightx, rightz), freqs, 'cupy')
+
+SF_Sz_L_calculator = rft.Sz("Sz_SF_L", "./graph/Sz", SF,  leftz, (leftx, lefty), (rightx, righty), freqs, 'cupy')
+SF_Sz_R_calculator = rft.Sz("Sz_SF_R", "./graph/Sz", SF, rightz, (leftx, lefty), (rightx, righty), freqs, 'cupy')
 
 # Set plotfield options
 TFgraphtool = plotfield.Graphtool(TF, 'TF', savedir)
@@ -105,19 +114,22 @@ SFgraphtool = plotfield.Graphtool(SF, 'SF', savedir)
 start_time = datetime.datetime.now()
 
 # time loop begins
-for tstep in range(TF.tsteps):
+for tstep in range(Tsteps):
 
     # At the start point
-    if tstep == 0 and TF.MPIrank == 0:
-        print("Total time step: %d" %(TF.tsteps))
-        print(("Size of a total field array : %05.2f Mbytes" %(TF.TOTAL_NUM_GRID_SIZE)))
-        print("Simulation start: {}".format(datetime.datetime.now()))
-    
-    pulse_re = Src.pulse_re(tstep, pick_pos)
+    if tstep == 0:
+        TF.MPIcomm.Barrier()
+        if TF.MPIrank == 0:
+            print("Total time step: %d" %(TF.tsteps))
+            print(("Size of a total field array : %05.2f Mbytes" %(TF.TOTAL_NUM_GRID_SIZE)))
+            print("Simulation start: {}".format(datetime.datetime.now()))
+        
+    # pulse for gaussian wave
+    pulse_re = Src.pulse_re(tstep, pick_pos=pick_pos)
+    pulse_im = Src.pulse_im(tstep, pick_pos=pick_pos)
 
     TF.put_src('Ey', pulse_re, 'soft')
     IF.put_src('Ey', pulse_re, 'soft')
-    #TF.put_src('Ez', pulse_re, 'soft')
 
     TF.updateH(tstep)
     IF.updateH(tstep)
@@ -127,8 +139,16 @@ for tstep in range(TF.tsteps):
 
     SF.get_SF(TF, IF)
 
-    IF_Sx_R_getter.do_RFT(tstep)
-    SF_Sx_R_getter.do_RFT(tstep)
+    IF_Sx_R_calculator.do_RFT(tstep)
+
+    SF_Sx_L_calculator.do_RFT(tstep)
+    SF_Sx_R_calculator.do_RFT(tstep)
+
+    SF_Sy_L_calculator.do_RFT(tstep)
+    SF_Sy_R_calculator.do_RFT(tstep)
+
+    SF_Sz_L_calculator.do_RFT(tstep)
+    SF_Sz_R_calculator.do_RFT(tstep)
 
     # Plot the field profile
     if tstep % plot_per == 0:
@@ -162,8 +182,16 @@ for tstep in range(TF.tsteps):
             interval_time = datetime.datetime.now()
             print(("time: %s, step: %05d, %5.2f%%" %(interval_time-start_time, tstep, 100.*tstep/TF.tsteps)))
 
-IF_Sx_R_getter.get_Sx()
-SF_Sx_R_getter.get_Sx()
+IF_Sx_R_calculator.get_Sx()
+
+SF_Sx_L_calculator.get_Sx()
+SF_Sx_R_calculator.get_Sx()
+
+SF_Sy_L_calculator.get_Sy()
+SF_Sy_R_calculator.get_Sy()
+
+SF_Sz_L_calculator.get_Sz()
+SF_Sz_R_calculator.get_Sz()
 
 if TF.MPIrank == 0:
 

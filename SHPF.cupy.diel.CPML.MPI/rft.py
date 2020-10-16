@@ -6,17 +6,11 @@ import matplotlib.pyplot as plt
 
 class S_calculator:
 
-    def __init__(self, name, path, Space, srt, end, freqs, engine):
+    def __init__(self, name, path, Space, freqs, engine):
 
         self.engine = engine
         if self.engine == 'cupy' : self.xp = cp
         else: self.xp = np
-
-        assert type(srt) == tuple
-        assert type(end) == tuple
-        
-        assert len(srt) == 3
-        assert len(end) == 3
 
         self.name = name
         self.Nf = len(freqs)
@@ -32,24 +26,104 @@ class S_calculator:
             if os.path.exists(self.path) == True: pass
             else: os.mkdir(self.path)
 
-        # Start index of the structure.
-        self.xsrt = srt[0]
-        self.ysrt = srt[1]
-        self.zsrt = srt[2]
-
-        # End index of the structure.
-        self.xend = end[0]
-        self.yend = end[1]
-        self.zend = end[2]
-
         # Initial global/local location.
         self.gloc = None
         self.lloc = None
 
+    def _get_local_x_loc(self, gxsrts, gxends):
+        """Each node get the local x location of the structure.
+
+        Parameters
+        ----------
+        gxsrts: float
+            global x start point of the structure.
+
+        gxends: float
+            global x end point of the structure.
+
+        Returns
+        -------
+        gxloc: tuple.
+            global x location of the structure.
+        lxloc: tuple.
+            local x location of the structure in each node.
+        """
+
+        assert gxsrts >= 0
+        assert gxends < self.Space.Nx
+
+        # Global x index of the border of each node.
+        bxsrt = self.Space.myNx_indice[self.Space.MPIrank][0]
+        bxend = self.Space.myNx_indice[self.Space.MPIrank][1]
+
+        # Initialize global and local x locations of the structure.
+        gxloc = None # global x location.
+        lxloc = None # local x location.
+
+        # Front nodes that contains no structures.
+        if gxsrts > bxend:
+            gxloc = None
+            lxloc = None
+
+        # Rear nodes that contains no structures.
+        if gxends <  bxsrt:
+            gxloc = None
+            lxloc = None
+
+        # First part when the structure is small.
+        if gxsrts >= bxsrt and gxsrts < bxend and gxends <= bxend:
+            gxloc = (gxsrts      , gxends      )
+            lxloc = (gxsrts-bxsrt, gxends-bxsrt)
+
+        # First part when the structure is big.
+        if gxsrts >= bxsrt and gxsrts < bxend and gxends > bxend:
+            gxloc = (gxsrts      , bxend      )
+            lxloc = (gxsrts-bxsrt, bxend-bxsrt)
+
+        # Middle node but big.
+        if gxsrts < bxsrt and gxends > bxend:
+            gxloc = (bxsrt      , bxend      )
+            lxloc = (bxsrt-bxsrt, bxend-bxsrt)
+
+        # Last part.
+        if gxsrts < bxsrt and gxends > bxsrt and gxends <= bxend:
+            gxloc = (bxsrt      , gxends      )
+            lxloc = (bxsrt-bxsrt, gxends-bxsrt)
+
+        """
+        # Global x index of each node.
+        node_xsrt = self.Space.myNx_indice[MPIrank][0]
+        node_xend = self.Space.myNx_indice[MPIrank][1]
+
+        self.gloc = None 
+        self.lloc = None 
+    
+        if xend <  node_xsrt:
+            self.gloc = None 
+            self.lloc = None 
+        if xsrt <  node_xsrt and xend > node_xsrt and xend <= node_xend:
+            self.gloc = ((node_xsrt          , ysrt, zsrt), (xend          , yend, zend))
+            self.lloc = ((node_xsrt-node_xsrt, ysrt, zsrt), (xend-node_xsrt, yend, zend))
+        if xsrt <  node_xsrt and xend > node_xend:
+            self.gloc = ((node_xsrt          , ysrt, zsrt), (node_xend          , yend, zend))
+            self.lloc = ((node_xsrt-node_xsrt, ysrt, zsrt), (node_xend-node_xsrt, yend, zend))
+        if xsrt >= node_xsrt and xsrt < node_xend and xend <= node_xend:
+            self.gloc = ((xsrt          , ysrt, zsrt), (xend          , yend, zend))
+            self.lloc = ((xsrt-node_xsrt, ysrt, zsrt), (xend-node_xsrt, yend, zend))
+        if xsrt >= node_xsrt and xsrt < node_xend and xend >  node_xend:
+            self.gloc = ((xsrt          , ysrt, zsrt), (node_xend          , yend, zend))
+            self.lloc = ((xsrt-node_xsrt, ysrt, zsrt), (node_xend-node_xsrt, yend, zend))
+        if xsrt >  node_xend:
+            self.gloc = None 
+            self.lloc = None 
+        """
+
+        return gxloc, lxloc
+
  
 class Sx(S_calculator):
 
-    def __init__(self, name, path, Space, srt, end, freqs, engine):
+    def __init__(self, name, path, Space, xloc, srt, end, freqs, engine):
         """Sx collector object.
 
         Args:
@@ -57,9 +131,14 @@ class Sx(S_calculator):
 
             Space: Space object.
 
+            xloc: float
+                x location of a collector.
+
             srt: tuple
+                (ysrt, zsrt)
 
             end: tuple
+                (yend, zend)
 
             freqs: ndarray
 
@@ -70,65 +149,41 @@ class Sx(S_calculator):
             None
         """
 
-        assert (end[0]-srt[0]) == 1, "Sx Collector must have 2D shape with x-thick = 1."
-        S_calculator.__init__(self, name, path, Space, srt, end, freqs, engine)
+        S_calculator.__init__(self, name, path, Space, freqs, engine)
 
-        # Local variables for readable code.
-        xsrt = self.xsrt
-        ysrt = self.ysrt
-        zsrt = self.zsrt
-        xend = self.xend
-        yend = self.yend
-        zend = self.zend
+        # Start loc of the structure.
+        self.xsrt = int(xloc  /Space.dx)
+        self.ysrt = int(srt[0]/Space.dy)
+        self.zsrt = int(srt[1]/Space.dz)
 
-       # Global x index of each node.
-        node_xsrt = self.Space.myNx_indice[self.Space.MPIrank][0]
-        node_xend = self.Space.myNx_indice[self.Space.MPIrank][1]
+        # End loc of the structure.
+        self.xend = self.xsrt + 1
+        self.yend = int(end[0]/Space.dy)
+        self.zend = int(end[1]/Space.dz)
 
-        if xend <  node_xsrt:
-            self.gloc = None
-            self.lloc = None
-        if xsrt <  node_xsrt and xend > node_xsrt and xend <= node_xend:
-            self.gloc = ((node_xsrt          , ysrt, zsrt), (       xend          , yend, zend))
-            self.lloc = ((node_xsrt-node_xsrt, ysrt, zsrt), (       xend-node_xsrt, yend, zend))
-        if xsrt <  node_xsrt and xend > node_xend:
-            self.gloc = ((node_xsrt          , ysrt, zsrt), (node_xend          , yend, zend))
-            self.lloc = ((node_xsrt-node_xsrt, ysrt, zsrt), (node_xend-node_xsrt, yend, zend))
-        if xsrt >= node_xsrt and xsrt < node_xend and xend <= node_xend:
-            self.gloc = ((xsrt          , ysrt, zsrt), (        xend          , yend, zend))
-            self.lloc = ((xsrt-node_xsrt, ysrt, zsrt), (        xend-node_xsrt, yend, zend))
-        if xsrt >= node_xsrt and xsrt < node_xend and xend >  node_xend:
-            self.gloc = ((xsrt          , ysrt, zsrt), (node_xend          , yend, zend))
-            self.lloc = ((xsrt-node_xsrt, ysrt, zsrt), (node_xend-node_xsrt, yend, zend))
-        if xsrt >  node_xend:
-            self.gloc = None
-            self.lloc = None
+        self.gxloc, self.lxloc = S_calculator._get_local_x_loc(self, self.xsrt, self.xend)
 
-        if self.gloc != None:
+        if self.gxloc != None:
 
             #print("rank {:>2}: loc of Sx collector >>> global \"{},{}\" and local \"{},{}\"" \
             #      .format(self.Space.MPIrank, self.gloc[0], self.gloc[1], self.lloc[0], self.lloc[1]))
 
-            self.DFT_Ey = self.xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
-            self.DFT_Ez = self.xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
+            self.DFT_Ey = self.xp.zeros((self.Nf, self.yend-self.ysrt, self.zend-self.zsrt), dtype=self.Space.cdtype)
+            self.DFT_Ez = self.xp.zeros((self.Nf, self.yend-self.ysrt, self.zend-self.zsrt), dtype=self.Space.cdtype)
 
-            self.DFT_Hy = self.xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
-            self.DFT_Hz = self.xp.zeros((self.Nf, yend-ysrt, zend-zsrt), dtype=self.Space.cdtype)
+            self.DFT_Hy = self.xp.zeros((self.Nf, self.yend-self.ysrt, self.zend-self.zsrt), dtype=self.Space.cdtype)
+            self.DFT_Hz = self.xp.zeros((self.Nf, self.yend-self.ysrt, self.zend-self.zsrt), dtype=self.Space.cdtype)
 
     def do_RFT(self, tstep):
 
-        if self.gloc != None:
+        if self.gxloc != None:
 
             dt = self.Space.dt
-            xsrt = self.lloc[0][0]
-            xend = self.lloc[1][0]
-            ysrt = self.ysrt
-            yend = self.yend
-            zsrt = self.zsrt
-            zend = self.zend
+            xsrt = self.lxloc[0]
+            xend = self.lxloc[1]
 
             f = [slice(0,None), None, None]
-            Fidx = [slice(xsrt,xsrt+1), slice(ysrt, yend), slice(zsrt, zend)]
+            Fidx = [slice(xsrt,xend), slice(self.ysrt, self.yend), slice(self.zsrt, self.zend)]
 
             self.DFT_Ey += self.Space.Ey[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
             self.DFT_Hz += self.Space.Hz[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
@@ -140,19 +195,12 @@ class Sx(S_calculator):
 
         self.Space.MPIcomm.barrier()
 
-        if self.gloc != None:
+        if self.gxloc != None:
 
             self.Sx = 0.5 * (  (self.DFT_Ey.real*self.DFT_Hz.real) + (self.DFT_Ey.imag*self.DFT_Hz.imag)
                               -(self.DFT_Ez.real*self.DFT_Hy.real) - (self.DFT_Ez.imag*self.DFT_Hy.imag)  )
 
             self.Sx_area = self.Sx.sum(axis=(1,2)) * self.Space.dy * self.Space.dz
-
-            if self.engine == 'cupy':
-                self.DFT_Ey = cp.asnumpy(self.DFT_Ey)
-                self.DFT_Ez = cp.asnumpy(self.DFT_Ez)
-                self.DFT_Hy = cp.asnumpy(self.DFT_Hy)
-                self.DFT_Hz = cp.asnumpy(self.DFT_Hz)
-                self.Sx_area = cp.asnumpy(self.Sx_area)
 
             self.xp.save("{}/{}_DFT_Ey_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ey)
             self.xp.save("{}/{}_DFT_Ez_rank{:02d}" .format(self.path, self.name, self.Space.MPIrank), self.DFT_Ez)
@@ -163,7 +211,7 @@ class Sx(S_calculator):
 
 class Sy(S_calculator):
 
-    def __init__(self, name, path, Space, srt, end, freqs, engine):
+    def __init__(self, name, path, Space, yloc, srt, end, freqs, engine):
         """Sy collector object.
 
         Args:
@@ -171,9 +219,13 @@ class Sy(S_calculator):
 
             Space: Space object.
 
+            yloc: float.
+
             srt: tuple.
+                (xsrt, zsrt).
 
             end: tuple.
+                (xend, zend).
 
             freqs: ndarray.
 
@@ -183,8 +235,17 @@ class Sy(S_calculator):
             None
         """
 
-        assert (end[1]-srt[1]) == 1, "Sx Collector must have 2D shape with x-thick = 1."
-        S_calculator.__init__(self, name, path, Space, srt, end, freqs, engine)
+        S_calculator.__init__(self, name, path, Space, freqs, engine)
+
+        # Start loc of the structure.
+        self.xsrt = int(srt[0]/Space.dx)
+        self.ysrt = int(  yloc/Space.dy)
+        self.zsrt = int(srt[1]/Space.dz)
+
+        # End loc of the structure.
+        self.xend = int(end[0]/Space.dx)
+        self.yend = self.ysrt+1
+        self.zend = int(end[1]/Space.dz)
 
         # Local variables for readable code.
         xsrt = self.xsrt
@@ -330,7 +391,7 @@ class Sy(S_calculator):
 
 class Sz(S_calculator):
 
-    def __init__(self, name, path, Space, srt, end, freqs, engine):
+    def __init__(self, name, path, Space, zloc, srt, end, freqs, engine):
         """Sy collector object.
 
         Args:
@@ -340,9 +401,13 @@ class Sz(S_calculator):
 
             Space: Space object.
 
+            zloc: float.
+
             srt: tuple
+                (xsrt, ysrt)
 
             end: tuple
+                (xend, yend)
 
             freqs: ndarray
 
@@ -352,8 +417,17 @@ class Sz(S_calculator):
             None
         """
 
-        assert (end[2]-srt[2]) == 1, "Sx Collector must have 2D shape with x-thick = 1."
-        S_calculator.__init__(self, name, path, Space, srt, end, freqs, engine)
+        S_calculator.__init__(self, name, path, Space, freqs, engine)
+
+        # Start loc of the structure.
+        self.xsrt = int(srt[0]/Space.dx)
+        self.ysrt = int(srt[1]/Space.dy)
+        self.zsrt = int(  zloc/Space.dz)
+
+        # End loc of the structure.
+        self.xend = int(end[0]/Space.dx)
+        self.yend = int(end[1]/Space.dz)
+        self.zend = self.zsrt + 1
 
         # Local variables for readable code.
         xsrt = self.xsrt

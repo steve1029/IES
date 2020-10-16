@@ -88,20 +88,20 @@ IF.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Ny, Nz))
 #IF.set_src_pos((src_xpos, src_ypos, src_zpos), (src_xpos+1, src_ypos+1, src_zpos+1))
 
 # Set S calculator
-leftx, rightx = int(Nx/4), int(Nx*3/4)
-lefty, righty = int(Ny/4), int(Ny*3/4)
-leftz, rightz = int(Nz/4), int(Nz*3/4)
+leftx, rightx = 320*um, 960*um
+lefty, righty = 320*um, 960*um
+leftz, rightz = 320*um, 960*um
 
-IF_Sx_R_calculator = rft.Sx("Sx_IF_R", "./graph/Sx", IF, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, 'cupy')
+IF_Sx_R_calculator = rft.Sx("Sx_IF_R", "./graph/Sx", IF, rightx, (lefty, leftz), (righty, rightz), freqs, 'cupy')
 
-SF_Sx_L_calculator = rft.Sx("Sx_SF_L", "./graph/Sx", SF, (leftx , lefty, leftz), (leftx +1, righty, rightz), freqs, 'cupy')
-SF_Sx_R_calculator = rft.Sx("Sx_SF_R", "./graph/Sx", SF, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, 'cupy')
+SF_Sx_L_calculator = rft.Sx("Sx_SF_L", "./graph/Sx", SF,  leftx, (lefty, leftz), (righty, rightz), freqs, 'cupy')
+SF_Sx_R_calculator = rft.Sx("Sx_SF_R", "./graph/Sx", SF, rightx, (lefty, leftz), (righty, rightz), freqs, 'cupy')
 
-SF_Sy_L_calculator = rft.Sy("Sy_SF_L", "./graph/Sy", SF, (leftx, lefty , leftz), (rightx, lefty +1, rightz), freqs, 'cupy')
-SF_Sy_R_calculator = rft.Sy("Sy_SF_R", "./graph/Sy", SF, (leftx, righty, leftz), (rightx, righty+1, rightz), freqs, 'cupy')
+SF_Sy_L_calculator = rft.Sy("Sy_SF_L", "./graph/Sy", SF,  lefty, (leftx, leftz), (rightx, rightz), freqs, 'cupy')
+SF_Sy_R_calculator = rft.Sy("Sy_SF_R", "./graph/Sy", SF, righty, (leftx, leftz), (rightx, rightz), freqs, 'cupy')
 
-SF_Sz_L_calculator = rft.Sz("Sz_SF_L", "./graph/Sz", SF, (leftx, lefty, leftz ), (rightx, righty, leftz +1), freqs, 'cupy')
-SF_Sz_R_calculator = rft.Sz("Sz_SF_R", "./graph/Sz", SF, (leftx, lefty, rightz), (rightx, righty, rightz+1), freqs, 'cupy')
+SF_Sz_L_calculator = rft.Sz("Sz_SF_L", "./graph/Sz", SF,  leftz, (leftx, lefty), (rightx, righty), freqs, 'cupy')
+SF_Sz_R_calculator = rft.Sz("Sz_SF_R", "./graph/Sz", SF, rightz, (leftx, lefty), (rightx, righty), freqs, 'cupy')
 
 """
 TF_Sx_L_calculator = rft.Sx("Sx_TF_L", "./graph/Sx", TF, (leftx , lefty, leftz), (leftx +1, righty, rightz), Src.freq, True)
