@@ -510,6 +510,9 @@ class Cylinder(Structure):
         dy = self.Space.dy
         dz = self.Space.dz
 
+        ry = center[0]/dy
+        rz = center[1]/dz
+
         MPIrank = self.Space.MPIrank
         MPIsize = self.Space.MPIsize
 
@@ -523,7 +526,7 @@ class Cylinder(Structure):
             for j in range(self.Space.Ny):
                 for k in range(self.Space.Nz):
 
-                    if (((j-center[0])*dy)**2 + ((k-center[1])*dz)**2) <= (radius**2):
+                    if (((j-ry)*dy)**2 + ((k-rz)*dz)**2) <= (radius**2):
 
                         self.Space.eps_Ex[self.lxloc[0]:self.lxloc[1], j, k] = self.eps_r * epsilon_0
                         self.Space.eps_Ey[self.lxloc[0]:self.lxloc[1], j, k] = self.eps_r * epsilon_0

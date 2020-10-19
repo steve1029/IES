@@ -17,8 +17,8 @@ savedir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/'
 nm = 1e-9
 um = 1e-6
 
-Nx, Ny, Nz = 128, 128, 128
-dx, dy, dz = 10*um, 10*um, 10*um
+Nx, Ny, Nz = 256, 256, 256
+dx, dy, dz = 5*um, 5*um, 5*um
 Lx, Ly, Lz = Nx*dx, Ny*dy, Nz*dz
 
 courant = 1./4
