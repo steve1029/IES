@@ -513,9 +513,6 @@ class Cylinder(Structure):
         ry = center[0]/dy
         rz = center[1]/dz
 
-        MPIrank = self.Space.MPIrank
-        MPIsize = self.Space.MPIsize
-
         gxsrts = round(height[0]/dx) # Global srt index of the structure.
         gxends = round(height[1]/dx) # Global end index of the structure.
 
@@ -541,18 +538,15 @@ class Cylinder(Structure):
 
 class Cylinder_slab(Structure):
 
-    def __init__(self, space, srt, end, radius, llm, dc, eps_r, mu_r):
+    def __init__(self, space, radius, height, llm, dc, eps_r, mu_r):
         """Cylinder object in Basic3D structure.
 
         Parameters
         ----------
         radius: float.
 
-        srt: tuple.
-            (x,y,z) coordinate of the left, lower most point of the slab.
-
-        end: tuple.
-            (x,y,z) coorfinate of the right, upper most point of the slab.
+        height: float.
+            a tuple with shape (xsrt,xend) showing the height of the cylinder such that (xsrt, xend).
 
         llm: tuple.
             (y,z) coordinate of the center of the left, lower most cylinder.
@@ -579,15 +573,14 @@ class Cylinder_slab(Structure):
         dy = self.Space.dy
         dz = self.Space.dz
 
-        MPIrank = self.Space.MPIrank
-        MPIsize = self.Space.MPIsize
+        gxsrts = round(height[0]/dx) # Global srt index of the structure.
+        gxends = round(height[1]/dx) # Global end index of the structure.
 
-        self.gxloc, self.lxloc = Structure._get_local_x_loc(self, srt[0], end[0])
+        self.gxloc, self.lxloc = Structure._get_local_x_loc(self, gxsrts, gxends)
 
         if self.gxloc != None:      
 
-            Box(self.Space, srt, end, eps_r, mu_r)
-            hollows = []
+            #Box(self.Space, srt, end, eps_r, mu_r)
 
             Lx = self.Space.Lx
             Ly = self.Space.Ly
@@ -597,18 +590,21 @@ class Cylinder_slab(Structure):
 
             j = 0
             k = 0
-            center = (0,0)
 
-            while (llm[0]*dy + dc[0]*j*dy + radius) < Ly:
-                while (llm[1]*dz + dc[1]*k*dz + radius) < Lz:
+            centers = []
+            cylinders = []
 
-                    center[0] = llm[0]*dy + dc[0]*j*dy
-                    center[1] = llm[1]*dz + dc[1]*k*dz
+            while (llm[0] + dc[0]*j) <= Ly:
+                while (llm[1] + dc[1]*k) <= Lz:
 
-                    Cylinder(self.Space, radius, height, center, eps_r, mu_r)
+                    center = (llm[0] + dc[0]*j, llm[1] + dc[1]*k)
+                    centers.append(center)
+
+                    cylinders.append(Cylinder(self.Space, radius, height, center, eps_r, mu_r))
 
                     k += 1
 
+                k = 0
                 j += 1
 
         return
