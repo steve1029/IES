@@ -53,7 +53,6 @@ SF = space.Empty3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.comple
 
 TF.malloc()
 IF.malloc()
-SF.malloc()
 
 # Put structures
 srt = (1300*um,    0*um,    0*um)

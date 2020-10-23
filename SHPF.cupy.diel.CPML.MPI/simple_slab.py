@@ -48,27 +48,27 @@ Src.plot_pulse(Tsteps, freqs, savedir)
 #-------------------------- Call objects --------------------------#
 #------------------------------------------------------------------#
 
-TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64, engine='cupy') # Total field
-IF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64, engine='cupy') # Incident field
-SF = space.Empty3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64, engine='cupy') # Scattered field
+TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64, engine='cupy', method='SHPF') # Total field
+IF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64, engine='cupy', method='SHPF') # Incident field
+SF = space.Empty3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.float32, np.complex64, engine='cupy', method='SHPF') # Scattered field
 
 TF.malloc()
 IF.malloc()
 SF.malloc()
 
 # Put structures
-Box1_srt = (500*um,    0*um,    0*um)
-Box1_end = (700*um, 1280*um, 1280*um)
+Box1_srt = (800*um,    0*um,    0*um)
+Box1_end = (900*um, 1280*um, 1280*um)
 box = structure.Box(TF, Box1_srt, Box1_end, 4., 1.)
 
-radius = 160*um
-height = (500*um, 700*um)
-center = (640*um, 640*um)
+#radius = 160*um
+#height = (500*um, 700*um)
+#center = (640*um, 640*um)
 #cylinder = structure.Cylinder(TF, radius, height, center, 4., 1.)
 
 # Set PML and PBC
-TF.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
-IF.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
+TF.set_PML({'x':'+-','y':'','z':''}, 10)
+IF.set_PML({'x':'+-','y':'','z':''}, 10)
 
 # Save eps, mu and PML data.
 #TF.save_PML_parameters('./')
@@ -76,7 +76,7 @@ IF.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
 
 # Set source position.
 #src_xpos = int(Nx/2)
-src_xpos = 20
+src_xpos = 50
 
 # plain wave normal to x.
 TF.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Ny, Nz))

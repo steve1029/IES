@@ -42,14 +42,6 @@ Src.plot_pulse(Tstep, freqs, savedir)
 #Src = source.Sine(dt, np.float64)
 #Src.set_wvlen( 50 * um)
 
-#sys.exit()
-
-#src_xpos = round( 100*um / dx)
-#ref_xpos = round(  50*um / dx)
-#trs_xpos = round( 900*um / dx)
-
-Box1_srt = (round(222*um/dx), round( 0*um/dy), round(  0*um/dz))
-Box1_end = (round(272*um/dx), round(96*um/dy), round( 96*um/dz))
 #------------------------------------------------------------------#
 #-------------------------- Call objects --------------------------#
 #------------------------------------------------------------------#
@@ -58,10 +50,12 @@ Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tstep, np.float32, np.comp
 Space.malloc()
 
 # Put structures
+Box1_srt = (round(222*um/dx), round( 0*um/dy), round(  0*um/dz))
+Box1_end = (round(272*um/dx), round(96*um/dy), round( 96*um/dz))
 #Box = structure.Box(Space, Box1_srt, Box1_end, 4., 1.)
 
 # Set PML and PBC
-Space.set_PML({'x':'+-','y':'-','z':'+-'}, 10)
+Space.set_PML({'x':'+-','y':'','z':''}, 10)
 #Space.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
 
 # Save eps, mu and PML data.
@@ -71,15 +65,19 @@ Space.set_PML({'x':'+-','y':'-','z':'+-'}, 10)
 # Set source position.
 #src_xpos = int(Nx/2)
 src_xpos = 40
+src_ypos = 40
 
 # plain wave normal to x.
-#Space.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Space.Ny, Space.Nz)) # Plane wave for Ey, x-direction.
+Space.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Ny, Nz)) # Plane wave for Ey, x-direction.
+
+# plain wave normal to y.
+#Space.set_src_pos((1, src_ypos, 0), (Nx, src_ypos+1, Nz)) # Plane wave for Ez, y-direction.
 
 # Line source along y axis.
 #Space.set_src_pos((src_xpos, 0, Space.Nzc), (src_xpos+1, Space.Ny, Space.Nzc+1))
 
 # Line source along z axis.
-Space.set_src_pos((src_xpos, Space.Nyc, 0), (src_xpos+1, Space.Nyc+1, Space.Nz))
+#Space.set_src_pos((src_xpos, Space.Nyc, 0), (src_xpos+1, Space.Nyc+1, Space.Nz))
 
 # Set Poynting vector calculator.
 leftx, rightx = int(Nx/4), int(Nx*3/4)
@@ -108,8 +106,8 @@ for tstep in range(Space.tsteps):
     pulse_re = Src.pulse_re(tstep, pick_pos)
     #pulse_im = Src.pulse_im(tstep, pick_pos)
 
-    #Space.put_src('Ey', pulse_re, 'soft')
-    Space.put_src('Ez', pulse_re, 'soft')
+    Space.put_src('Ey', pulse_re, 'soft')
+    #Space.put_src('Ez', pulse_re, 'soft')
 
     Space.updateH(tstep)
     Space.updateE(tstep)
@@ -120,11 +118,11 @@ for tstep in range(Space.tsteps):
     if tstep % plot_per == 0:
         #graphtool.plot2D3D('Ex', tstep, xidx=Space.Nxc, colordeep=6., stride=2, zlim=6.)
 
-        #Ey = graphtool.gather('Ey')
-        #graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=1., stride=2, zlim=1.)
+        Ey = graphtool.gather('Ey')
+        graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=1., stride=2, zlim=1.)
         
-        Ez = graphtool.gather('Ez')
-        graphtool.plot2D3D(Ez, tstep, zidx=Space.Nzc, colordeep=1., stride=2, zlim=1.)
+        #Ez = graphtool.gather('Ez')
+        #graphtool.plot2D3D(Ez, tstep, zidx=Space.Nzc, colordeep=1., stride=2, zlim=1.)
 
         if Space.MPIrank == 0:
 
