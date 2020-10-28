@@ -5,7 +5,7 @@ import cupy as cp
 
 class Basic3D:
     
-    def __init__(self, grid, gridgap, dt, tsteps, rdtype, cdtype, **kwargs):
+    def __init__(self, grid, gridgap, dt, tsteps, field_dtype, mmtdtype, **kwargs):
         """Create Simulation Space.
 
             ex) Space.grid((128,128,600), (50*nm,50*nm,5*nm), dtype=self.xp.complex64)
@@ -18,11 +18,11 @@ class Basic3D:
         gridgap : tuple
             define the dx, dy, dz.
 
-        rdtype : class numpy dtype
-            choose self.xp.float32 or self.xp.float64
+        field_dtype : class numpy dtype
+            dtype for field array. Choose self.xp.float32 or self.xp.float64
 
-        cdtype : class numpy dtype
-            choose self.xp.complex64 or self.xp.complex128
+        mmtdtype : class numpy dtype
+            dtype for FFT momentum vector array. Choose self.xp.complex64 or self.xp.complex128
 
         kwargs : string
             
@@ -40,8 +40,8 @@ class Basic3D:
         self.nm = 1e-9
         self.um = 1e-6  
 
-        self.rdtype   = rdtype
-        self.cdtype   = cdtype
+        self.field_dtype   = field_dtype
+        self.mmtdtype   = mmtdtype
         self.MPIcomm  = MPI.COMM_WORLD
         self.MPIrank  = self.MPIcomm.Get_rank()
         self.MPIsize  = self.MPIcomm.Get_size()
@@ -57,7 +57,7 @@ class Basic3D:
         self.Ny = self.grid[1]
         self.Nz = self.grid[2]
         self.TOTAL_NUM_GRID = self.Nx * self.Ny * self.Nz
-        self.TOTAL_NUM_GRID_SIZE = (self.rdtype(1).nbytes * self.TOTAL_NUM_GRID) / 1024 / 1024
+        self.TOTAL_NUM_GRID_SIZE = (self.field_dtype(1).nbytes * self.TOTAL_NUM_GRID) / 1024 / 1024
         
         self.Nxc = int(self.Nx / 2)
         self.Nyc = int(self.Ny / 2)
@@ -120,13 +120,13 @@ class Basic3D:
         self.myNx     = int(self.Nx/self.MPIsize)
         self.loc_grid = (self.myNx, self.Ny, self.Nz)
 
-        self.Ex = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.Ey = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.Ez = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
+        self.Ex = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.Ey = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.Ez = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
 
-        self.Hx = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.Hy = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.Hz = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
+        self.Hx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.Hy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.Hz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
 
         ###############################################################################
         ####################### Slices of xgrid that each node got ####################
@@ -149,16 +149,29 @@ class Basic3D:
 
     def malloc(self):
 
-        self.ky = self.xp.fft.rfftfreq(self.Ny, self.dy) * 2 * self.xp.pi
-        self.kz = self.xp.fft.rfftfreq(self.Nz, self.dz) * 2 * self.xp.pi
+        if self.field_dtype == np.complex64 or self.field_dtype == np.complex128:
+            self.fft = self.xp.fft.fftn
+            self.ifft = self.xp.fft.ifftn
+            self.fftfreq = self.xp.fft.fftfreq
+
+        elif self.field_dtype == np.float32 or self.field_dtype == np.float64:
+            self.fft = self.xp.fft.rfftn
+            self.ifft = self.xp.fft.irfftn
+            self.fftfreq = self.xp.fft.rfftfreq
+
+        else:
+            raise ValueError("Please use field_dtype for numpy dtype!")
+
+        self.ky = self.fftfreq(self.Ny, self.dy) * 2 * self.xp.pi
+        self.kz = self.fftfreq(self.Nz, self.dz) * 2 * self.xp.pi
 
         if self.engine == 'cupy':
-            self.iky = (1j*self.ky[None,:,None]).astype(self.cdtype)
-            self.ikz = (1J*self.kz[None,None,:]).astype(self.cdtype)
-            self.ypshift = self.xp.exp(self.iky* self.dy/2).astype(self.cdtype)
-            self.zpshift = self.xp.exp(self.ikz* self.dz/2).astype(self.cdtype)
-            self.ymshift = self.xp.exp(self.iky*-self.dy/2).astype(self.cdtype)
-            self.zmshift = self.xp.exp(self.ikz*-self.dz/2).astype(self.cdtype)
+            self.iky = (1j*self.ky[None,:,None]).astype(self.mmtdtype)
+            self.ikz = (1J*self.kz[None,None,:]).astype(self.mmtdtype)
+            self.ypshift = self.xp.exp(self.iky* self.dy/2).astype(self.mmtdtype)
+            self.zpshift = self.xp.exp(self.ikz* self.dz/2).astype(self.mmtdtype)
+            self.ymshift = self.xp.exp(self.iky*-self.dy/2).astype(self.mmtdtype)
+            self.zmshift = self.xp.exp(self.ikz*-self.dz/2).astype(self.mmtdtype)
         else:
             nax = np.newaxis
             self.iky = 1j*self.ky[:,nax,:]
@@ -166,35 +179,35 @@ class Basic3D:
             self.ypshift = self.xp.exp(1j*self.ky*self.dy/2)[:,nax,:]
             self.zpshift = self.xp.exp(1j*self.kz*self.dz/2)[:,:,nax]
 
-        self.diffxEy = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.diffxEz = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.diffyEx = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.diffyEz = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.diffzEx = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.diffzEy = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
+        self.diffxEy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.diffxEz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.diffyEx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.diffyEz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.diffzEx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.diffzEy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
 
-        self.diffxHy = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.diffxHz = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.diffyHx = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.diffyHz = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.diffzHx = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.diffzHy = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
+        self.diffxHy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.diffxHz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.diffyHx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.diffyHz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.diffzHx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.diffzHy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
 
-        self.eps_Ex = self.xp.ones(self.loc_grid, dtype=self.rdtype) * epsilon_0
-        self.eps_Ey = self.xp.ones(self.loc_grid, dtype=self.rdtype) * epsilon_0
-        self.eps_Ez = self.xp.ones(self.loc_grid, dtype=self.rdtype) * epsilon_0
+        self.eps_Ex = self.xp.ones(self.loc_grid, dtype=self.field_dtype) * epsilon_0
+        self.eps_Ey = self.xp.ones(self.loc_grid, dtype=self.field_dtype) * epsilon_0
+        self.eps_Ez = self.xp.ones(self.loc_grid, dtype=self.field_dtype) * epsilon_0
 
-        self.mu_Hx  = self.xp.ones(self.loc_grid, dtype=self.rdtype) * mu_0
-        self.mu_Hy  = self.xp.ones(self.loc_grid, dtype=self.rdtype) * mu_0
-        self.mu_Hz  = self.xp.ones(self.loc_grid, dtype=self.rdtype) * mu_0
+        self.mu_Hx  = self.xp.ones(self.loc_grid, dtype=self.field_dtype) * mu_0
+        self.mu_Hy  = self.xp.ones(self.loc_grid, dtype=self.field_dtype) * mu_0
+        self.mu_Hz  = self.xp.ones(self.loc_grid, dtype=self.field_dtype) * mu_0
 
-        self.econ_Ex = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.econ_Ey = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.econ_Ez = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
+        self.econ_Ex = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.econ_Ey = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.econ_Ez = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
 
-        self.mcon_Hx = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.mcon_Hy = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
-        self.mcon_Hz = self.xp.zeros(self.loc_grid, dtype=self.rdtype)
+        self.mcon_Hx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.mcon_Hy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.mcon_Hz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
  
     def set_PML(self, region, npml):
 
@@ -222,25 +235,25 @@ class Basic3D:
         self.PMLalphamaxy = 0.02
         self.PMLalphamaxz = 0.02
 
-        self.PMLsigmax = self.xp.zeros(self.PMLgrading, dtype=self.rdtype)
-        self.PMLalphax = self.xp.zeros(self.PMLgrading, dtype=self.rdtype)
-        self.PMLkappax = self.xp.ones (self.PMLgrading, dtype=self.rdtype)
+        self.PMLsigmax = self.xp.zeros(self.PMLgrading, dtype=self.field_dtype)
+        self.PMLalphax = self.xp.zeros(self.PMLgrading, dtype=self.field_dtype)
+        self.PMLkappax = self.xp.ones (self.PMLgrading, dtype=self.field_dtype)
 
-        self.PMLsigmay = self.xp.zeros(self.PMLgrading, dtype=self.rdtype)
-        self.PMLalphay = self.xp.zeros(self.PMLgrading, dtype=self.rdtype)
-        self.PMLkappay = self.xp.ones (self.PMLgrading, dtype=self.rdtype)
+        self.PMLsigmay = self.xp.zeros(self.PMLgrading, dtype=self.field_dtype)
+        self.PMLalphay = self.xp.zeros(self.PMLgrading, dtype=self.field_dtype)
+        self.PMLkappay = self.xp.ones (self.PMLgrading, dtype=self.field_dtype)
 
-        self.PMLsigmaz = self.xp.zeros(self.PMLgrading, dtype=self.rdtype)
-        self.PMLalphaz = self.xp.zeros(self.PMLgrading, dtype=self.rdtype)
-        self.PMLkappaz = self.xp.ones (self.PMLgrading, dtype=self.rdtype)
+        self.PMLsigmaz = self.xp.zeros(self.PMLgrading, dtype=self.field_dtype)
+        self.PMLalphaz = self.xp.zeros(self.PMLgrading, dtype=self.field_dtype)
+        self.PMLkappaz = self.xp.ones (self.PMLgrading, dtype=self.field_dtype)
 
-        self.PMLbx = self.xp.zeros(self.PMLgrading, dtype=self.rdtype)
-        self.PMLby = self.xp.zeros(self.PMLgrading, dtype=self.rdtype)
-        self.PMLbz = self.xp.zeros(self.PMLgrading, dtype=self.rdtype)
+        self.PMLbx = self.xp.zeros(self.PMLgrading, dtype=self.field_dtype)
+        self.PMLby = self.xp.zeros(self.PMLgrading, dtype=self.field_dtype)
+        self.PMLbz = self.xp.zeros(self.PMLgrading, dtype=self.field_dtype)
 
-        self.PMLax = self.xp.zeros(self.PMLgrading, dtype=self.rdtype)
-        self.PMLay = self.xp.zeros(self.PMLgrading, dtype=self.rdtype)
-        self.PMLaz = self.xp.zeros(self.PMLgrading, dtype=self.rdtype)
+        self.PMLax = self.xp.zeros(self.PMLgrading, dtype=self.field_dtype)
+        self.PMLay = self.xp.zeros(self.PMLgrading, dtype=self.field_dtype)
+        self.PMLaz = self.xp.zeros(self.PMLgrading, dtype=self.field_dtype)
 
         #------------------------------------------------------------------------------------------------#
         #------------------------------- Grading kappa, sigma and alpha ---------------------------------#
@@ -250,15 +263,15 @@ class Basic3D:
 
             if   key == 'x' and value != '':
 
-                self.psi_eyx_p = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.rdtype)
-                self.psi_ezx_p = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.rdtype)
-                self.psi_hyx_p = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.rdtype)
-                self.psi_hzx_p = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.rdtype)
+                self.psi_eyx_p = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.field_dtype)
+                self.psi_ezx_p = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.field_dtype)
+                self.psi_hyx_p = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.field_dtype)
+                self.psi_hzx_p = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.field_dtype)
 
-                self.psi_eyx_m = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.rdtype)
-                self.psi_ezx_m = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.rdtype)
-                self.psi_hyx_m = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.rdtype)
-                self.psi_hzx_m = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.rdtype)
+                self.psi_eyx_m = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.field_dtype)
+                self.psi_ezx_m = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.field_dtype)
+                self.psi_hyx_m = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.field_dtype)
+                self.psi_hzx_m = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.field_dtype)
 
                 loc = self.xp.arange(self.PMLgrading) * self.dx / self.bdw_x
                 self.PMLsigmax = self.PMLsigmamaxx * (loc **self.gO)
@@ -267,15 +280,15 @@ class Basic3D:
 
             elif key == 'y' and value != '':
 
-                self.psi_exy_p = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.rdtype)
-                self.psi_ezy_p = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.rdtype)
-                self.psi_hxy_p = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.rdtype)
-                self.psi_hzy_p = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.rdtype)
+                self.psi_exy_p = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.field_dtype)
+                self.psi_ezy_p = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.field_dtype)
+                self.psi_hxy_p = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.field_dtype)
+                self.psi_hzy_p = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.field_dtype)
 
-                self.psi_exy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.rdtype)
-                self.psi_ezy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.rdtype)
-                self.psi_hxy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.rdtype)
-                self.psi_hzy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.rdtype)
+                self.psi_exy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.field_dtype)
+                self.psi_ezy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.field_dtype)
+                self.psi_hxy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.field_dtype)
+                self.psi_hzy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.field_dtype)
 
                 loc  = self.xp.arange(self.PMLgrading) * self.dy / self.bdw_y
                 self.PMLsigmay = self.PMLsigmamaxy * (loc **self.gO)
@@ -284,15 +297,15 @@ class Basic3D:
 
             elif key == 'z' and value != '':
 
-                self.psi_exz_p = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.rdtype)
-                self.psi_eyz_p = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.rdtype)
-                self.psi_hxz_p = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.rdtype)
-                self.psi_hyz_p = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.rdtype)
+                self.psi_exz_p = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.field_dtype)
+                self.psi_eyz_p = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.field_dtype)
+                self.psi_hxz_p = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.field_dtype)
+                self.psi_hyz_p = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.field_dtype)
 
-                self.psi_exz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.rdtype)
-                self.psi_eyz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.rdtype)
-                self.psi_hxz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.rdtype)
-                self.psi_hyz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.rdtype)
+                self.psi_exz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.field_dtype)
+                self.psi_eyz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.field_dtype)
+                self.psi_hxz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.field_dtype)
+                self.psi_hyz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.field_dtype)
 
                 loc  = self.xp.arange(self.PMLgrading) * self.dz / self.bdw_z
                 self.PMLsigmaz = self.PMLsigmamaxz * (loc **self.gO)
@@ -305,15 +318,18 @@ class Basic3D:
 
         if 'x' in self.PMLregion.keys() and self.PMLregion.get('x') != '':
             self.PMLbx = self.xp.exp(-(self.PMLsigmax/self.PMLkappax + self.PMLalphax) * self.dt / epsilon_0)
-            self.PMLax = self.PMLsigmax / (self.PMLsigmax*self.PMLkappax + self.PMLalphax*self.PMLkappax**2) * (self.PMLbx - 1.)
+            self.PMLax = self.PMLsigmax \
+                    / (self.PMLsigmax*self.PMLkappax + self.PMLalphax*self.PMLkappax**2) * (self.PMLbx - 1.)
 
         if 'y' in self.PMLregion.keys() and self.PMLregion.get('y') != '':
             self.PMLby = self.xp.exp(-(self.PMLsigmay/self.PMLkappay + self.PMLalphay) * self.dt / epsilon_0)
-            self.PMLay = self.PMLsigmay / (self.PMLsigmay*self.PMLkappay + self.PMLalphay*self.PMLkappay**2) * (self.PMLby - 1.)
+            self.PMLay = self.PMLsigmay \
+                    / (self.PMLsigmay*self.PMLkappay + self.PMLalphay*self.PMLkappay**2) * (self.PMLby - 1.)
 
         if 'z' in self.PMLregion.keys() and self.PMLregion.get('z') != '':
             self.PMLbz = self.xp.exp(-(self.PMLsigmaz/self.PMLkappaz + self.PMLalphaz) * self.dt / epsilon_0)
-            self.PMLaz = self.PMLsigmaz / (self.PMLsigmaz*self.PMLkappaz + self.PMLalphaz*self.PMLkappaz**2) * (self.PMLbz - 1.)
+            self.PMLaz = self.PMLsigmaz \
+                    / (self.PMLsigmaz*self.PMLkappaz + self.PMLalphaz*self.PMLkappaz**2) * (self.PMLbz - 1.)
 
         return
 
@@ -354,6 +370,27 @@ class Basic3D:
         
         return
 
+    def apply_BBC(self, mmt, axes):
+        """Apply Bloch Boundary Condition.
+
+        Parameters
+        ----------
+        mmt: tuple
+            momentum vector of the monocromatic wave.
+
+        axes: dictionary
+            Axes to apply BBC. 
+
+        Returns
+        -------
+        None
+        """
+
+        self.BBCregion = region
+        self.mmt = mmt
+
+        return
+
     def save_eps_mu(self, path):
         """Save eps_r and mu_r to check
 
@@ -381,12 +418,13 @@ class Basic3D:
 
         return
 
-    def set_src_pos(self, src_srt, src_end):
+    def set_src_pos(self, src_srt, src_end, mmt):
         """Set the position, type of the source and field.
 
         PARAMETERS
         ----------
         src_srt : tuple
+
         src_end   : tuple
 
             A tuple which has three ints as its elements.
@@ -399,6 +437,9 @@ class Basic3D:
                     src_srt: (30, 30, 0), src_end: (30, 30, Space.Nz)
                 3. plane wave
                     src_srt: (30,0,0), src_end: (30, Space.Ny, Space.Nz)
+
+        mmt: tuple.
+            momentum vector (kx,ky,kz). Only non-zero when the source is monochromatic.
 
         RETURNS
         -------
@@ -440,7 +481,7 @@ class Basic3D:
                         self.my_src_xsrt = self.src_xsrt - my_xsrt
                         self.my_src_xend = self.src_xend - my_xsrt
 
-                        self.src = self.xp.zeros(self.tsteps, dtype=self.rdtype)
+                        self.src = self.xp.zeros(self.tsteps, dtype=self.field_dtype)
 
                         #print("rank{:>2}: src_xsrt : {}, my_src_xsrt: {}, my_src_xend: {}"\
                         #       .format(self.MPIrank, self.src_xsrt, self.my_src_xsrt, self.my_src_xend))
@@ -458,7 +499,7 @@ class Basic3D:
                 self.my_src_xsrt = self.src_xsrt
                 self.my_src_xend = self.src_xend
 
-                self.src = self.xp.zeros(self.tsteps, dtype=self.rdtype)
+                self.src = self.xp.zeros(self.tsteps, dtype=self.field_dtype)
 
             # case 3. x position of source is reversed.
             elif self.src_xsrt > self.src_xend:
@@ -466,6 +507,22 @@ class Basic3D:
 
             else:
                 raise IndexError("x position of src is not defined!")
+
+        #--------------------------------------------------------------------------#
+        #--------- Apply phase difference according to the incident angle ---------#
+        #--------------------------------------------------------------------------#
+
+        kx = mmt[0]
+        ky = mmt[1]
+        kz = mmt[2]
+
+        self.mmt = mmt
+
+        if self.MPIrank == self.who_put_src:
+
+            self.px = np.exp(1j*-kx*self.xp.arange(self.my_src_xsrt, self.my_src_xend)*self.dx)
+            self.py = np.exp(1j*-ky*self.xp.arange(self.   src_ysrt, self.   src_yend)*self.dy)
+            self.pz = np.exp(1j*-kz*self.xp.arange(self.   src_zsrt, self.   src_zend)*self.dz)
 
     def put_src(self, where, pulse, put_type):
         """Put source at the designated postion set by set_src_pos method.
@@ -490,17 +547,17 @@ class Basic3D:
         #------------------------------------------------------------#
 
         self.put_type = put_type
-
         self.where = where
-        
-        self.pulse = self.rdtype(pulse)
+        self.pulse = pulse
 
         if self.MPIrank == self.who_put_src:
 
             x = slice(self.my_src_xsrt, self.my_src_xend)
             y = slice(self.   src_ysrt, self.   src_yend)
             z = slice(self.   src_zsrt, self.   src_zend)
-            
+
+            self.pulse *= self.px[:,None,None] * self.py[None,:,None] * self.pz[None,None,:]
+
             if   self.put_type == 'soft':
 
                 if (self.where == 'Ex') or (self.where == 'ex'): self.Ex[x,y,z] += self.pulse
@@ -561,15 +618,15 @@ class Basic3D:
         if self.method == 'SHPF':
 
             # To update Hx
-            self.diffyEz = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ez, axes=(1,)), axes=(1,))
-            self.diffzEy = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ey, axes=(2,)), axes=(2,))
+            self.diffyEz = self.ifft(self.iky*self.ypshift*self.fft(self.Ez, axes=(1,)), axes=(1,))
+            self.diffzEy = self.ifft(self.ikz*self.zpshift*self.fft(self.Ey, axes=(2,)), axes=(2,))
 
             # To update Hy
-            self.diffzEx = self.xp.fft.irfftn(self.ikz*self.zpshift*self.xp.fft.rfftn(self.Ex, axes=(2,)), axes=(2,))
+            self.diffzEx = self.ifft(self.ikz*self.zpshift*self.fft(self.Ex, axes=(2,)), axes=(2,))
             self.diffxEz[:-1,:,:] = (self.Ez[1:,:,:] - self.Ez[:-1,:,:]) / self.dx
 
             # To update Hz
-            self.diffyEx = self.xp.fft.irfftn(self.iky*self.ypshift*self.xp.fft.rfftn(self.Ex, axes=(1,)), axes=(1,))
+            self.diffyEx = self.ifft(self.iky*self.ypshift*self.fft(self.Ex, axes=(1,)), axes=(1,))
             self.diffxEy[:-1,:,:] = (self.Ey[1:,:,:] - self.Ey[:-1,:,:]) / self.dx
 
             if self.MPIrank != (self.MPIsize-1):
@@ -748,15 +805,15 @@ class Basic3D:
         if self.method == 'SHPF':
 
             # Get derivatives of Hy and Hz to update Ex
-            self.diffyHz = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hz, axes=(1,)), axes=(1,))
-            self.diffzHy = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hy, axes=(2,)), axes=(2,))
+            self.diffyHz = self.ifft(self.iky*self.ymshift*self.fft(self.Hz, axes=(1,)), axes=(1,))
+            self.diffzHy = self.ifft(self.ikz*self.zmshift*self.fft(self.Hy, axes=(2,)), axes=(2,))
 
             # Get derivatives of Hx and Hz to update Ey
-            self.diffzHx = self.xp.fft.irfftn(self.ikz*self.zmshift*self.xp.fft.rfftn(self.Hx, axes=(2,)), axes=(2,))
+            self.diffzHx = self.ifft(self.ikz*self.zmshift*self.fft(self.Hx, axes=(2,)), axes=(2,))
             self.diffxHz[1:,:,:] = (self.Hz[1:,:,:] - self.Hz[:-1,:,:]) / self.dx
 
             # Get derivatives of Hx and Hy to update Ez
-            self.diffyHx = self.xp.fft.irfftn(self.iky*self.ymshift*self.xp.fft.rfftn(self.Hx, axes=(1,)), axes=(1,))
+            self.diffyHx = self.ifft(self.iky*self.ymshift*self.fft(self.Hx, axes=(1,)), axes=(1,))
             self.diffxHy[1:,:,:] = (self.Hy[1:,:,:] - self.Hy[:-1,:,:]) / self.dx
 
             if self.MPIrank != 0:
@@ -1266,7 +1323,7 @@ class Basic3D:
 
         # Update Ey at z+.
         CEy2 = (2*self.dt) / (2.*self.eps_Ey[myidx_Eyzp] + self.econ_Ey[myidx_Eyzp]*self.dt)
-        self.psi_eyz_p[psiidx_Eyzp] = (self.PMLbz[even]*self.psi_eyz_p[psiidx_Eyzp])
+        self.psi_eyz_p[psiidx_Eyzp] = (self.PMLbz[even]*self.psi_eyz_p[psiidx_Eyzp])\
                                     + (self.PMLaz[even]*self.diffzHx[myidx_Eyzp])
         self.Ey[myidx_Eyzp] += CEy2*(+((1./self.PMLkappaz[even]-1.)*self.diffzHx[myidx_Eyzp]) + self.psi_eyz_p[psiidx_Eyzp])
 
@@ -1301,9 +1358,10 @@ class Basic3D:
                 myidx_Hyzm = [slice(0,-1), slice(0,-1), slice(0,self.npml)]
 
         # Update Hx at z-.
-        CHx2 = (-2*self.dt) / (2.*self.mu_Hx[myidx] + self.mcon_Hx[myidx]*self.dt)
-        self.psi_hxz_m[psiidx] = (self.PMLbz[even]*self.psi_hxz_m[psiidx]) + (self.PMLaz[even]*self.diffzEy[myidx])
-        self.Hx[myidx] += CHx2*(-((1./self.PMLkappaz[even]-1.)*self.diffzEy[myidx]) - self.psi_hxz_m[psiidx])
+        CHx2 = (-2*self.dt) / (2.*self.mu_Hx[myidx_Hxzm] + self.mcon_Hx[myidx_Hxzm]*self.dt)
+        self.psi_hxz_m[psiidx_Hxzm] = (self.PMLbz[even]*self.psi_hxz_m[psiidx_Hxzm])\
+                                    + (self.PMLaz[even]*self.diffzEy[myidx_Hxzm])
+        self.Hx[myidx_Hxzm] += CHx2*(-((1./self.PMLkappaz[even]-1.)*self.diffzEy[myidx_Hxzm]) - self.psi_hxz_m[psiidx_Hxzm])
 
         # Update Hy at z-.
         CHy2 = (-2*self.dt) / (2.*self.mu_Hy[myidx_Hyzm] + self.mcon_Hy[myidx_Hyzm]*self.dt)
@@ -1341,24 +1399,24 @@ class Basic3D:
                 psiidx_Eyzm = [slice(1,None), slice(0,None), slice(1,self.npml)]
                 myidx_Eyzm  = [slice(1,None), slice(0,None), slice(1,self.npml)]
 
-            # Update Ex at z-.
-            CEx2 = (2*self.dt) / (2.*self.eps_Ex[myidx_Exzm] + self.econ_Ex[myidx_Exzm]*self.dt)
-            self.psi_exz_m[psiidx_Exzm] = (self.PMLbz[odd] * self.psi_exz_m[psiidx_Exzm])\
-                                        + (self.PMLaz[odd] * self.diffzHy[myidx_Exzm])
-            self.Ex[myidx_Exzm] += CEx2*(-((1./self.PMLkappaz[odd]-1.)*self.diffzHy[myidx_Exzm])-self.psi_exz_m[psiidx_Exzm])
+        # Update Ex at z-.
+        CEx2 = (2*self.dt) / (2.*self.eps_Ex[myidx_Exzm] + self.econ_Ex[myidx_Exzm]*self.dt)
+        self.psi_exz_m[psiidx_Exzm] = (self.PMLbz[odd] * self.psi_exz_m[psiidx_Exzm])\
+                                    + (self.PMLaz[odd] * self.diffzHy[myidx_Exzm])
+        self.Ex[myidx_Exzm] += CEx2*(-((1./self.PMLkappaz[odd]-1.)*self.diffzHy[myidx_Exzm])-self.psi_exz_m[psiidx_Exzm])
 
-            # Update Ey at z-.
-            CEy2 = (2*self.dt) / (2.*self.eps_Ey[myidx_Eyzm] + self.econ_Ey[myidx_Eyzm]*self.dt)
-            self.psi_eyz_m[psiidx_Eyzm] = (self.PMLbz[odd] * self.psi_eyz_m[psiidx_Eyzm])\
-                                        + (self.PMLaz[odd] * self.diffzHx[myidx_Eyzm])
-            self.Ey[myidx_Eyzm] += CEy2*(+((1./self.PMLkappaz[odd]-1.)*self.diffzHx[myidx_Eyzm])+self.psi_eyz_m[psiidx_Eyzm])
+        # Update Ey at z-.
+        CEy2 = (2*self.dt) / (2.*self.eps_Ey[myidx_Eyzm] + self.econ_Ey[myidx_Eyzm]*self.dt)
+        self.psi_eyz_m[psiidx_Eyzm] = (self.PMLbz[odd] * self.psi_eyz_m[psiidx_Eyzm])\
+                                    + (self.PMLaz[odd] * self.diffzHx[myidx_Eyzm])
+        self.Ey[myidx_Eyzm] += CEy2*(+((1./self.PMLkappaz[odd]-1.)*self.diffzHx[myidx_Eyzm])+self.psi_eyz_m[psiidx_Eyzm])
 
 
 class Empty3D(Basic3D):
     
-    def __init__(self, grid, gridgap, dt, tsteps, rdtype, cdtype, **kwargs):
+    def __init__(self, grid, gridgap, dt, tsteps, field_dtype, mmtdtype, **kwargs):
 
-        Basic3D.__init__(self, grid, gridgap, dt, tsteps, rdtype, cdtype, **kwargs)
+        Basic3D.__init__(self, grid, gridgap, dt, tsteps, field_dtype, mmtdtype, **kwargs)
 
     def get_SF(self, TF, IF):
         """Get scattered field

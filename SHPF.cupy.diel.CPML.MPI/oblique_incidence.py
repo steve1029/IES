@@ -40,7 +40,7 @@ np.save("./graph/freqs", freqs)
 #-------------------------- Call objects --------------------------#
 #------------------------------------------------------------------#
 
-Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tstep, np.float32, np.complex64, method='SHPF', engine='cupy')
+Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tstep, np.complex64, np.complex64, method='SHPF', engine='cupy')
 Space.malloc()
 
 # Put structures
@@ -49,19 +49,19 @@ Box1_end = (round(272*um/dx), round(96*um/dy), round( 96*um/dz))
 #Box = structure.Box(Space, Box1_srt, Box1_end, 4., 1.)
 
 # Set PML and PBC
+#Space.set_PML({'x':'+-','y':'','z':''}, 10)
 Space.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
-#Space.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
 
 # Save eps, mu and PML data.
 #Space.save_PML_parameters('./')
 #Space.save_eps_mu(savedir)
 
 # Set the type of input source.
-Src = source.Gaussian(dt, wvc, spread, pick_pos, np.float64)
-Src.plot_pulse(Tstep, freqs, savedir)
-#Src = source.Sine(dt, np.float64)
-#wvlen = 200*um
-#Src.set_wvlen(wvlen)
+#Src = source.Gaussian(dt, wvc, spread, pick_pos, np.float64)
+#Src.plot_pulse(Tstep, freqs, savedir)
+Src = source.Harmonic(dt)
+wvlen = 200*um
+Src.set_wvlen(wvlen)
 
 # Set source position.
 #src_xpos = int(Nx/2)
@@ -70,14 +70,14 @@ src_ypos = 40
 
 # Momentum of the source.
 k0 = 2*np.pi / wvlen
-phi, theta = 0, np.pi/6
+phi, theta = 0, 70*np.pi/180
 kx = k0 * np.cos(phi) * np.cos(theta)
-ky = k0 * np.cos(phi) * np.sin(theta)
-kz = k0 * np.sin(phi)
+ky = k0 * np.sin(phi)
+kz = k0 * np.cos(phi) * np.sin(theta)
 mmt = (kx, ky, kz)
 
 # plain wave normal to x.
-Space.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Ny, Nz)) # Plane wave for Ey, x-direction.
+Space.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Ny, Nz), mmt) # Plane wave for Ey, x-direction.
 
 # plain wave normal to y.
 #Space.set_src_pos((1, src_ypos, 0), (Nx, src_ypos+1, Nz)) # Plane wave for Ez, y-direction.
@@ -112,10 +112,11 @@ for tstep in range(Space.tsteps):
             print(("Size of a total field array : %05.2f Mbytes" %(Space.TOTAL_NUM_GRID_SIZE)))
             print("Simulation start: {}".format(datetime.datetime.now()))
         
-    pulse_re = Src.pulse_re(tstep, pick_pos)
+    #pulse_re = Src.pulse_re(tstep, pick_pos)
     #pulse_im = Src.pulse_im(tstep, pick_pos)
+    pulse = Src.signal(tstep)
 
-    Space.put_src('Ey', pulse_re, 'soft')
+    Space.put_src('Ey', pulse, 'soft')
     #Space.put_src('Ez', pulse_re, 'soft')
 
     Space.updateH(tstep)
@@ -128,7 +129,7 @@ for tstep in range(Space.tsteps):
         #graphtool.plot2D3D('Ex', tstep, xidx=Space.Nxc, colordeep=6., stride=2, zlim=6.)
 
         Ey = graphtool.gather('Ey')
-        graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=1., stride=2, zlim=1.)
+        graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=3., stride=2, zlim=3.)
         
         #Ez = graphtool.gather('Ez')
         #graphtool.plot2D3D(Ez, tstep, zidx=Space.Nzc, colordeep=1., stride=2, zlim=1.)

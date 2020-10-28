@@ -107,9 +107,10 @@ class Sine:
 
     def signal(self, tstep):
 
-        pulse_re = np.sin(self.omega * tstep * self.dt)
+        pulse = np.exp(1j*self.omega * tstep * self.dt)
+        #pulse = np.sin(self.omega * tstep * self.dt)
 
-        return pulse_re
+        return pulse
 
 
 class Cosine:
@@ -138,3 +139,30 @@ class Cosine:
         pulse_re = np.cos(self.omega * tstep * self.dt)
 
         return pulse_re
+
+
+class Harmonic:
+
+    def __init__(self, dt):
+
+        self.dt = dt
+
+    def set_freq(self, freq):
+        
+        self.freq = freq
+        self.wvlen = c / self.freq
+        self.omega = 2 * np.pi * self.freq
+        self.wvector = 2 * np.pi / self.wvlen
+
+    def set_wvlen(self, wvlen):
+
+        self.wvlen = wvlen
+        self.freq = c / self.wvlen
+        self.omega = 2 * np.pi * self.freq
+        self.wvector = 2 * np.pi / self.wvlen
+
+    def signal(self, tstep):
+
+        pulse = np.exp(1j*self.omega * tstep * self.dt)
+
+        return pulse
