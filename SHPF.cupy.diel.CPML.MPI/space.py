@@ -370,24 +370,25 @@ class Basic3D:
         
         return
 
-    def apply_BBC(self, mmt, axes):
+    def apply_BBC(self, BBC):
         """Apply Bloch Boundary Condition.
 
         Parameters
         ----------
-        mmt: tuple
-            momentum vector of the monocromatic wave.
-
-        axes: dictionary
-            Axes to apply BBC. 
+        BBC: Boolean
+            Choose to apply BBC or not, along all axes.
 
         Returns
         -------
         None
         """
 
-        self.BBCregion = region
-        self.mmt = mmt
+        self.apply_BBC = BBC
+
+        kx = self.fftfreq(self.myNx, self.dx) * 2 * self.xp.pi
+        ikx = (1j*kx[:,None,None]).astype(self.mmtdtype)
+        self.xpshift = self.xp.exp(ikx* self.dx/2).astype(self.mmtdtype)
+        self.xmshift = self.xp.exp(ikx*-self.dx/2).astype(self.mmtdtype)
 
         return
 
@@ -751,6 +752,20 @@ class Basic3D:
         #---------------- Apply BBC when it is given ---------------#
         #-----------------------------------------------------------#
 
+        if self.apply_BBC == True:
+
+            shifted_ez = self.ifft(self.ypshift*self.fft(self.Ez, axes=(1,)), axes=(1,))
+            shifted_ey = self.ifft(self.zpshift*self.fft(self.Ey, axes=(2,)), axes=(2,))
+            self.Hx += -self.dt/self.mu_Hx*1j*(self.mmt[1]*shifted_ez - self.mmt[2]*shifted_ey)
+
+            shifted_ex = self.ifft(self.zpshift*self.fft(self.Ex, axes=(2,)), axes=(2,))[:-1,:,:]
+            shifted_ez = (self.Ez[:-1,:,:] + self.Ey[1:,:,:]) / 2
+            self.Hy[:-1,:,:] += -self.dt/self.mu_Hy[:-1,:,:]*1j*(self.mmt[2]*shifted_ex - self.mmt[0]*shifted_ez)
+
+            shifted_ex = self.ifft(self.ypshift*self.fft(self.Ex, axes=(1,)), axes=(1,))[:-1,:,:]
+            shifted_ey = (self.Ey[1:,:,:] + self.Ey[:-1,:,:]) / 2
+            self.Hz[:-1,:,:] += -self.dt/self.mu_Hz[:-1,:,:]*1j*(self.mmt[0]*shifted_ey - self.mmt[1]*shifted_ex)
+
     def updateE(self, tstep):
         """Update E field.
 
@@ -950,6 +965,20 @@ class Basic3D:
         #-----------------------------------------------------------#
         #---------------- Apply BBC when it is given ---------------#
         #-----------------------------------------------------------#
+
+        if self.apply_BBC == True:
+
+            shifted_hz = self.ifft(self.ymshift*self.fft(self.Hz, axes=(1,)), axes=(1,))
+            shifted_hy = self.ifft(self.zmshift*self.fft(self.Hy, axes=(2,)), axes=(2,))
+            self.Ex += self.dt/self.eps_Ex*1j*(self.mmt[1]*shifted_hz - self.mmt[2]*shifted_hy)
+
+            shifted_hx = self.ifft(self.zmshift*self.fft(self.Hx, axes=(2,)), axes=(2,))[1:,:,:]
+            shifted_hz = (self.Hz[1:,:,:] + self.Hz[:-1,:,:]) / 2
+            self.Ey[1:,:,:] += self.dt/self.eps_Ey[1:,:,:]*1j*(self.mmt[2]*shifted_hx - self.mmt[0]*shifted_hz)
+
+            shifted_hy = self.ifft(self.xmshift*self.fft(self.Hy, axes=(0,)), axes=(0,))[1:,:,:]
+            shifted_hx = (self.Hx[1:,:,:] + self.Hx[:-1,:,:]) / 2
+            self.Ez[1:,:,:] += self.dt/self.eps_Ez[1:,:,:]*1j*(self.mmt[0]*shifted_hy - self.mmt[1]*shifted_hx)
 
     def _PML_updateH_px(self):
 

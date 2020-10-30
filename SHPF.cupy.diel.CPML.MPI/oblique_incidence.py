@@ -49,8 +49,8 @@ Box1_end = (round(272*um/dx), round(96*um/dy), round( 96*um/dz))
 #Box = structure.Box(Space, Box1_srt, Box1_end, 4., 1.)
 
 # Set PML and PBC
-#Space.set_PML({'x':'+-','y':'','z':''}, 10)
-Space.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
+Space.set_PML({'x':'+-','y':'','z':''}, 10)
+#Space.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
 
 # Save eps, mu and PML data.
 #Space.save_PML_parameters('./')
@@ -69,12 +69,17 @@ src_xpos = 40
 src_ypos = 40
 
 # Momentum of the source.
+# phi is the angle between k0 vector and xz-plane.
+# theta is the angle between k0cos(phi) and x-axis.
 k0 = 2*np.pi / wvlen
-phi, theta = 0, 70*np.pi/180
+phi, theta = 0*np.pi/180, 0*np.pi/180
+#phi, theta = 0, 0
 kx = k0 * np.cos(phi) * np.cos(theta)
 ky = k0 * np.sin(phi)
 kz = k0 * np.cos(phi) * np.sin(theta)
-mmt = (kx, ky, kz)
+mmt = (0, ky, kz)
+
+Space.apply_BBC(True)
 
 # plain wave normal to x.
 Space.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Ny, Nz), mmt) # Plane wave for Ey, x-direction.
@@ -93,7 +98,7 @@ leftx, rightx = int(Nx/4), int(Nx*3/4)
 lefty, righty = int(Ny/4), int(Ny*3/4)
 leftz, rightz = int(Nz/4), int(Nz*3/4)
 
-#Sx_R_calculator = rft.Sx("SF_R", "./graph/Sx", Space, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, 'cupy')
+#Sx_R_getter = rft.Sx("SF_R", "./graph/Sx", Space, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, 'cupy')
 
 # Set plotfield options
 graphtool = plotfield.Graphtool(Space, 'TF', savedir)
@@ -117,7 +122,7 @@ for tstep in range(Space.tsteps):
     pulse = Src.signal(tstep)
 
     Space.put_src('Ey', pulse, 'soft')
-    #Space.put_src('Ez', pulse_re, 'soft')
+    #Space.put_src('Ez', pulse, 'soft')
 
     Space.updateH(tstep)
     Space.updateE(tstep)
@@ -132,7 +137,7 @@ for tstep in range(Space.tsteps):
         graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=3., stride=2, zlim=3.)
         
         #Ez = graphtool.gather('Ez')
-        #graphtool.plot2D3D(Ez, tstep, zidx=Space.Nzc, colordeep=1., stride=2, zlim=1.)
+        #graphtool.plot2D3D(Ez, tstep, zidx=Space.Nzc, colordeep=3., stride=2, zlim=3.)
 
         if Space.MPIrank == 0:
 
