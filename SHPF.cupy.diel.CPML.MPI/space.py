@@ -385,10 +385,23 @@ class Basic3D:
 
         self.apply_BBC = BBC
 
-        kx = self.fftfreq(self.myNx, self.dx) * 2 * self.xp.pi
-        ikx = (1j*kx[:,None,None]).astype(self.mmtdtype)
-        self.xpshift = self.xp.exp(ikx* self.dx/2).astype(self.mmtdtype)
-        self.xmshift = self.xp.exp(ikx*-self.dx/2).astype(self.mmtdtype)
+        self.ez_at_Hx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.ey_at_Hx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+
+        self.ex_at_Hy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.ez_at_Hy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+
+        self.ex_at_Hz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.ey_at_Hz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+
+        self.hz_at_Ex = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.hy_at_Ex = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+
+        self.hx_at_Ey = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.hz_at_Ey = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+
+        self.hx_at_Ez = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        self.hy_at_Ez = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
 
         return
 
@@ -419,7 +432,7 @@ class Basic3D:
 
         return
 
-    def set_src_pos(self, src_srt, src_end, mmt):
+    def set_src(self, src_srt, src_end, mmt):
         """Set the position, type of the source and field.
 
         PARAMETERS
@@ -463,7 +476,7 @@ class Basic3D:
         self.src_zend = src_end[2]
 
         #----------------------------------------------------------------------#
-        #--------- All rank should know who put src to plot src graph ---------#
+        #--------- All ranks should know who put src to plot src graph --------#
         #----------------------------------------------------------------------#
 
         self.MPIcomm.Barrier()
@@ -525,8 +538,18 @@ class Basic3D:
             self.py = np.exp(1j*-ky*self.xp.arange(self.   src_ysrt, self.   src_yend)*self.dy)
             self.pz = np.exp(1j*-kz*self.xp.arange(self.   src_zsrt, self.   src_zend)*self.dz)
 
+            """
+            xdist = self.my_src_xend-self.my_src_xsrt
+            ydist = self.   src_yend-self.   src_ysrt
+            zdist = self.   src_zend-self.   src_zsrt
+
+            if xdist == 1: self.px *= np.exp(1j*kx*self.my_src_xsrt)
+            if ydist == 1: self.py *= np.exp(1j*ky*self.   src_ysrt)
+            if zdist == 1: self.pz *= np.exp(1j*kz*self.   src_zsrt)
+            """
+
     def put_src(self, where, pulse, put_type):
-        """Put source at the designated postion set by set_src_pos method.
+        """Put source at the designated postion set by set_src method.
         
         PARAMETERS
         ----------  
@@ -754,17 +777,21 @@ class Basic3D:
 
         if self.apply_BBC == True:
 
-            shifted_ez = self.ifft(self.ypshift*self.fft(self.Ez, axes=(1,)), axes=(1,))
-            shifted_ey = self.ifft(self.zpshift*self.fft(self.Ey, axes=(2,)), axes=(2,))
-            self.Hx += -self.dt/self.mu_Hx*1j*(self.mmt[1]*shifted_ez - self.mmt[2]*shifted_ey)
+            self.ez_at_Hx[:  ,:,:] = self.ifft(self.ypshift*self.fft(self.Ez, axes=(1,)), axes=(1,))
+            self.ey_at_Hx[:  ,:,:] = self.ifft(self.zpshift*self.fft(self.Ey, axes=(2,)), axes=(2,))
 
-            shifted_ex = self.ifft(self.zpshift*self.fft(self.Ex, axes=(2,)), axes=(2,))[:-1,:,:]
-            shifted_ez = (self.Ez[:-1,:,:] + self.Ey[1:,:,:]) / 2
-            self.Hy[:-1,:,:] += -self.dt/self.mu_Hy[:-1,:,:]*1j*(self.mmt[2]*shifted_ex - self.mmt[0]*shifted_ez)
+            self.ex_at_Hy[:  ,:,:] = self.ifft(self.zpshift*self.fft(self.Ex, axes=(2,)), axes=(2,))
+            #self.ez_at_Hy[:-1,:,:] = (self.Ez[:-1,:,:] + self.Ez[1:,:,:]) / 2
 
-            shifted_ex = self.ifft(self.ypshift*self.fft(self.Ex, axes=(1,)), axes=(1,))[:-1,:,:]
-            shifted_ey = (self.Ey[1:,:,:] + self.Ey[:-1,:,:]) / 2
-            self.Hz[:-1,:,:] += -self.dt/self.mu_Hz[:-1,:,:]*1j*(self.mmt[0]*shifted_ey - self.mmt[1]*shifted_ex)
+            self.ex_at_Hz[:  ,:,:] = self.ifft(self.ypshift*self.fft(self.Ex, axes=(1,)), axes=(1,))
+            #self.ey_at_Hz[:-1,:,:] = (self.Ey[1:,:,:] + self.Ey[:-1,:,:]) / 2
+
+            sli1 = [slice(None,None), slice(None,None), slice(None,None)]
+            sli2 = [slice(None,-1  ), slice(None,None), slice(None,None)]
+
+            self.Hx[sli1] += -self.dt/self.mu_Hx[sli1]*1j*(self.mmt[1]*self.ez_at_Hx[sli1] - self.mmt[2]*self.ey_at_Hx[sli1])
+            self.Hy[sli2] += -self.dt/self.mu_Hy[sli2]*1j*(self.mmt[2]*self.ex_at_Hy[sli2] - self.mmt[0]*self.ez_at_Hy[sli2])
+            self.Hz[sli2] += -self.dt/self.mu_Hz[sli2]*1j*(self.mmt[0]*self.ey_at_Hz[sli2] - self.mmt[1]*self.ex_at_Hz[sli2])
 
     def updateE(self, tstep):
         """Update E field.
@@ -968,17 +995,21 @@ class Basic3D:
 
         if self.apply_BBC == True:
 
-            shifted_hz = self.ifft(self.ymshift*self.fft(self.Hz, axes=(1,)), axes=(1,))
-            shifted_hy = self.ifft(self.zmshift*self.fft(self.Hy, axes=(2,)), axes=(2,))
-            self.Ex += self.dt/self.eps_Ex*1j*(self.mmt[1]*shifted_hz - self.mmt[2]*shifted_hy)
+            self.hz_at_Ex[ :,:,:] = self.ifft(self.ymshift*self.fft(self.Hz, axes=(1,)), axes=(1,))
+            self.hy_at_Ex[ :,:,:] = self.ifft(self.zmshift*self.fft(self.Hy, axes=(2,)), axes=(2,))
 
-            shifted_hx = self.ifft(self.zmshift*self.fft(self.Hx, axes=(2,)), axes=(2,))[1:,:,:]
-            shifted_hz = (self.Hz[1:,:,:] + self.Hz[:-1,:,:]) / 2
-            self.Ey[1:,:,:] += self.dt/self.eps_Ey[1:,:,:]*1j*(self.mmt[2]*shifted_hx - self.mmt[0]*shifted_hz)
+            self.hx_at_Ey[ :,:,:] = self.ifft(self.zmshift*self.fft(self.Hx, axes=(2,)), axes=(2,))
+            #self.hz_at_Ey[1:,:,:] = (self.Hz[1:,:,:] + self.Hz[:-1,:,:]) / 2
 
-            shifted_hy = self.ifft(self.xmshift*self.fft(self.Hy, axes=(0,)), axes=(0,))[1:,:,:]
-            shifted_hx = (self.Hx[1:,:,:] + self.Hx[:-1,:,:]) / 2
-            self.Ez[1:,:,:] += self.dt/self.eps_Ez[1:,:,:]*1j*(self.mmt[0]*shifted_hy - self.mmt[1]*shifted_hx)
+            self.hx_at_Ez[ :,:,:] = self.ifft(self.ymshift*self.fft(self.Hx, axes=(1,)), axes=(1,))
+            #self.hy_at_Ez[1:,:,:] = self.ifft(self.xmshift*self.fft(self.Hy, axes=(0,)), axes=(0,))
+
+            sli1 = [slice(None,None), slice(None,None), slice(None,None)]
+            sli2 = [slice(   1,None), slice(None,None), slice(None,None)]
+
+            self.Ex[sli1] += self.dt/self.eps_Ex[sli1]*1j*(self.mmt[1]*self.hz_at_Ex[sli1] - self.mmt[2]*self.hy_at_Ex[sli1])
+            self.Ey[sli2] += self.dt/self.eps_Ey[sli2]*1j*(self.mmt[2]*self.hx_at_Ey[sli2] - self.mmt[0]*self.hz_at_Ey[sli2])
+            self.Ez[sli2] += self.dt/self.eps_Ez[sli2]*1j*(self.mmt[0]*self.hy_at_Ez[sli2] - self.mmt[1]*self.hx_at_Ez[sli2])
 
     def _PML_updateH_px(self):
 

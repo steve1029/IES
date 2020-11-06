@@ -107,8 +107,8 @@ class Sine:
 
     def signal(self, tstep):
 
-        pulse = np.exp(1j*self.omega * tstep * self.dt)
-        #pulse = np.sin(self.omega * tstep * self.dt)
+        #pulse = np.exp(1j*self.omega * tstep * self.dt)
+        pulse = np.sin(self.omega * tstep * self.dt)
 
         return pulse
 
@@ -163,6 +163,6 @@ class Harmonic:
 
     def signal(self, tstep):
 
-        pulse = np.exp(1j*self.omega * tstep * self.dt)
+        pulse = np.exp(1j*self.omega*tstep*self.dt)
 
         return pulse

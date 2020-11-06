@@ -49,7 +49,7 @@ Box1_end = (round(272*um/dx), round(96*um/dy), round( 96*um/dz))
 #Box = structure.Box(Space, Box1_srt, Box1_end, 4., 1.)
 
 # Set PML and PBC
-Space.set_PML({'x':'+-','y':'','z':''}, 10)
+Space.set_PML({'x':'+-','y':'+-','z':''}, 10)
 #Space.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
 
 # Save eps, mu and PML data.
@@ -60,38 +60,51 @@ Space.set_PML({'x':'+-','y':'','z':''}, 10)
 #Src = source.Gaussian(dt, wvc, spread, pick_pos, np.float64)
 #Src.plot_pulse(Tstep, freqs, savedir)
 Src = source.Harmonic(dt)
-wvlen = 200*um
+wvlen = 300*um
 Src.set_wvlen(wvlen)
 
 # Set source position.
 #src_xpos = int(Nx/2)
-src_xpos = 40
-src_ypos = 40
+src_xpos = 50
+src_ypos = 50
 
 # Momentum of the source.
+# mmt for plane wave normal to x axis
 # phi is the angle between k0 vector and xz-plane.
 # theta is the angle between k0cos(phi) and x-axis.
 k0 = 2*np.pi / wvlen
-phi, theta = 0*np.pi/180, 0*np.pi/180
+phi, theta = 30*np.pi/180, 0*np.pi/180
 #phi, theta = 0, 0
-kx = k0 * np.cos(phi) * np.cos(theta)
-ky = k0 * np.sin(phi)
-kz = k0 * np.cos(phi) * np.sin(theta)
-mmt = (0, ky, kz)
+
+#kx = k0 * np.cos(phi) * np.cos(theta)
+#ky = k0 * np.sin(phi)
+#kz = k0 * np.cos(phi) * np.sin(theta)
+
+# mmt for plane wave normal to y axis
+# phi is the angle between k0 vector and xy-plane.
+# theta is the angle between k0cos(phi) and y-axis.
+kx = k0 * np.cos(phi)* np.sin(theta)
+ky = k0 * np.cos(phi)* np.cos(theta)
+kz = k0 * np.sin(phi)
+
+#mmt = (0, 0, 0)
+#mmt = (0, ky, kz)
+#mmt = (0, ky, 0)
+mmt = (0, 0, kz)
 
 Space.apply_BBC(True)
 
 # plain wave normal to x.
-Space.set_src_pos((src_xpos, 0, 0), (src_xpos+1, Ny, Nz), mmt) # Plane wave for Ey, x-direction.
+#Space.set_src((src_xpos, 0, 0), (src_xpos+1, Ny, Nz), mmt) # Plane wave for Ey, x-direction.
 
 # plain wave normal to y.
-#Space.set_src_pos((1, src_ypos, 0), (Nx, src_ypos+1, Nz)) # Plane wave for Ez, y-direction.
+Space.set_src((1, src_ypos, 0), (Nx, src_ypos+1, Nz-0), mmt) # Plane wave for Ez, y-direction.
 
 # Line source along y axis.
-#Space.set_src_pos((src_xpos, 0, Space.Nzc), (src_xpos+1, Space.Ny, Space.Nzc+1))
+#Space.set_src((src_xpos, 0, Space.Nzc), (src_xpos+1, Space.Ny, Space.Nzc+1))
 
 # Line source along z axis.
-#Space.set_src_pos((src_xpos, Space.Nyc, 0), (src_xpos+1, Space.Nyc+1, Space.Nz))
+#Space.set_src((src_xpos, Space.Nyc, 0), (src_xpos+1, Space.Nyc+1, Space.Nz))
 
 # Set Poynting vector calculator.
 leftx, rightx = int(Nx/4), int(Nx*3/4)
@@ -121,7 +134,8 @@ for tstep in range(Space.tsteps):
     #pulse_im = Src.pulse_im(tstep, pick_pos)
     pulse = Src.signal(tstep)
 
-    Space.put_src('Ey', pulse, 'soft')
+    Space.put_src('Ex', pulse, 'soft')
+    #Space.put_src('Ey', pulse, 'soft')
     #Space.put_src('Ez', pulse, 'soft')
 
     Space.updateH(tstep)
@@ -131,12 +145,16 @@ for tstep in range(Space.tsteps):
 
     # Plot the field profile
     if tstep % plot_per == 0:
-        #graphtool.plot2D3D('Ex', tstep, xidx=Space.Nxc, colordeep=6., stride=2, zlim=6.)
 
-        Ey = graphtool.gather('Ey')
-        graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=3., stride=2, zlim=3.)
+        Ex = graphtool.gather('Ex')
+        graphtool.plot2D3D(Ex, tstep, xidx=Space.Nxc, colordeep=3., stride=2, zlim=3.)
+
+        #Ey = graphtool.gather('Ey')
+        #graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=3., stride=2, zlim=3.)
+        #graphtool.plot2D3D(Ey, tstep, zidx=Space.Nzc, colordeep=3., stride=2, zlim=3.)
         
         #Ez = graphtool.gather('Ez')
+        #graphtool.plot2D3D(Ez, tstep, xidx=Space.Nxc, colordeep=3., stride=2, zlim=3.)
         #graphtool.plot2D3D(Ez, tstep, zidx=Space.Nzc, colordeep=3., stride=2, zlim=3.)
 
         if Space.MPIrank == 0:
