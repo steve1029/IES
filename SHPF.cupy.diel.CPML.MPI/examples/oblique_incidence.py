@@ -24,7 +24,7 @@ dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz
 
 courant = 1./4
 dt = courant * min(dx,dy,dz) / c
-Tstep = 2001
+Tstep = 2000
 
 wvc = 300*um
 interval = 2
@@ -40,7 +40,7 @@ np.save("./graph/freqs", freqs)
 #-------------------------- Call objects --------------------------#
 #------------------------------------------------------------------#
 
-Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tstep, np.complex64, np.complex64, method='SHPF', engine='cupy')
+Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tstep, np.complex64, np.complex64, method='FDTD', engine='cupy')
 Space.malloc()
 
 # Put structures
@@ -88,17 +88,21 @@ ky = k0 * np.cos(phi)* np.cos(theta)
 kz = k0 * np.sin(phi)
 
 #mmt = (0, 0, 0)
-#mmt = (0, ky, kz)
+mmt = (0, ky, kz)
 #mmt = (0, ky, 0)
-mmt = (0, 0, kz)
+#mmt = (0, 0, kz)
 
-Space.apply_BBC(True)
+BBC = {'x':False, 'y':False, 'z':True}
+Space.apply_BBC(BBC)
 
 # plain wave normal to x.
 #Space.set_src((src_xpos, 0, 0), (src_xpos+1, Ny, Nz), mmt) # Plane wave for Ey, x-direction.
 
 # plain wave normal to y.
 Space.set_src((1, src_ypos, 0), (Nx, src_ypos+1, Nz-0), mmt) # Plane wave for Ez, y-direction.
+
+# plain wave normal to z.
+#Space.set_src((0, 0, 20), (Nx, Ny, 21), mmt) # Plane wave for Ez, y-direction.
 
 # Line source along y axis.
 #Space.set_src((src_xpos, 0, Space.Nzc), (src_xpos+1, Space.Ny, Space.Nzc+1))
@@ -120,7 +124,7 @@ graphtool = plotfield.Graphtool(Space, 'TF', savedir)
 start_time = datetime.datetime.now()
 
 # time loop begins
-for tstep in range(Space.tsteps):
+for tstep in range(Space.tsteps+1):
 
     # At the start point
     if tstep == 0:

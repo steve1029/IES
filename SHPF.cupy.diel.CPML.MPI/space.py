@@ -167,7 +167,7 @@ class Basic3D:
 
         if self.engine == 'cupy':
             self.iky = (1j*self.ky[None,:,None]).astype(self.mmtdtype)
-            self.ikz = (1J*self.kz[None,None,:]).astype(self.mmtdtype)
+            self.ikz = (1j*self.kz[None,None,:]).astype(self.mmtdtype)
             self.ypshift = self.xp.exp(self.iky* self.dy/2).astype(self.mmtdtype)
             self.zpshift = self.xp.exp(self.ikz* self.dz/2).astype(self.mmtdtype)
             self.ymshift = self.xp.exp(self.iky*-self.dy/2).astype(self.mmtdtype)
@@ -375,7 +375,7 @@ class Basic3D:
 
         Parameters
         ----------
-        BBC: Boolean
+        BBC: dictionary
             Choose to apply BBC or not, along all axes.
 
         Returns
@@ -383,25 +383,37 @@ class Basic3D:
         None
         """
 
-        self.apply_BBC = BBC
+        self.apply_BBCx = BBC.get('x')
+        self.apply_BBCy = BBC.get('y')
+        self.apply_BBCz = BBC.get('z')
 
-        self.ez_at_Hx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
-        self.ey_at_Hx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+        if self.method == 'SHPF':
 
-        self.ex_at_Hy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
-        self.ez_at_Hy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+            if self.apply_BBCx == True: 
 
-        self.ex_at_Hz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
-        self.ey_at_Hz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+                self.ez_at_Hy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+                self.ey_at_Hz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
 
-        self.hz_at_Ex = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
-        self.hy_at_Ex = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+                self.hz_at_Ey = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+                self.hy_at_Ez = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
 
-        self.hx_at_Ey = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
-        self.hz_at_Ey = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+                raise ValueError("BBC along x-axis is not developed yet!")
 
-        self.hx_at_Ez = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
-        self.hy_at_Ez = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+            if self.apply_BBCy == True: 
+
+                self.hz_at_Ex = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+                self.hx_at_Ez = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+
+                self.ez_at_Hx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+                self.ex_at_Hz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+
+            if self.apply_BBCz == True: 
+
+                self.hy_at_Ex = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+                self.hx_at_Ey = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+
+                self.ey_at_Hx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+                self.ex_at_Hy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
 
         return
 
@@ -534,19 +546,17 @@ class Basic3D:
 
         if self.MPIrank == self.who_put_src:
 
-            self.px = np.exp(1j*-kx*self.xp.arange(self.my_src_xsrt, self.my_src_xend)*self.dx)
-            self.py = np.exp(1j*-ky*self.xp.arange(self.   src_ysrt, self.   src_yend)*self.dy)
-            self.pz = np.exp(1j*-kz*self.xp.arange(self.   src_zsrt, self.   src_zend)*self.dz)
+            self.px = np.exp(1j*kx*self.xp.arange(self.my_src_xsrt, self.my_src_xend)*self.dx)
+            self.py = np.exp(1j*ky*self.xp.arange(self.   src_ysrt, self.   src_yend)*self.dy)
+            self.pz = np.exp(1j*kz*self.xp.arange(self.   src_zsrt, self.   src_zend)*self.dz)
 
-            """
             xdist = self.my_src_xend-self.my_src_xsrt
             ydist = self.   src_yend-self.   src_ysrt
             zdist = self.   src_zend-self.   src_zsrt
 
-            if xdist == 1: self.px *= np.exp(1j*kx*self.my_src_xsrt)
-            if ydist == 1: self.py *= np.exp(1j*ky*self.   src_ysrt)
-            if zdist == 1: self.pz *= np.exp(1j*kz*self.   src_zsrt)
-            """
+            if xdist == 1: self.px = np.exp(1j*kx*self.xp.arange(1)*self.dx)
+            if ydist == 1: self.py = np.exp(1j*ky*self.xp.arange(1)*self.dy)
+            if zdist == 1: self.pz = np.exp(1j*kz*self.xp.arange(1)*self.dz)
 
     def put_src(self, where, pulse, put_type):
         """Put source at the designated postion set by set_src method.
@@ -775,23 +785,35 @@ class Basic3D:
         #---------------- Apply BBC when it is given ---------------#
         #-----------------------------------------------------------#
 
-        if self.apply_BBC == True:
+        sli1 = [slice(None,None), slice(None,None), slice(None,None)]
+        sli2 = [slice(None,-1  ), slice(None,None), slice(None,None)]
 
-            self.ez_at_Hx[:  ,:,:] = self.ifft(self.ypshift*self.fft(self.Ez, axes=(1,)), axes=(1,))
-            self.ey_at_Hx[:  ,:,:] = self.ifft(self.zpshift*self.fft(self.Ey, axes=(2,)), axes=(2,))
+        if self.apply_BBCx == True:
 
-            self.ex_at_Hy[:  ,:,:] = self.ifft(self.zpshift*self.fft(self.Ex, axes=(2,)), axes=(2,))
             #self.ez_at_Hy[:-1,:,:] = (self.Ez[:-1,:,:] + self.Ez[1:,:,:]) / 2
-
-            self.ex_at_Hz[:  ,:,:] = self.ifft(self.ypshift*self.fft(self.Ex, axes=(1,)), axes=(1,))
             #self.ey_at_Hz[:-1,:,:] = (self.Ey[1:,:,:] + self.Ey[:-1,:,:]) / 2
 
-            sli1 = [slice(None,None), slice(None,None), slice(None,None)]
-            sli2 = [slice(None,-1  ), slice(None,None), slice(None,None)]
+            #self.Hx[sli1] += -self.dt/self.mu_Hx[sli1]*1j*(self.mmt[1]*self.ez_at_Hx[sli1] - self.mmt[2]*self.ey_at_Hx[sli1])
+            #self.Hy[sli2] += -self.dt/self.mu_Hy[sli2]*1j*(self.mmt[2]*self.ex_at_Hy[sli2] - self.mmt[0]*self.ez_at_Hy[sli2])
+            #self.Hz[sli2] += -self.dt/self.mu_Hz[sli2]*1j*(self.mmt[0]*self.ey_at_Hz[sli2] - self.mmt[1]*self.ex_at_Hz[sli2])
 
-            self.Hx[sli1] += -self.dt/self.mu_Hx[sli1]*1j*(self.mmt[1]*self.ez_at_Hx[sli1] - self.mmt[2]*self.ey_at_Hx[sli1])
-            self.Hy[sli2] += -self.dt/self.mu_Hy[sli2]*1j*(self.mmt[2]*self.ex_at_Hy[sli2] - self.mmt[0]*self.ez_at_Hy[sli2])
-            self.Hz[sli2] += -self.dt/self.mu_Hz[sli2]*1j*(self.mmt[0]*self.ey_at_Hz[sli2] - self.mmt[1]*self.ex_at_Hz[sli2])
+            raise ValueError("BBC along x axis is not developed yet!")
+
+        if self.apply_BBCy == True:
+
+            self.ez_at_Hx = self.ifft(self.ypshift*self.fft(self.Ez, axes=(1,)), axes=(1,))
+            self.ex_at_Hz = self.ifft(self.ypshift*self.fft(self.Ex, axes=(1,)), axes=(1,))
+
+            self.Hx[sli1] += -self.dt/self.mu_Hx[sli1]*1j*( self.mmt[1]*self.ez_at_Hx[sli1])
+            self.Hz[sli2] += -self.dt/self.mu_Hz[sli2]*1j*(-self.mmt[1]*self.ex_at_Hz[sli2])
+
+        if self.apply_BBCz == True:
+
+            self.ey_at_Hx = self.ifft(self.zpshift*self.fft(self.Ey, axes=(2,)), axes=(2,))
+            self.ex_at_Hy = self.ifft(self.zpshift*self.fft(self.Ex, axes=(2,)), axes=(2,))
+
+            self.Hx[sli1] += -self.dt/self.mu_Hx[sli1]*1j*( self.mmt[2]*self.ey_at_Hx[sli1])
+            self.Hy[sli2] += -self.dt/self.mu_Hy[sli2]*1j*(-self.mmt[2]*self.ex_at_Hy[sli2])
 
     def updateE(self, tstep):
         """Update E field.
@@ -993,23 +1015,34 @@ class Basic3D:
         #---------------- Apply BBC when it is given ---------------#
         #-----------------------------------------------------------#
 
-        if self.apply_BBC == True:
+        sli1 = [slice(None,None), slice(None,None), slice(None,None)]
+        sli2 = [slice(   1,None), slice(None,None), slice(None,None)]
 
-            self.hz_at_Ex[ :,:,:] = self.ifft(self.ymshift*self.fft(self.Hz, axes=(1,)), axes=(1,))
-            self.hy_at_Ex[ :,:,:] = self.ifft(self.zmshift*self.fft(self.Hy, axes=(2,)), axes=(2,))
-
-            self.hx_at_Ey[ :,:,:] = self.ifft(self.zmshift*self.fft(self.Hx, axes=(2,)), axes=(2,))
+        if self.apply_BBCx == True:
+            #self.hy_at_Ez[1:,:,:] = self.ifft(self.xmshift*self.fft(self.Hy, axes=(0,)), axes=(0,))
             #self.hz_at_Ey[1:,:,:] = (self.Hz[1:,:,:] + self.Hz[:-1,:,:]) / 2
 
-            self.hx_at_Ez[ :,:,:] = self.ifft(self.ymshift*self.fft(self.Hx, axes=(1,)), axes=(1,))
-            #self.hy_at_Ez[1:,:,:] = self.ifft(self.xmshift*self.fft(self.Hy, axes=(0,)), axes=(0,))
+            #self.Ex[sli1] += self.dt/self.eps_Ex[sli1]*1j*(self.mmt[1]*self.hz_at_Ex[sli1] - self.mmt[2]*self.hy_at_Ex[sli1])
+            #self.Ey[sli2] += self.dt/self.eps_Ey[sli2]*1j*(self.mmt[2]*self.hx_at_Ey[sli2] - self.mmt[0]*self.hz_at_Ey[sli2])
+            #self.Ez[sli2] += self.dt/self.eps_Ez[sli2]*1j*(self.mmt[0]*self.hy_at_Ez[sli2] - self.mmt[1]*self.hx_at_Ez[sli2])
 
-            sli1 = [slice(None,None), slice(None,None), slice(None,None)]
-            sli2 = [slice(   1,None), slice(None,None), slice(None,None)]
+            raise ValueError("BBC along x axis is not developed yet!")
 
-            self.Ex[sli1] += self.dt/self.eps_Ex[sli1]*1j*(self.mmt[1]*self.hz_at_Ex[sli1] - self.mmt[2]*self.hy_at_Ex[sli1])
-            self.Ey[sli2] += self.dt/self.eps_Ey[sli2]*1j*(self.mmt[2]*self.hx_at_Ey[sli2] - self.mmt[0]*self.hz_at_Ey[sli2])
-            self.Ez[sli2] += self.dt/self.eps_Ez[sli2]*1j*(self.mmt[0]*self.hy_at_Ez[sli2] - self.mmt[1]*self.hx_at_Ez[sli2])
+        if self.apply_BBCy == True:
+
+            self.hz_at_Ex = self.ifft(self.ymshift*self.fft(self.Hz, axes=(1,)), axes=(1,))
+            self.hx_at_Ez = self.ifft(self.ymshift*self.fft(self.Hx, axes=(1,)), axes=(1,))
+
+            self.Ex[sli1] += self.dt/self.eps_Ex[sli1]*1j*( self.mmt[1]*self.hz_at_Ex[sli1])
+            self.Ez[sli2] += self.dt/self.eps_Ez[sli2]*1j*(-self.mmt[1]*self.hx_at_Ez[sli2])
+
+        if self.apply_BBCz == True:
+
+            self.hy_at_Ex = self.ifft(self.zmshift*self.fft(self.Hy, axes=(2,)), axes=(2,))
+            self.hx_at_Ey = self.ifft(self.zmshift*self.fft(self.Hx, axes=(2,)), axes=(2,))
+
+            self.Ex[sli1] += self.dt/self.eps_Ex[sli1]*1j*( self.mmt[2]*self.hy_at_Ex[sli1])
+            self.Ey[sli2] += self.dt/self.eps_Ey[sli2]*1j*(-self.mmt[2]*self.hx_at_Ey[sli2])
 
     def _PML_updateH_px(self):
 
