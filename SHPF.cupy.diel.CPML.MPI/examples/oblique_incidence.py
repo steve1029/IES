@@ -8,6 +8,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.constants import c, mu_0, epsilon_0
 import numpy as np
 import cupy as cp
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import source, space, plotfield, structure, rft
 
 #------------------------------------------------------------------#
@@ -24,17 +25,17 @@ dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz
 
 courant = 1./4
 dt = courant * min(dx,dy,dz) / c
-Tstep = 2000
+Tstep = 3000
 
 wvc = 300*um
 interval = 2
 spread   = 0.3
 pick_pos = 1000
-plot_per = 100
+plot_per = 200
 
 wvlens = np.arange(200, 600, interval) * um
 freqs = c / wvlens
-np.save("./graph/freqs", freqs)
+np.save("../graph/freqs", freqs)
 
 #------------------------------------------------------------------#
 #-------------------------- Call objects --------------------------#
@@ -49,7 +50,7 @@ Box1_end = (round(272*um/dx), round(96*um/dy), round( 96*um/dz))
 #Box = structure.Box(Space, Box1_srt, Box1_end, 4., 1.)
 
 # Set PML and PBC
-Space.set_PML({'x':'+-','y':'+-','z':''}, 10)
+Space.set_PML({'x':'+-','y':'','z':''}, 10)
 #Space.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
 
 # Save eps, mu and PML data.
@@ -59,6 +60,7 @@ Space.set_PML({'x':'+-','y':'+-','z':''}, 10)
 # Set the type of input source.
 #Src = source.Gaussian(dt, wvc, spread, pick_pos, np.float64)
 #Src.plot_pulse(Tstep, freqs, savedir)
+smoothing = source.Smoothing(dt, 300)
 Src = source.Harmonic(dt)
 wvlen = 300*um
 Src.set_wvlen(wvlen)
@@ -73,33 +75,33 @@ src_ypos = 50
 # phi is the angle between k0 vector and xz-plane.
 # theta is the angle between k0cos(phi) and x-axis.
 k0 = 2*np.pi / wvlen
-phi, theta = 30*np.pi/180, 0*np.pi/180
+phi, theta = 0*np.pi/180, 30*np.pi/180
 #phi, theta = 0, 0
 
-#kx = k0 * np.cos(phi) * np.cos(theta)
-#ky = k0 * np.sin(phi)
-#kz = k0 * np.cos(phi) * np.sin(theta)
+kx = k0 * np.cos(phi) * np.cos(theta)
+ky = k0 * np.sin(phi)
+kz = k0 * np.cos(phi) * np.sin(theta)
 
 # mmt for plane wave normal to y axis
 # phi is the angle between k0 vector and xy-plane.
 # theta is the angle between k0cos(phi) and y-axis.
-kx = k0 * np.cos(phi)* np.sin(theta)
-ky = k0 * np.cos(phi)* np.cos(theta)
-kz = k0 * np.sin(phi)
+#kx = k0 * np.cos(phi)* np.sin(theta)
+#ky = k0 * np.cos(phi)* np.cos(theta)
+#kz = k0 * np.sin(phi)
 
 #mmt = (0, 0, 0)
-mmt = (0, ky, kz)
+mmt = (kx, ky, kz)
 #mmt = (0, ky, 0)
 #mmt = (0, 0, kz)
 
-BBC = {'x':False, 'y':False, 'z':True}
-Space.apply_BBC(BBC)
+region = {'x':False, 'y':True, 'z':True}
+Space.apply_BPBC(region, BBC=False, PBC=True)
 
 # plain wave normal to x.
-#Space.set_src((src_xpos, 0, 0), (src_xpos+1, Ny, Nz), mmt) # Plane wave for Ey, x-direction.
+Space.set_src((src_xpos, 0, 0), (src_xpos+1, Ny, Nz), mmt) # Plane wave for Ey, x-direction.
 
 # plain wave normal to y.
-Space.set_src((1, src_ypos, 0), (Nx, src_ypos+1, Nz-0), mmt) # Plane wave for Ez, y-direction.
+#Space.set_src((1, src_ypos, 0), (Nx, src_ypos+1, Nz-0), mmt) # Plane wave for Ez, y-direction.
 
 # plain wave normal to z.
 #Space.set_src((0, 0, 20), (Nx, Ny, 21), mmt) # Plane wave for Ez, y-direction.
@@ -134,12 +136,11 @@ for tstep in range(Space.tsteps+1):
             print(("Size of a total field array : %05.2f Mbytes" %(Space.TOTAL_NUM_GRID_SIZE)))
             print("Simulation start: {}".format(datetime.datetime.now()))
         
-    #pulse_re = Src.pulse_re(tstep, pick_pos)
-    #pulse_im = Src.pulse_im(tstep, pick_pos)
-    pulse = Src.signal(tstep)
+    #pulse = Src.pulse_re(tstep, pick_pos)
+    pulse = Src.signal(tstep) * smoothing.apply(tstep)
 
-    Space.put_src('Ex', pulse, 'soft')
-    #Space.put_src('Ey', pulse, 'soft')
+    #Space.put_src('Ex', pulse, 'soft')
+    Space.put_src('Ey', pulse, 'soft')
     #Space.put_src('Ez', pulse, 'soft')
 
     Space.updateH(tstep)
@@ -150,11 +151,11 @@ for tstep in range(Space.tsteps+1):
     # Plot the field profile
     if tstep % plot_per == 0:
 
-        Ex = graphtool.gather('Ex')
-        graphtool.plot2D3D(Ex, tstep, xidx=Space.Nxc, colordeep=3., stride=2, zlim=3.)
+        #Ex = graphtool.gather('Ex')
+        #graphtool.plot2D3D(Ex, tstep, xidx=Space.Nxc, colordeep=3., stride=2, zlim=3.)
 
-        #Ey = graphtool.gather('Ey')
-        #graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=3., stride=2, zlim=3.)
+        Ey = graphtool.gather('Ey')
+        graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=3., stride=2, zlim=3.)
         #graphtool.plot2D3D(Ey, tstep, zidx=Space.Nzc, colordeep=3., stride=2, zlim=3.)
         
         #Ez = graphtool.gather('Ez')
@@ -174,8 +175,8 @@ if Space.MPIrank == 0:
     finished_time = datetime.datetime.now()
 
     # Record simulation size and operation time
-    if not os.path.exists("./record") : os.mkdir("./record")
-    record_path = "./record/record_%s.txt" %(datetime.date.today())
+    if not os.path.exists("../record") : os.mkdir("../record")
+    record_path = "../record/record_%s.txt" %(datetime.date.today())
 
     if not os.path.exists(record_path):
         f = open( record_path,'a')

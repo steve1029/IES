@@ -166,3 +166,19 @@ class Harmonic:
         pulse = np.exp(-1j*self.omega*tstep*self.dt)
 
         return pulse
+
+class Smoothing:
+
+    def __init__(self, dt, threshold):
+        
+        self.dt = dt
+        self.threshold = threshold
+
+    def apply(self, tstep):
+
+        smoother = 0
+
+        if tstep < self.threshold: smoother = tstep / self.threshold
+        else: smoother = 1.
+
+        return smoother

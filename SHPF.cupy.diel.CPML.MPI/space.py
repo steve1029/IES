@@ -370,26 +370,43 @@ class Basic3D:
         
         return
 
-    def apply_BBC(self, BBC):
-        """Apply Bloch Boundary Condition.
+    def apply_BPBC(self, region, BBC, PBC):
+        """Apply Bloch Boundary Condition or Periodic Boundary condition.
 
         Parameters
         ----------
-        BBC: dictionary
+        region: dictionary
             Choose to apply BBC or not, along all axes.
+
+        BBC: Boolean
+            Choose BBC or PBC.
+
+        PBC: Boolean
+            Choose BBC or PBC.
 
         Returns
         -------
         None
         """
 
-        self.apply_BBCx = BBC.get('x')
-        self.apply_BBCy = BBC.get('y')
-        self.apply_BBCz = BBC.get('z')
+        self.BBC = BBC
+        self.PBC = PBC
 
-        if self.method == 'SHPF':
+        self.apply_BPBCx = region.get('x')
+        self.apply_BPBCy = region.get('y')
+        self.apply_BPBCz = region.get('z')
 
-            if self.apply_BBCx == True: 
+        if self.method == 'FDTD':
+            
+            if self.apply_BPBCx == True:
+
+                raise ValueError("BBC for x-axis in FDTD space is not developed yet.")
+
+        elif self.method == 'SHPF':
+
+            if self.apply_BPBCx == True: 
+
+                raise ValueError("BBC along x-axis is not developed yet!")
 
                 self.ez_at_Hy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
                 self.ey_at_Hz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
@@ -397,9 +414,7 @@ class Basic3D:
                 self.hz_at_Ey = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
                 self.hy_at_Ez = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
 
-                raise ValueError("BBC along x-axis is not developed yet!")
-
-            if self.apply_BBCy == True: 
+            if self.apply_BPBCy == True: 
 
                 self.hz_at_Ex = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
                 self.hx_at_Ez = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
@@ -407,13 +422,19 @@ class Basic3D:
                 self.ez_at_Hx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
                 self.ex_at_Hz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
 
-            if self.apply_BBCz == True: 
+            if self.apply_BPBCz == True: 
 
                 self.hy_at_Ex = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
                 self.hx_at_Ey = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
 
                 self.ey_at_Hx = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
                 self.ex_at_Hy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
+
+            if self.BBC == False and self.PBC == False:
+
+                self.apply_BPBCx = False
+                self.apply_BPBCy = False
+                self.apply_BPBCz = False
 
         return
 
@@ -638,12 +659,87 @@ class Basic3D:
 
         if self.MPIrank != (self.MPIsize-1):
 
-            recvEylast = self.MPIcomm.recv( source=(self.MPIrank+1), tag=(tstep*100+9 ))
-            recvEzlast = self.MPIcomm.recv( source=(self.MPIrank+1), tag=(tstep*100+11))
+            self.recvEylast = self.MPIcomm.recv( source=(self.MPIrank+1), tag=(tstep*100+9 ))
+            self.recvEzlast = self.MPIcomm.recv( source=(self.MPIrank+1), tag=(tstep*100+11))
 
             if self.engine == 'cupy':
-                recvEylast = cp.asarray(recvEylast)
-                recvEzlast = cp.asarray(recvEzlast)
+                self.recvEylast = cp.asarray(self.recvEylast)
+                self.recvEzlast = cp.asarray(self.recvEzlast)
+
+        #----------------------------------------------------------------------#
+        #---------------- Apply BBC when the method is the FDTD ---------------#
+        #----------------------------------------------------------------------#
+
+        if self.method == 'FDTD':
+
+            if self.apply_BPBCx == True:
+
+                #self.ez_at_Hy[:-1,:,:] = (self.Ez[:-1,:,:] + self.Ez[1:,:,:]) / 2
+                #self.ey_at_Hz[:-1,:,:] = (self.Ey[1:,:,:] + self.Ey[:-1,:,:]) / 2
+
+                #self.Hx[sli1] += -self.dt/self.mu_Hx[sli1]*1j*(self.mmt[1]*self.ez_at_Hx[sli1] - self.mmt[2]*self.ey_at_Hx[sli1])
+                #self.Hy[sli2] += -self.dt/self.mu_Hy[sli2]*1j*(self.mmt[2]*self.ex_at_Hy[sli2] - self.mmt[0]*self.ez_at_Hy[sli2])
+                #self.Hz[sli2] += -self.dt/self.mu_Hz[sli2]*1j*(self.mmt[0]*self.ey_at_Hz[sli2] - self.mmt[1]*self.ex_at_Hz[sli2])
+
+                raise ValueError("BBC along x axis is not developed yet!")
+
+            if self.apply_BPBCy == True:
+
+                if   self.BBC == True: newL = self.Ly - 2*self.dy
+                elif self.PBC == True: newL = 0
+
+                # Exchange Ex,Ey,Ez at j=0,1 with j=Ny-2, Ny-1.
+                if self.MPIrank == (self.MPIsize-1): 
+                    self._exchange_BBCy(self.mmt[1], newL, self.Ex, self.Ey, self.Ez, None, None, mpi=False)
+                else: 
+                    self._exchange_BBCy(self.mmt[1], newL, self.Ex, self.Ey, self.Ez, self.recvEylast, self.recvEzlast, mpi=True)
+
+                    """
+                    # First rank
+                    if self.MPIrank == 0:
+                        if 'x' in self.PMLregion.keys():
+                            if '+' in self.PMLregion.get('x') and self.MPIsize == 1: self._pxPML_pyPBC()
+                            if '-' in self.PMLregion.get('x'): self._mxPML_pyPBC()
+                    # Middle rank
+                    elif self.MPIrank > 0 and self.MPIrank < (self.MPIsize-1):
+                        if 'x' in self.PMLregion.keys():
+                            if '+' in self.PMLregion.get('x'): pass
+                            if '-' in self.PMLregion.get('x'): pass
+                    # Last rank
+                    elif self.MPIrank == (self.MPIsize-1) and self.MPIsize != 1:
+                        if 'x' in self.PMLregion.keys():
+                            if '+' in self.PMLregion.get('x'): self._pxPML_pyPBC()
+                            if '-' in self.PMLregion.get('x'): pass
+                    """
+
+            if self.apply_BPBCz == True:
+
+                if   self.BBC == True: newL = self.Lz - 2*self.dz
+                elif self.PBC == True: newL = 0
+
+                if self.MPIrank == (self.MPIsize-1): 
+                    self._exchange_BBCz(self.mmt[2], newL, self.Ex, self.Ey, self.Ez, None, None, mpi=False)
+                else: 
+                    self._exchange_BBCz(self.mmt[2], newL, self.Ex, self.Ey, self.Ez, self.recvEylast, self.recvEzlast, mpi=True)
+
+                    """
+                    # First rank
+                    if self.MPIrank == 0:
+                        if 'x' in self.PMLregion.keys():
+                            if '+' in self.PMLregion.get('x') and self.MPIsize == 1: self._pxPML_pzPBC()
+                            if '-' in self.PMLregion.get('x'): self._mxPML_pzPBC()
+
+                    # Middle rank
+                    elif self.MPIrank > 0 and self.MPIrank < (self.MPIsize-1):
+                        if 'x' in self.PMLregion.keys():
+                            if '+' in self.PMLregion.get('x'): pass
+                            if '-' in self.PMLregion.get('x'): pass
+                    # Last rank
+                    elif self.MPIrank == (self.MPIsize-1) and self.MPIsize != 1:
+                        if 'x' in self.PMLregion.keys():
+                            if '+' in self.PMLregion.get('x'): self._pxPML_pzPBC()
+                            if '-' in self.PMLregion.get('x'): pass
+                    """
 
         #-----------------------------------------------------------#
         #---------------------- Get derivatives --------------------#
@@ -667,10 +763,10 @@ class Basic3D:
 
                 # No need to update diffzEx and diffyEx because they are already done.
                 # To update Hy at x=myNx-1.
-                self.diffxEz[-1,:,:] = (recvEzlast[:,:] - self.Ez[-1,:,:]) / self.dx
+                self.diffxEz[-1,:,:] = (self.recvEzlast[:,:] - self.Ez[-1,:,:]) / self.dx
 
                 # To update Hz at x=myNx-1
-                self.diffxEy[-1,:,:] = (recvEylast[:,:] - self.Ey[-1,:,:]) / self.dx
+                self.diffxEy[-1,:,:] = (self.recvEylast[:,:] - self.Ey[-1,:,:]) / self.dx
 
         elif self.method == 'FDTD':
 
@@ -689,12 +785,12 @@ class Basic3D:
             if self.MPIrank != (self.MPIsize-1):
 
                 # To update Hy at x=myNx-1.
-                self.diffzEx[-1,:,:-1] = ( self.Ex[-1,:,1:] - self.Ex[-1,:,:-1]) / self.dz
-                self.diffxEz[-1,:,:-1] = (recvEzlast[:,:-1] - self.Ez[-1,:,:-1]) / self.dx
+                self.diffzEx[-1,:,:-1] = (self.      Ex[-1,:,1:] - self.Ex[-1,:,:-1]) / self.dz
+                self.diffxEz[-1,:,:-1] = (self.recvEzlast[:,:-1] - self.Ez[-1,:,:-1]) / self.dx
 
                 # To update Hz at x=myNx-1
-                self.diffxEy[-1,:-1,:] = (recvEylast[:-1,:] - self.Ey[-1,:-1,:]) / self.dx
-                self.diffyEx[-1,:-1,:] = ( self.Ex[-1,1:,:] - self.Ex[-1,:-1,:]) / self.dy
+                self.diffxEy[-1,:-1,:] = (self.recvEylast[:-1,:] - self.Ey[-1,:-1,:]) / self.dx
+                self.diffyEx[-1,:-1,:] = (self.      Ex[-1,1:,:] - self.Ex[-1,:-1,:]) / self.dy
 
         #-----------------------------------------------------------#
         #--------------- Cast basic update equations ---------------#
@@ -752,6 +848,48 @@ class Basic3D:
                 self.Hy[sli1] = CHy1[-1,:,:]*self.Hy[sli1] + CHy2[-1,:,:]*(self.diffzEx[sli1]-self.diffxEz[sli1])
                 self.Hz[sli2] = CHz1[-1,:,:]*self.Hz[sli2] + CHz2[-1,:,:]*(self.diffxEy[sli2]-self.diffyEx[sli2])
 
+        #----------------------------------------------------------------------#
+        #---------------- Apply BBC when the method is the SHPF ---------------#
+        #----------------------------------------------------------------------#
+
+        sli1 = [slice(None,None), slice(None,None), slice(None,None)]
+        sli2 = [slice(None,  -1), slice(None,None), slice(None,None)]
+
+        if self.method == 'SHPF' and self.BBC == True:
+
+            if self.apply_BPBCx == True:
+
+                #self.ez_at_Hy[:-1,:,:] = (self.Ez[:-1,:,:] + self.Ez[1:,:,:]) / 2
+                #self.ey_at_Hz[:-1,:,:] = (self.Ey[1:,:,:] + self.Ey[:-1,:,:]) / 2
+
+                #self.Hx[sli1] += -self.dt/self.mu_Hx[sli1]*1j*(self.mmt[1]*self.ez_at_Hx[sli1] - self.mmt[2]*self.ey_at_Hx[sli1])
+                #self.Hy[sli2] += -self.dt/self.mu_Hy[sli2]*1j*(self.mmt[2]*self.ex_at_Hy[sli2] - self.mmt[0]*self.ez_at_Hy[sli2])
+                #self.Hz[sli2] += -self.dt/self.mu_Hz[sli2]*1j*(self.mmt[0]*self.ey_at_Hz[sli2] - self.mmt[1]*self.ex_at_Hz[sli2])
+
+                raise ValueError("BBC along x axis is not developed yet!")
+
+            if self.apply_BPBCy == True:
+
+                self.ez_at_Hx = self.ifft(self.ypshift*self.fft(self.Ez, axes=(1,)), axes=(1,))
+                self.ex_at_Hz = self.ifft(self.ypshift*self.fft(self.Ex, axes=(1,)), axes=(1,))
+
+                #self.ez_at_Hx = self.ifft(self.zpshift*self.ypshift*self.fft(self.Ez, axes=(1,2)), axes=(1,2))
+                #self.ex_at_Hz = self.ifft(             self.ypshift*self.fft(self.Ex, axes=(1, )), axes=(1, ))
+
+                self.Hx[sli1] += -self.dt/self.mu_Hx[sli1]*1j*(-self.mmt[1]*self.ez_at_Hx[sli1])
+                self.Hz[sli2] += -self.dt/self.mu_Hz[sli2]*1j*( self.mmt[1]*self.ex_at_Hz[sli2])
+
+            if self.apply_BPBCz == True:
+
+                self.ey_at_Hx = self.ifft(self.zpshift*self.fft(self.Ey, axes=(2,)), axes=(2,))
+                self.ex_at_Hy = self.ifft(self.zpshift*self.fft(self.Ex, axes=(2,)), axes=(2,))
+
+                #self.ey_at_Hx = self.ifft(self.zpshift*self.ypshift*self.fft(self.Ey, axes=(1,2)), axes=(1,2))
+                #self.ex_at_Hy = self.ifft(self.zpshift*             self.fft(self.Ex, axes=( 2,)), axes=( 2,))
+
+                self.Hx[sli1] += -self.dt/self.mu_Hx[sli1]*1j*( self.mmt[2]*self.ey_at_Hx[sli1])
+                self.Hy[sli2] += -self.dt/self.mu_Hy[sli2]*1j*(-self.mmt[2]*self.ex_at_Hy[sli2])
+
         #-----------------------------------------------------------#
         #---------------- Apply PML when it is given ---------------#
         #-----------------------------------------------------------#
@@ -780,40 +918,6 @@ class Basic3D:
             if 'x' in self.PMLregion.keys():
                 if '+' in self.PMLregion.get('x'): self._PML_updateH_px()
                 if '-' in self.PMLregion.get('x'): pass
-
-        #-----------------------------------------------------------#
-        #---------------- Apply BBC when it is given ---------------#
-        #-----------------------------------------------------------#
-
-        sli1 = [slice(None,None), slice(None,None), slice(None,None)]
-        sli2 = [slice(None,-1  ), slice(None,None), slice(None,None)]
-
-        if self.apply_BBCx == True:
-
-            #self.ez_at_Hy[:-1,:,:] = (self.Ez[:-1,:,:] + self.Ez[1:,:,:]) / 2
-            #self.ey_at_Hz[:-1,:,:] = (self.Ey[1:,:,:] + self.Ey[:-1,:,:]) / 2
-
-            #self.Hx[sli1] += -self.dt/self.mu_Hx[sli1]*1j*(self.mmt[1]*self.ez_at_Hx[sli1] - self.mmt[2]*self.ey_at_Hx[sli1])
-            #self.Hy[sli2] += -self.dt/self.mu_Hy[sli2]*1j*(self.mmt[2]*self.ex_at_Hy[sli2] - self.mmt[0]*self.ez_at_Hy[sli2])
-            #self.Hz[sli2] += -self.dt/self.mu_Hz[sli2]*1j*(self.mmt[0]*self.ey_at_Hz[sli2] - self.mmt[1]*self.ex_at_Hz[sli2])
-
-            raise ValueError("BBC along x axis is not developed yet!")
-
-        if self.apply_BBCy == True:
-
-            self.ez_at_Hx = self.ifft(self.ypshift*self.fft(self.Ez, axes=(1,)), axes=(1,))
-            self.ex_at_Hz = self.ifft(self.ypshift*self.fft(self.Ex, axes=(1,)), axes=(1,))
-
-            self.Hx[sli1] += -self.dt/self.mu_Hx[sli1]*1j*( self.mmt[1]*self.ez_at_Hx[sli1])
-            self.Hz[sli2] += -self.dt/self.mu_Hz[sli2]*1j*(-self.mmt[1]*self.ex_at_Hz[sli2])
-
-        if self.apply_BBCz == True:
-
-            self.ey_at_Hx = self.ifft(self.zpshift*self.fft(self.Ey, axes=(2,)), axes=(2,))
-            self.ex_at_Hy = self.ifft(self.zpshift*self.fft(self.Ex, axes=(2,)), axes=(2,))
-
-            self.Hx[sli1] += -self.dt/self.mu_Hx[sli1]*1j*( self.mmt[2]*self.ey_at_Hx[sli1])
-            self.Hy[sli2] += -self.dt/self.mu_Hy[sli2]*1j*(-self.mmt[2]*self.ex_at_Hy[sli2])
 
     def updateE(self, tstep):
         """Update E field.
@@ -855,12 +959,87 @@ class Basic3D:
 
         if self.MPIrank != 0:
 
-            recvHyfirst = self.MPIcomm.recv( source=(self.MPIrank-1), tag=(tstep*100+3))
-            recvHzfirst = self.MPIcomm.recv( source=(self.MPIrank-1), tag=(tstep*100+5))
+            self.recvHyfirst = self.MPIcomm.recv( source=(self.MPIrank-1), tag=(tstep*100+3))
+            self.recvHzfirst = self.MPIcomm.recv( source=(self.MPIrank-1), tag=(tstep*100+5))
         
             if self.engine == 'cupy':
-                recvHyfirst = cp.asarray(recvHyfirst)
-                recvHzfirst = cp.asarray(recvHzfirst)
+                self.recvHyfirst = cp.asarray(self.recvHyfirst)
+                self.recvHzfirst = cp.asarray(self.recvHzfirst)
+
+        #----------------------------------------------------------------------#
+        #---------------- Apply BBC when the method is the FDTD ---------------#
+        #----------------------------------------------------------------------#
+
+        if self.method == 'FDTD':
+
+            if self.apply_BPBCx == True:
+
+                #self.hy_at_Ez[1:,:,:] = self.ifft(self.xmshift*self.fft(self.Hy, axes=(0,)), axes=(0,))
+                #self.hz_at_Ey[1:,:,:] = (self.Hz[1:,:,:] + self.Hz[:-1,:,:]) / 2
+
+                #self.Ex[sli1] += self.dt/self.eps_Ex[sli1]*1j*(self.mmt[1]*self.hz_at_Ex[sli1] - self.mmt[2]*self.hy_at_Ex[sli1])
+                #self.Ey[sli2] += self.dt/self.eps_Ey[sli2]*1j*(self.mmt[2]*self.hx_at_Ey[sli2] - self.mmt[0]*self.hz_at_Ey[sli2])
+                #self.Ez[sli2] += self.dt/self.eps_Ez[sli2]*1j*(self.mmt[0]*self.hy_at_Ez[sli2] - self.mmt[1]*self.hx_at_Ez[sli2])
+
+                raise ValueError("BBC along x axis is not developed yet!")
+
+            if self.apply_BPBCy == True:
+                
+                if   self.BBC == True: newL = self.Ly - 2*self.dy
+                elif self.PBC == True: newL = 0
+
+                # Exchange Ex,Ey,Ez at j=0,1 with j=Ny-2, Ny-1.
+                if self.MPIrank == 0: 
+                    self._exchange_BBCy(self.mmt[1], newL, self.Hx, self.Hy, self.Hz, None, None, mpi=False)
+                else: 
+                    self._exchange_BBCy(self.mmt[1], newL, self.Hx, self.Hy, self.Hz, self.recvHyfirst, self.recvHzfirst, mpi=True)
+
+                    """
+                    # First rank
+                    if self.MPIrank == 0:
+                        if 'x' in self.PMLregion.keys():
+                            if '+' in self.PMLregion.get('x') and self.MPIsize == 1: self._pxPML_myPBC()
+                            if '-' in self.PMLregion.get('x'): self._mxPML_myPBC()
+                    # Middle rank
+                    elif self.MPIrank > 0 and self.MPIrank < (self.MPIsize-1):
+                        if 'x' in self.PMLregion.keys():
+                            if '+' in self.PMLregion.get('x'): pass
+                            if '-' in self.PMLregion.get('x'): pass
+                    # Last rank
+                    elif self.MPIrank == (self.MPIsize-1) and self.MPIsize != 1:
+                        if 'x' in self.PMLregion.keys():
+                            if '+' in self.PMLregion.get('x'): self._pxPML_myPBC()
+                            if '-' in self.PMLregion.get('x'): pass
+                    """
+
+            if self.apply_BPBCz == True:
+
+                if   self.BBC == True: newL = self.Lz - 2*self.dz
+                elif self.PBC == True: newL = 0
+
+                if self.MPIrank == 0: 
+                    self._exchange_BBCz(self.mmt[2], newL, self.Hx, self.Hy, self.Hz, None, None, mpi=False)
+                else: 
+                    self._exchange_BBCz(self.mmt[2], newL, self.Hx, self.Hy, self.Hz, self.recvHyfirst, self.recvHzfirst, mpi=True)
+
+                    """
+                    # First rank
+                    if self.MPIrank == 0:
+                        if 'x' in self.PMLregion.keys():
+                            if '+' in self.PMLregion.get('x') and self.MPIsize == 1: self._pxPML_mzPBC()
+                            if '-' in self.PMLregion.get('x'): self._mxPML_mzPBC()
+
+                    # Middle rank
+                    elif self.MPIrank > 0 and self.MPIrank < (self.MPIsize-1):
+                        if 'x' in self.PMLregion.keys():
+                            if '+' in self.PMLregion.get('x'): pass
+                            if '-' in self.PMLregion.get('x'): pass
+                    # Last rank
+                    elif self.MPIrank == (self.MPIsize-1) and self.MPIsize != 1:
+                        if 'x' in self.PMLregion.keys():
+                            if '+' in self.PMLregion.get('x'): self._pxPML_mzPBC()
+                            if '-' in self.PMLregion.get('x'): pass
+                    """
 
         #-----------------------------------------------------------#
         #---------------------- Get derivatives --------------------#
@@ -883,10 +1062,10 @@ class Basic3D:
             if self.MPIrank != 0:
 
                 # Get derivatives of Hx and Hz to update Ey at x=0.
-                self.diffxHz[0,:,:] = (self.Hz[0,:,:]-recvHzfirst[:,:]) / self.dx
+                self.diffxHz[0,:,:] = (self.Hz[0,:,:]-self.recvHzfirst[:,:]) / self.dx
 
                 # Get derivatives of Hx and Hy to update Ez at x=0.
-                self.diffxHy[0,:,:] = (self.Hy[0,:,:]-recvHyfirst[:,:]) / self.dx
+                self.diffxHy[0,:,:] = (self.Hy[0,:,:]-self.recvHyfirst[:,:]) / self.dx
 
         elif self.method == 'FDTD':
 
@@ -905,12 +1084,12 @@ class Basic3D:
             if self.MPIrank != 0:
 
                 # Get derivatives of Hx and Hz to update Ey at x=0.
-                self.diffxHz[0,:,1:] = (self.Hz[0,:,1:]-recvHzfirst[:,1:]) / self.dx
-                self.diffzHx[0,:,1:] = (self.Hx[0,:,1:]- self.Hx[0,:,:-1]) / self.dz
+                self.diffxHz[0,:,1:] = (self.Hz[0,:,1:] - self.recvHzfirst[:,1:]) / self.dx
+                self.diffzHx[0,:,1:] = (self.Hx[0,:,1:] - self.      Hx[0,:,:-1]) / self.dz
 
                 # Get derivatives of Hx and Hy to update Ez at x=0.
-                self.diffxHy[0,1:,:] = (self.Hy[0,1:,:]-recvHyfirst[1:,:]) / self.dx
-                self.diffyHx[0,1:,:] = (self.Hx[0,1:,:]- self.Hx[0,:-1,:]) / self.dy
+                self.diffxHy[0,1:,:] = (self.Hy[0,1:,:] - self.recvHyfirst[1:,:]) / self.dx
+                self.diffyHx[0,1:,:] = (self.Hx[0,1:,:] - self.      Hx[0,:-1,:]) / self.dy
 
         #-----------------------------------------------------------#
         #--------------- Cast basic update equations ---------------#
@@ -981,6 +1160,48 @@ class Basic3D:
                 self.Ey[0,:,1:] = CEy1[0,:,:] * self.Ey[0,:,1:] + CEy2[0,:,:] * (self.diffzHx[0,:,1:]-self.diffxHz[0,:,1:])
                 self.Ez[0,1:,:] = CEz1[0,:,:] * self.Ez[0,1:,:] + CEz2[0,:,:] * (self.diffxHy[0,1:,:]-self.diffyHx[0,1:,:])
 
+        #----------------------------------------------------------------------#
+        #---------------- Apply BBC when the method is the SHPF ---------------#
+        #----------------------------------------------------------------------#
+
+        sli1 = [slice(None,None), slice(None,None), slice(None,None)]
+        sli2 = [slice(   1,None), slice(None,None), slice(None,None)]
+
+        if self.method == 'SHPF' and self.BBC == True:
+
+            if self.apply_BPBCx == True:
+
+                #self.hy_at_Ez[1:,:,:] = self.ifft(self.xmshift*self.fft(self.Hy, axes=(0,)), axes=(0,))
+                #self.hz_at_Ey[1:,:,:] = (self.Hz[1:,:,:] + self.Hz[:-1,:,:]) / 2
+
+                #self.Ex[sli1] += self.dt/self.eps_Ex[sli1]*1j*(self.mmt[1]*self.hz_at_Ex[sli1] - self.mmt[2]*self.hy_at_Ex[sli1])
+                #self.Ey[sli2] += self.dt/self.eps_Ey[sli2]*1j*(self.mmt[2]*self.hx_at_Ey[sli2] - self.mmt[0]*self.hz_at_Ey[sli2])
+                #self.Ez[sli2] += self.dt/self.eps_Ez[sli2]*1j*(self.mmt[0]*self.hy_at_Ez[sli2] - self.mmt[1]*self.hx_at_Ez[sli2])
+
+                raise ValueError("BBC along x axis is not developed yet!")
+
+            if self.apply_BPBCy == True:
+                
+                self.hz_at_Ex = self.ifft(self.ymshift*self.fft(self.Hz, axes=(1,)), axes=(1,))
+                self.hx_at_Ez = self.ifft(self.ymshift*self.fft(self.Hx, axes=(1,)), axes=(1,))
+
+                #self.hz_at_Ex = self.Hz
+                #self.hx_at_Ez = self.ifft(self.zpshift*self.fft(self.Hx, axes=(2,)), axes=(2,))
+
+                self.Ex[sli1] += self.dt/self.eps_Ex[sli1]*1j*(-self.mmt[1]*self.hz_at_Ex[sli1])
+                self.Ez[sli2] += self.dt/self.eps_Ez[sli2]*1j*( self.mmt[1]*self.hx_at_Ez[sli2])
+
+            if self.apply_BPBCz == True:
+
+                self.hy_at_Ex = self.ifft(self.zmshift*self.fft(self.Hy, axes=(2,)), axes=(2,))
+                self.hx_at_Ey = self.ifft(self.zmshift*self.fft(self.Hx, axes=(2,)), axes=(2,))
+
+                #self.hy_at_Ex = self.Hy
+                #self.hx_at_Ey = self.ifft(self.ypshift*self.fft(self.Hx, axes=(1,)), axes=(1,))
+
+                self.Ex[sli1] += self.dt/self.eps_Ex[sli1]*1j*( self.mmt[2]*self.hy_at_Ex[sli1])
+                self.Ey[sli2] += self.dt/self.eps_Ey[sli2]*1j*(-self.mmt[2]*self.hx_at_Ey[sli2])
+
         #-----------------------------------------------------------#
         #---------------- Apply PML when it is given ---------------#
         #-----------------------------------------------------------#
@@ -1010,39 +1231,6 @@ class Basic3D:
             if 'x' in self.PMLregion.keys():
                 if '+' in self.PMLregion.get('x'): self._PML_updateE_px()
                 if '-' in self.PMLregion.get('x'): pass
-
-        #-----------------------------------------------------------#
-        #---------------- Apply BBC when it is given ---------------#
-        #-----------------------------------------------------------#
-
-        sli1 = [slice(None,None), slice(None,None), slice(None,None)]
-        sli2 = [slice(   1,None), slice(None,None), slice(None,None)]
-
-        if self.apply_BBCx == True:
-            #self.hy_at_Ez[1:,:,:] = self.ifft(self.xmshift*self.fft(self.Hy, axes=(0,)), axes=(0,))
-            #self.hz_at_Ey[1:,:,:] = (self.Hz[1:,:,:] + self.Hz[:-1,:,:]) / 2
-
-            #self.Ex[sli1] += self.dt/self.eps_Ex[sli1]*1j*(self.mmt[1]*self.hz_at_Ex[sli1] - self.mmt[2]*self.hy_at_Ex[sli1])
-            #self.Ey[sli2] += self.dt/self.eps_Ey[sli2]*1j*(self.mmt[2]*self.hx_at_Ey[sli2] - self.mmt[0]*self.hz_at_Ey[sli2])
-            #self.Ez[sli2] += self.dt/self.eps_Ez[sli2]*1j*(self.mmt[0]*self.hy_at_Ez[sli2] - self.mmt[1]*self.hx_at_Ez[sli2])
-
-            raise ValueError("BBC along x axis is not developed yet!")
-
-        if self.apply_BBCy == True:
-
-            self.hz_at_Ex = self.ifft(self.ymshift*self.fft(self.Hz, axes=(1,)), axes=(1,))
-            self.hx_at_Ez = self.ifft(self.ymshift*self.fft(self.Hx, axes=(1,)), axes=(1,))
-
-            self.Ex[sli1] += self.dt/self.eps_Ex[sli1]*1j*( self.mmt[1]*self.hz_at_Ex[sli1])
-            self.Ez[sli2] += self.dt/self.eps_Ez[sli2]*1j*(-self.mmt[1]*self.hx_at_Ez[sli2])
-
-        if self.apply_BBCz == True:
-
-            self.hy_at_Ex = self.ifft(self.zmshift*self.fft(self.Hy, axes=(2,)), axes=(2,))
-            self.hx_at_Ey = self.ifft(self.zmshift*self.fft(self.Hx, axes=(2,)), axes=(2,))
-
-            self.Ex[sli1] += self.dt/self.eps_Ex[sli1]*1j*( self.mmt[2]*self.hy_at_Ex[sli1])
-            self.Ey[sli2] += self.dt/self.eps_Ey[sli2]*1j*(-self.mmt[2]*self.hx_at_Ey[sli2])
 
     def _PML_updateH_px(self):
 
@@ -1503,6 +1691,390 @@ class Basic3D:
         self.psi_eyz_m[psiidx_Eyzm] = (self.PMLbz[odd] * self.psi_eyz_m[psiidx_Eyzm])\
                                     + (self.PMLaz[odd] * self.diffzHx[myidx_Eyzm])
         self.Ey[myidx_Eyzm] += CEy2*(+((1./self.PMLkappaz[odd]-1.)*self.diffzHx[myidx_Eyzm])+self.psi_eyz_m[psiidx_Eyzm])
+
+    def _exchange_BBCy(self, k, newL, fx, fy, fz, recv1, recv2, mpi):
+
+        assert self.method == 'FDTD'
+
+        p0 = [slice(0,None), 0, slice(0,None)]
+        p1 = [slice(0,None), 1, slice(0,None)]
+        m1 = [slice(0,None),-1, slice(0,None)]
+        m2 = [slice(0,None),-2, slice(0,None)]
+
+        fx[m1] = fx[p1] * self.xp.exp( 1j*k*newL) 
+        fy[m1] = fy[p1] * self.xp.exp( 1j*k*newL) 
+        fz[m1] = fz[p1] * self.xp.exp( 1j*k*newL) 
+
+        fy[p0] = fy[m2] * self.xp.exp(-1j*k*newL)
+        fx[p0] = fx[m2] * self.xp.exp(-1j*k*newL)
+        fz[p0] = fz[m2] * self.xp.exp(-1j*k*newL)
+
+        if mpi == True:
+
+            p0 = [ 0, slice(0,None)]
+            p1 = [ 1, slice(0,None)]
+            m1 = [-1, slice(0,None)]
+            m2 = [-2, slice(0,None)]
+
+            recv1[m1] = recv1[p1] * self.xp.exp( 1j*k*newL)
+            recv2[m1] = recv2[p1] * self.xp.exp( 1j*k*newL)
+
+            recv1[p0] = recv1[m2] * self.xp.exp(-1j*k*newL)
+            recv2[p0] = recv2[m2] * self.xp.exp(-1j*k*newL)
+
+    def _exchange_BBCz(self, k, newL, fx, fy, fz, recv1, recv2, mpi):
+
+        assert self.method == 'FDTD'
+
+        p0 = [slice(0,None), slice(0,None),  0]
+        p1 = [slice(0,None), slice(0,None),  1]
+        m1 = [slice(0,None), slice(0,None), -1]
+        m2 = [slice(0,None), slice(0,None), -2]
+
+        fx[p0] = fx[m2] * self.xp.exp(-1j*k*newL)
+        fy[p0] = fy[m2] * self.xp.exp(-1j*k*newL)
+        fz[p0] = fz[m2] * self.xp.exp(-1j*k*newL)
+
+        fx[m1] = fx[p1] * self.xp.exp( 1j*k*newL) 
+        fy[m1] = fy[p1] * self.xp.exp( 1j*k*newL) 
+        fz[m1] = fz[p1] * self.xp.exp( 1j*k*newL) 
+
+        if mpi == True:
+
+            p0 = [slice(0,None),  0]
+            p1 = [slice(0,None),  1]
+            m1 = [slice(0,None), -1]
+            m2 = [slice(0,None), -2]
+
+            recv1[p0] = recv1[m2] * self.xp.exp(-1j*k*newL)
+            recv2[p0] = recv2[m2] * self.xp.exp(-1j*k*newL)
+
+            recv1[m1] = recv1[p1] * self.xp.exp( 1j*k*newL)
+            recv2[m1] = recv2[p1] * self.xp.exp( 1j*k*newL)
+
+    def _updateH_PBC_py(self, mpi):
+
+        assert self.method == 'FDTD'
+        shift = self.xp.exp(1j*self.mmt[1]*self.Ly)
+
+	# Update Hx at j=(Ny-1) by using Ez at j=0
+        fidx   = [slice(None,None),  0, slice(0,  -1)]
+        lidx   = [slice(None,None), -1, slice(0,  -1)]
+        k_lidx = [slice(None,None), -1, slice(1,None)]
+
+        CHx1 = (2.*self.mu_Hx[lidx] - self.mcon_Hx[lidx]*self.dt) / (2.*self.mu_Hx[lidx] + self.mcon_Hx[lidx]*self.dt)
+        CHx2 = (-2*self.dt) / (2.*self.mu_Hx[lidx] + self.mcon_Hx[lidx]*self.dt)
+
+        self.diffyEz[lidx] = (self.Ez[fidx]   - self.Ez[lidx]) / self.dy
+        self.diffzEy[lidx] = (self.Ey[k_lidx] - self.Ey[lidx]) / self.dz
+        self.Hx[lidx] = CHx1 * self.Hx[lidx] + CHx2 * (self.diffyEz[lidx] - self.diffzEy[lidx])
+
+	# Update Hz at j=(Ny-1) by using Ex at j=0
+        fidx   = [slice(0,-1  ),  0, slice(0,None)]
+        lidx   = [slice(0,-1  ), -1, slice(0,None)]
+        i_lidx = [slice(1,None), -1, slice(0,None)]
+
+        CHz1 = (2.*self.mu_Hz[lidx] - self.mcon_Hz[lidx]*self.dt) / (2.*self.mu_Hz[lidx] + self.mcon_Hz[lidx]*self.dt)
+        CHz2 = (-2*self.dt) / (2.*self.mu_Hz[lidx] + self.mcon_Hz[lidx]*self.dt)
+
+        self.diffxEy[lidx] = (self.Ey[i_lidx] - self.Ey[lidx]) / self.dx
+        self.diffyEx[lidx] = (self.Ex[fidx]   - self.Ex[lidx]) / self.dy
+        self.Hz[lidx] = CHz1 * self.Hz[lidx] + CHz2 * (self.diffxEy[lidx] - self.diffyEx[lidx])
+
+	# Update Hz at j=(Ny-1) and i=(myNx-1) by using Ex at j=0 and Ey from next rank.
+        if mpi == True:
+
+            lidx  = [-1, -1, slice(0,None)]
+            fiidx = [-1, slice(0,None)]
+            fjidx = [-1,  0, slice(0,None)]
+
+            CHz1 = (2.*self.mu_Hz[lidx] - self.mcon_Hz[lidx]*self.dt) / (2.*self.mu_Hz[lidx] + self.mcon_Hz[lidx]*self.dt)
+            CHz2 = (-2*self.dt) / (2.*self.mu_Hz[lidx] + self.mcon_Hz[lidx]*self.dt)
+
+            self.diffxEy[lidx] = (self.recvEylast[fiidx] - self.Ey[lidx]) / self.dx
+            self.diffyEx[lidx] = (self.Ex[fjidx]         - self.Ex[lidx]) / self.dy
+
+            self.Hz[lidx] = CHz1 * self.Hz[lidx] + CHz2 * (self.diffxEy[lidx] - self.diffyEx[lidx])
+
+    def _updateE_PBC_my(self, mpi):
+
+        assert self.method == 'FDTD'
+
+        # Update Ex at j=0 by using Hy at j=Ny-1
+        fidx   = [slice(None,None),  0, slice(1,None)] # first index.
+        fidx_k = [slice(None,None),  0, slice(0,-1  )]
+        lidx   = [slice(None,None), -1, slice(1,None)] # last index.
+
+        CEx1 = (2.*self.eps_Ex[fidx] - self.econ_Ex[fidx]*self.dt) / (2.*self.eps_Ex[fidx] + self.econ_Ex[fidx]*self.dt)
+        CEx2 = (2.*self.dt) / (2.*self.eps_Ex[fidx] + self.econ_Ex[fidx]*self.dt)
+
+        # PEC condition.
+        pec = (self.eps_Ex[fidx] > 1e3)
+        CEx1[pec] = 0.
+        CEx2[pec] = 0.
+
+        self.diffyHz[fidx] = (self.Hz[fidx] - self.Hz[lidx]  ) / self.dy
+        self.diffzHy[fidx] = (self.Hy[fidx] - self.Hy[fidx_k]) / self.dz
+        self.Ex[fidx] = CEx1 * self.Ex[fidx] + CEx2 * (self.diffyHz[fidx] - self.diffzHy[fidx])
+
+        # Update Ez at j=0 by using Hx at j=Ny-1
+        fidx   = [slice(1,None),  0, slice(None,None)] # first index.
+        fidx_i = [slice(0,  -1),  0, slice(None,None)]
+        lidx   = [slice(1,None), -1, slice(None,None)] # last index.
+
+        CEz1 = (2.*self.eps_Ez[fidx] - self.econ_Ez[fidx]*self.dt) / (2.*self.eps_Ez[fidx] + self.econ_Ez[fidx]*self.dt)
+        CEz2 = (2.*self.dt) / (2.*self.eps_Ez[fidx] + self.econ_Ez[fidx]*self.dt)
+
+        # PEC condition.
+        pec = self.eps_Ez[fidx] > 1e3
+        CEz1[pec] = 0.
+        CEz2[pec] = 0.
+
+        self.diffxHy[fidx] = (self.Hy[fidx] - self.Hy[fidx_i]) / self.dx
+        self.diffyHx[fidx] = (self.Hx[fidx] - self.Hx[lidx]  ) / self.dy
+        self.Ez[fidx] = CEz1 * self.Ez[fidx] + CEz2 * (self.diffxHy[fidx] - self.diffyHx[fidx])
+
+	# Update Ez at i=0 and j=0 by using Hx at j=(Ny-1) and Hy from previous rank.
+        if mpi == True:
+
+            fidx = [0,  0, slice(None,None)] # first index.
+            fiidx = [0, slice(None,None)] # i=0, first index.
+            lidx = [0, -1, slice(None,None)] # last index.
+
+            CEz1 = (2.*self.eps_Ez[fidx] - self.econ_Ez[fidx]*self.dt) / (2.*self.eps_Ez[fidx] + self.econ_Ez[fidx]*self.dt)
+            CEz2 = (2.*self.dt) / (2.*self.eps_Ez[fidx] + self.econ_Ez[fidx]*self.dt)
+
+            # PEC condition.
+            pec = self.eps_Ez[fidx] > 1e3
+            CEz1[pec] = 0.
+            CEz2[pec] = 0.
+
+            self.diffxHy[fidx] = (self.Hy[fidx] - self.recvHyfirst[fiidx])/ self.dx
+            self.diffyHx[fidx] = (self.Hx[fidx] - self.Hx[lidx]         ) / self.dy
+            self.Ez[fidx] = CEz1 * self.Ez[fidx] + CEz2 * (self.diffxHy[fidx] - self.diffyHx[fidx])
+
+    def _updateE_PBC_mz(self, mpi):
+
+        # Update Ex at k=0
+        fidx   = [slice(0,None), slice(1,None), 0]
+        fidx_j = [slice(0,None), slice(0,  -1), 0]
+        lidx   = [slice(0,None), slice(1,None),-1]
+
+        CEx1 = (2.*self.eps_Ex[fidx] - self.econ_Ex[fidx]*self.dt) / (2.*self.eps_Ex[fidx] + self.econ_Ex[fidx]*self.dt)
+        CEx2 = (2.*self.dt) / (2.*self.eps_Ex[fidx] + self.econ_Ex[fidx]*self.dt)
+
+        # PEC condition.
+        pec = self.eps_Ex[fidx] > 1e3
+        CEx1[pec] = 0.
+        CEx2[pec] = 0.
+
+        #self.Ex[fidx] = self.Ex[:,1:,self.Nz-2] * shift
+        #self.Ex[lidx] = self.Ex[fidx] * 
+
+        self.diffyHz[fidx] = (self.Hz[fidx] - self.Hz[fidx_j]) / self.dy	
+        self.diffzHy[fidx] = (self.Hy[fidx] - self.Hy[lidx]  ) / self.dz
+        self.Ex[fidx] = CEx1 * self.Ex[fidx] + CEx2 * (self.diffyHz[fidx] - self.diffzHy[fidx])
+
+        # Update Ey at k=0
+        fidx   = [slice(1,None), slice(0,None), 0]
+        fidx_i = [slice(0,  -1), slice(0,None), 0]
+        lidx   = [slice(1,None), slice(0,None),-1]
+
+        CEy1 = (2.*self.eps_Ey[fidx] - self.econ_Ey[fidx]*self.dt) / (2.*self.eps_Ey[fidx] + self.econ_Ey[fidx]*self.dt)
+        CEy2 = (2.*self.dt) / (2.*self.eps_Ey[fidx] + self.econ_Ey[fidx]*self.dt)
+
+        # PEC condition.
+        pec = self.eps_Ey[fidx] > 1e3
+        CEy1[pec] = 0.
+        CEy2[pec] = 0.
+
+        self.diffxHz[fidx] = (self.Hz[fidx] - self.Hz[fidx_i]) / self.dx	
+        self.diffzHx[fidx] = (self.Hx[fidx] - self.Hx[lidx]  ) / self.dz
+        self.Ey[fidx] = CEy1 * self.Ey[fidx] + CEy2 * (self.diffzHx[fidx] - self.diffxHz[fidx])
+
+        if mpi == True:
+
+            fidx = [0, slice(0,None), 0]
+            fiidx = [slice(0,None), 0] # i=0, first index.
+            lidx = [0, slice(0,None),-1]
+
+            CEy1 = (2.*self.eps_Ey[fidx] - self.econ_Ey[fidx]*self.dt) / (2.*self.eps_Ey[fidx] + self.econ_Ey[fidx]*self.dt)
+            CEy2 = (2.*self.dt) / (2.*self.eps_Ey[fidx] + self.econ_Ey[fidx]*self.dt)
+
+            pec = self.eps_Ey[fidx] > 1e3
+
+            CEy1[pec] = 0.
+            CEy2[pec] = 0.
+
+            self.diffxHz[fidx] = (self.Hz[fidx] - self.recvHzfirst[fiidx]) / self.dx
+            self.diffzHx[fidx] = (self.Hx[fidx] - self.Hx[lidx]          ) / self.dz
+            self.Ey[fidx] = CEy1 * self.Ey[fidx] + CEy2 * (self.diffzHx[fidx] - self.diffxHz[fidx])
+
+    def _updateH_PBC_pz(self, mpi):
+
+        assert self.method == 'FDTD'
+
+        # Update Hx at k=(Nz-1)
+        lidx   = [slice(0,None), slice(0,  -1), -1]
+        j_lidx = [slice(0,None), slice(1,None), -1]
+        fidx   = [slice(0,None), slice(0,  -1),  0]
+
+        CHx1 = (2.*self.mu_Hx[lidx] - self.mcon_Hx[lidx]*self.dt) / (2.*self.mu_Hx[lidx] + self.mcon_Hx[lidx]*self.dt)
+        CHx2 = (-2*self.dt) / (2.*self.mu_Hx[lidx] + self.mcon_Hx[lidx]*self.dt)
+
+        self.diffyEz[lidx] = (self.Ez[j_lidx] - self.Ez[lidx]) / self.dy	
+        self.diffzEy[lidx] = (self.Ey[fidx]   - self.Ey[lidx]) / self.dz
+        self.Hx[lidx] = CHx1 * self.Hx[lidx] + CHx2 * (self.diffyEz[lidx] - self.diffzEy[lidx])
+
+        # Update Hy at k=(Nz-1)
+        lidx   = [slice(0,  -1), slice(0,None), -1]
+        i_lidx = [slice(1,None), slice(0,None), -1]
+        fidx   = [slice(0,  -1), slice(0,None),  0]
+
+        CHy1 = (2.*self.mu_Hy[lidx] - self.mcon_Hy[lidx]*self.dt) / (2.*self.mu_Hy[lidx] + self.mcon_Hy[lidx]*self.dt)
+        CHy2 = (-2*self.dt) / (2.*self.mu_Hy[lidx] + self.mcon_Hy[lidx]*self.dt)
+
+        self.diffxEz[lidx] = (self.Ez[i_lidx] - self.Ez[lidx]) / self.dx	
+        self.diffzEx[lidx] = (self.Ex[fidx]   - self.Ex[lidx]) / self.dz
+        self.Hy[lidx] = CHy1 * self.Hy[lidx] + CHy2 * (self.diffzEx[lidx] - self.diffxEz[lidx])
+
+        if mpi == True:
+
+            lidx  = [-1, slice(0,None), -1]
+            fiidx = [slice(0,None), -1]
+            fkidx = [-1, slice(0,None),  0]
+
+            CHy1 = (2.*self.mu_Hy[lidx] - self.mcon_Hy[lidx]*self.dt) / (2.*self.mu_Hy[lidx] + self.mcon_Hy[lidx]*self.dt)
+            CHy2 = (-2*self.dt) / (2.*self.mu_Hy[lidx] + self.mcon_Hy[lidx]*self.dt)
+
+            self.diffxEz[lidx] = (self.recvEzlast[fiidx] - self.Ez[lidx]) / self.dx	
+            self.diffzEx[lidx] = (self.Ex[fkidx]         - self.Ex[lidx]) / self.dz
+            self.Hy[lidx] = CHy1 * self.Hy[lidx] + CHy2 * (self.diffzEx[lidx] - self.diffxEz[lidx])
+
+    def _mxPML_myPBC(self):
+
+        assert self.method == 'FDTD'
+
+        odd = slice(-3,None,-2)
+
+        psiidx = [slice(1,self.npml), 0, slice(0,None)]
+        fidx   = [slice(1,self.npml), 0, slice(0,None)]
+
+        CEz2 = (2.*self.dt) / (2.*self.eps_Ez[fidx] + self.econ_Ez[fidx]*self.dt)
+
+        # PEC condition.
+        pec = self.eps_Ez[fidx] > 1e3
+        CEz2[pec] = 0.
+
+        self.psi_ezx_m[psiidx] = (self.PMLbx[odd,None] * self.psi_ezx_m[psiidx]) + (self.PMLax[odd,None] * self.diffxHy[fidx])
+        self.Ez[fidx] += CEz2 * (+(1./self.PMLkappax[odd,None] - 1.) * self.diffxHy[fidx] + self.psi_ezx_m[psiidx])
+
+    def _mxPML_pyPBC(self):
+
+        assert self.method == 'FDTD'
+
+        even = slice(-2,None,-2)
+
+        psiidx = [slice(0,self.npml), -1, slice(0,None)]
+        lidx   = [slice(0,self.npml), -1, slice(0,None)]
+
+        CHz2 = (-2.*self.dt) / (2.*self.mu_Hz[lidx] + self.mcon_Hz[lidx]*self.dt)
+
+        self.psi_hzx_m[psiidx] = (self.PMLbx[even,None] * self.psi_hzx_m[psiidx]) + (self.PMLax[even,None] * self.diffxEy[lidx])
+        self.Hz[lidx] += CHz2 * (+((1./self.PMLkappax[even,None] - 1.) * self.diffxEy[lidx]) + self.psi_hzx_m[psiidx])
+
+    def _mxPML_mzPBC(self):
+
+        assert self.method == 'FDTD'
+
+        odd = slice(-3,None,-2)
+
+        psiidx = [slice(1,self.npml), slice(0,None), 0]
+        fidx   = [slice(1,self.npml), slice(0,None), 0]
+
+        CEy2 = (2.*self.dt) / (2.*self.eps_Ey[fidx] + self.econ_Ey[fidx]*self.dt)
+
+        # PEC condition.
+        pec = self.eps_Ey[fidx] > 1e3
+        CEy2[pec] = 0.
+
+        self.psi_eyx_m[psiidx] = (self.PMLbx[odd,None] * self.psi_eyx_m[psiidx]) + (self.PMLax[odd,None] * self.diffxHz[fidx])
+        self.Ey[fidx] += CEy2 * (-(1./self.PMLkappax[odd,None] - 1.) * self.diffxHz[fidx] - self.psi_eyx_m[psiidx])
+
+    def _mxPML_pzPBC(self):
+
+        assert self.method == 'FDTD'
+
+        even = slice(-2,None,-2)
+
+        psiidx = [slice(0,self.npml), slice(0,None), -1]
+        lidx   = [slice(0,self.npml), slice(0,None), -1]
+
+        CHy2 =	(-2*self.dt) / (2.*self.mu_Hy[lidx] + self.mcon_Hy[lidx]*self.dt)
+
+        self.psi_hyx_m[psiidx] = (self.PMLbx[even,None] * self.psi_hyx_m[psiidx]) + (self.PMLax[even,None] * self.diffxEz[lidx])
+        self.Hy[lidx] += CHy2 * (-((1./self.PMLkappax[even,None] - 1.) * self.diffxEz[lidx]) - self.psi_hyx_m[psiidx])
+
+    def _pxPML_myPBC(self):
+
+        assert self.method == 'FDTD'
+
+        even = slice(0,None,2)
+
+        psiidx = [slice(0,self.npml), 0, slice(0,None)]
+        myidx = [slice(-self.npml,None), 0, slice(0,None)]
+
+        CEz2 = (2.*self.dt) / (2.*self.eps_Ez[myidx] + self.econ_Ez[myidx]*self.dt)
+
+        # PEC condition.
+        pec = self.eps_Ez[myidx] > 1e3
+        CEz2[pec] = 0.
+
+        self.psi_ezx_p[psiidx] = (self.PMLbx[even,None] * self.psi_ezx_p[psiidx]) + (self.PMLax[even,None] * self.diffxHy[myidx])
+        self.Ez[myidx] += CEz2 * (+(1./self.PMLkappax[even,None] - 1.) * self.diffxHy[myidx] + self.psi_ezx_p[psiidx])
+
+    def _pxPML_pyPBC(self):
+
+        assert self.method == 'FDTD'
+
+        odd = slice(1,-1,2)
+        psiidx = [slice(0,self.npml-1), -1, slice(0,None)]
+        myidx  = [slice(-self.npml,-1), -1, slice(0,None)]
+
+        CHz2 =	(-2*self.dt) / (2.*self.mu_Hz[myidx] + self.mcon_Hz[myidx]*self.dt)
+
+        self.psi_hzx_p[psiidx] = (self.PMLbx[odd,None] * self.psi_hzx_p[psiidx]) + (self.PMLax[odd,None] * self.diffxEy[myidx])
+        self.Hz[myidx] += CHz2 * (+((1./self.PMLkappax[odd,None] - 1.) * self.diffxEy[myidx]) + self.psi_hzx_p[psiidx])
+
+    def _pxPML_mzPBC(self):
+
+        assert self.method == 'FDTD'
+
+        even = slice(0,None,2)
+        psiidx = [slice(0,self.npml), slice(0,None), 0]
+        myidx = [slice(-self.npml,None), slice(0,None), 0]
+
+        CEy2 = (2.*self.dt) / (2.*self.eps_Ey[myidx] + self.econ_Ey[myidx]*self.dt)
+
+        # PEC condition.
+        pec = self.eps_Ey[myidx] > 1e3
+        CEy2[pec] = 0.
+
+        self.psi_eyx_p[psiidx] = (self.PMLbx[even,None] * self.psi_eyx_p[psiidx]) + (self.PMLax[even,None] * self.diffxHz[myidx])
+        self.Ey[myidx] += CEy2 * (-(1./self.PMLkappax[even,None] - 1.) * self.diffxHz[myidx] - self.psi_eyx_p[psiidx])
+
+    def _pxPML_pzPBC(self):
+
+        assert self.method == 'FDTD'
+
+        odd = slice(1,-1,2)
+        psiidx = [slice(0,self.npml-1), slice(0,None), -1]
+        myidx  = [slice(-self.npml,-1), slice(0,None), -1]
+
+        CHy2 =	(-2*self.dt) / (2.*self.mu_Hy[myidx] + self.mcon_Hy[myidx]*self.dt)
+
+        self.psi_hyx_p[psiidx] = (self.PMLbx[odd,None] * self.psi_hyx_p[psiidx]) + (self.PMLax[odd,None] * self.diffxEz[myidx])
+        self.Hy[myidx] += CHy2 * (-((1./self.PMLkappax[odd,None] - 1.) * self.diffxEz[myidx]) - self.psi_hyx_p[psiidx])
 
 
 class Empty3D(Basic3D):
