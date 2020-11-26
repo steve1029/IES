@@ -167,6 +167,7 @@ class Harmonic:
 
         return pulse
 
+
 class Smoothing:
 
     def __init__(self, dt, threshold):
