@@ -31,7 +31,7 @@ wvc = 300*um
 interval = 2
 spread   = 0.3
 pick_pos = 1000
-plot_per = 200
+plot_per = 100
 
 wvlens = np.arange(200, 600, interval) * um
 freqs = c / wvlens
@@ -41,7 +41,7 @@ np.save("../graph/freqs", freqs)
 #-------------------------- Call objects --------------------------#
 #------------------------------------------------------------------#
 
-Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tstep, np.complex64, np.complex64, method='SHPF', engine='cupy')
+Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tstep, np.complex64, np.complex64, method='PSTD', engine='cupy')
 Space.malloc()
 
 # Put structures
@@ -50,7 +50,7 @@ Box1_end = (round(272*um/dx), round(96*um/dy), round( 96*um/dz))
 #Box = structure.Box(Space, Box1_srt, Box1_end, 4., 1.)
 
 # Set PML and PBC
-Space.set_PML({'x':'+-','y':'','z':'+-'}, 10)
+Space.set_PML({'x':'+-','y':'','z':''}, 10)
 #Space.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
 
 # Save eps, mu and PML data.
@@ -58,9 +58,9 @@ Space.set_PML({'x':'+-','y':'','z':'+-'}, 10)
 #Space.save_eps_mu(savedir)
 
 # Set the type of input source.
+smoothing = source.Smoothing(dt, 1000)
 #Src = source.Gaussian(dt, wvc, spread, pick_pos, np.float64)
 #Src.plot_pulse(Tstep, freqs, savedir)
-smoothing = source.Smoothing(dt, 1000)
 Src = source.Harmonic(dt)
 wvlen = 300*um
 Src.set_wvlen(wvlen)
@@ -74,12 +74,12 @@ src_ypos = 50
 # mmt for plane wave normal to x axis
 # phi is the angle between k0 vector and xz-plane.
 # theta is the angle between k0cos(phi) and x-axis.
-#k0 = 2*np.pi / wvlen
-#phi, theta = 0*np.pi/180, 30*np.pi/180
+k0 = 2*np.pi / wvlen
+phi, theta = 0*np.pi/180, 30*np.pi/180
 #phi, theta = 0, 0
-#kx = k0 * np.cos(phi) * np.cos(theta)
-#ky = k0 * np.sin(phi)
-#kz = k0 * np.cos(phi) * np.sin(theta)
+kx = k0 * np.cos(phi) * np.cos(theta)
+ky = k0 * np.sin(phi)
+kz = k0 * np.cos(phi) * np.sin(theta)
 
 # mmt for plane wave normal to y axis
 # phi is the angle between k0 vector and xy-plane.
@@ -93,11 +93,11 @@ src_ypos = 50
 # mmt for plane wave normal to z axis
 # phi is the angle between k0 vector and yz-plane.
 # theta is the angle between k0cos(phi) and y-axis.
-k0 = 2*np.pi / wvlen
-phi, theta = 0*np.pi/180, 10*np.pi/180
-kx = k0 * np.cos(phi)* np.sin(theta)
-ky = k0 * np.cos(phi)* np.cos(theta)
-kz = k0 * np.sin(phi)
+#k0 = 2*np.pi / wvlen
+#phi, theta = 0*np.pi/180, 30*np.pi/180
+#kx = k0 * np.sin(phi)
+#ky = k0 * np.cos(phi)* np.sin(theta)
+#kz = k0 * np.cos(phi)* np.cos(theta)
 
 #mmt = (0, 0, 0)
 mmt = (kx, ky, kz)
@@ -108,13 +108,13 @@ region = {'x':False, 'y':True, 'z':True}
 Space.apply_BPBC(region, BBC=True, PBC=False)
 
 # plain wave normal to x.
-#Space.set_src((src_xpos, 0, 0), (src_xpos+1, Ny, Nz), mmt) # Plane wave for Ey, x-direction.
+Space.set_src((src_xpos, 0, 0), (src_xpos+1, Ny, Nz), mmt) # Plane wave for Ey, x-direction.
 
 # plain wave normal to y.
 #Space.set_src((1, src_ypos, 0), (Nx, src_ypos+1, Nz-0), mmt) # Plane wave for Ez, y-direction.
 
 # plain wave normal to z.
-Space.set_src((0, 0, 40), (Nx, Ny, 41), mmt) # Plane wave for Ez, y-direction.
+#Space.set_src((0, 0, 40), (Nx, Ny, 41), mmt) # Plane wave for Ez, y-direction.
 
 # Line source along y axis.
 #Space.set_src((src_xpos, 0, Space.Nzc), (src_xpos+1, Space.Ny, Space.Nzc+1))
@@ -149,8 +149,8 @@ for tstep in range(Space.tsteps+1):
     #pulse = Src.pulse_re(tstep, pick_pos)
     pulse = Src.signal(tstep) * smoothing.apply(tstep)
 
-    Space.put_src('Ex', pulse, 'soft')
-    #Space.put_src('Ey', pulse, 'soft')
+    #Space.put_src('Ex', pulse, 'soft')
+    Space.put_src('Ey', pulse, 'soft')
     #Space.put_src('Ez', pulse, 'soft')
 
     Space.updateH(tstep)
@@ -161,11 +161,11 @@ for tstep in range(Space.tsteps+1):
     # Plot the field profile
     if tstep % plot_per == 0:
 
-        Ex = graphtool.gather('Ex')
-        graphtool.plot2D3D(Ex, tstep, xidx=Space.Nxc, colordeep=3., stride=2, zlim=3.)
+        #Ex = graphtool.gather('Ex')
+        #graphtool.plot2D3D(Ex, tstep, xidx=Space.Nxc, colordeep=3., stride=2, zlim=3.)
 
-        #Ey = graphtool.gather('Ey')
-        #graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=3., stride=2, zlim=3.)
+        Ey = graphtool.gather('Ey')
+        graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=3., stride=2, zlim=3.)
         #graphtool.plot2D3D(Ey, tstep, zidx=Space.Nzc, colordeep=3., stride=2, zlim=3.)
         
         #Ez = graphtool.gather('Ez')
