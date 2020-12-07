@@ -19,19 +19,19 @@ savedir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/'
 nm = 1e-9
 um = 1e-6
 
-Lx, Ly, Lz = 128*10*um, 128*10*um, 128*10*um
-Nx, Ny, Nz = 128, 128, 128
+Lx, Ly, Lz = 128*10*um, 128*10*um, 256*10*um
+Nx, Ny, Nz = 128, 128, 256
 dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz
 
 courant = 1./4
 dt = courant * min(dx,dy,dz) / c
-Tstep = 3000
+Tstep = 2000
 
 wvc = 300*um
 interval = 2
 spread   = 0.3
 pick_pos = 1000
-plot_per = 100
+plot_per = 30
 
 wvlens = np.arange(200, 600, interval) * um
 freqs = c / wvlens
@@ -104,11 +104,11 @@ mmt = (kx, ky, kz)
 #mmt = (0, ky, 0)
 #mmt = (0, 0, kz)
 
-region = {'x':False, 'y':True, 'z':True}
+region = {'x':False, 'y':False, 'z':True}
 Space.apply_BPBC(region, BBC=True, PBC=False)
 
 # plain wave normal to x.
-Space.set_src((src_xpos, 0, 0), (src_xpos+1, Ny, Nz), mmt) # Plane wave for Ey, x-direction.
+Space.set_src((src_xpos, 0, 20), (src_xpos+1, Ny, Nz-20), mmt) # Plane wave for Ey, x-direction.
 
 # plain wave normal to y.
 #Space.set_src((1, src_ypos, 0), (Nx, src_ypos+1, Nz-0), mmt) # Plane wave for Ez, y-direction.
@@ -148,6 +148,7 @@ for tstep in range(Space.tsteps+1):
         
     #pulse = Src.pulse_re(tstep, pick_pos)
     pulse = Src.signal(tstep) * smoothing.apply(tstep)
+    #pulse = Src.signal(tstep)
 
     #Space.put_src('Ex', pulse, 'soft')
     Space.put_src('Ey', pulse, 'soft')
@@ -165,7 +166,7 @@ for tstep in range(Space.tsteps+1):
         #graphtool.plot2D3D(Ex, tstep, xidx=Space.Nxc, colordeep=3., stride=2, zlim=3.)
 
         Ey = graphtool.gather('Ey')
-        graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=3., stride=2, zlim=3.)
+        graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=1., stride=2, zlim=1.)
         #graphtool.plot2D3D(Ey, tstep, zidx=Space.Nzc, colordeep=3., stride=2, zlim=3.)
         
         #Ez = graphtool.gather('Ez')

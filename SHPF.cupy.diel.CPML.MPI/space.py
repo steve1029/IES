@@ -88,8 +88,7 @@ class Basic3D:
         if kwargs.get('method') != None: self.method = kwargs.get('method')
         if kwargs.get('courant') != None: self.courant = kwargs.get('courant')
 
-        if self.method == 'PSTD': assert self.MPIsize == 1
-        else: raise ValueError("MPI size must be 1 if you want to use the PSTD method.")
+        if self.method == 'PSTD': assert self.MPIsize == 1, "MPI size must be 1 if you want to use the PSTD method."
 
         assert self.engine == 'numpy' or self.engine == 'cupy'
 
@@ -687,6 +686,7 @@ class Basic3D:
         #----------------------------------------------------------------------#
 
         if self.method == 'FDTD': self._updateH_BBC_FDTD()
+        #if self.method == 'PSTD' and self.BBC == True: self._updateH_BBC_FDTD()
 
         #-----------------------------------------------------------#
         #---------------------- Get derivatives --------------------#
@@ -892,6 +892,7 @@ class Basic3D:
         #----------------------------------------------------------------------#
 
         if self.method == 'FDTD': self._updateE_BBC_FDTD()
+        #if self.method == 'PSTD' and self.BBC == True: self._updateE_BBC_FDTD()
 
         #-----------------------------------------------------------#
         #---------------------- Get derivatives --------------------#
@@ -1056,8 +1057,8 @@ class Basic3D:
         #---------------- Apply BBC when the method is the SHPF ---------------#
         #----------------------------------------------------------------------#
 
-        if self.method == 'PSTD' and self.BBC == True: self._updateE_BBC_PSTD()
         if self.method == 'SHPF' and self.BBC == True: self._updateE_BBC_SHPF()
+        if self.method == 'PSTD' and self.BBC == True: self._updateE_BBC_PSTD()
 
         #-----------------------------------------------------------#
         #---------------- Apply PML when it is given ---------------#
@@ -1737,7 +1738,7 @@ class Basic3D:
 
     def _exchange_BBCz(self, k, newL, fx, fy, fz, recv1, recv2, mpi):
 
-        assert self.method == 'FDTD'
+        #assert self.method == 'FDTD'
 
         p0 = [slice(0,None), slice(0,None),  0]
         p1 = [slice(0,None), slice(0,None),  1]

@@ -147,7 +147,7 @@ class Graphtool(object):
                 self.plane_to_plot = integrated[xidx, yidx, zidx].real
             else: self.plane_to_plot = integrated[xidx, yidx, zidx]
 
-            X, Y = np.meshgrid(row, col, indexing='xy', sparse=True)
+            X, Y = np.meshgrid(col, row, indexing='xy', sparse=True)
             today = datetime.date.today()
 
             fig  = plt.figure(figsize=figsize)
