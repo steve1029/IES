@@ -41,21 +41,25 @@ np.save("../graph/freqs", freqs)
 #-------------------------- Call objects --------------------------#
 #------------------------------------------------------------------#
 
-Space = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tstep, np.complex64, np.complex64, method='SHPF', engine='cupy')
-Space.malloc()
+FDTDspace = space.Basic3D((Nx,Ny,Nz), (dx,dy,dz), dt, Tstep, np.complex64, np.complex64, method='FDTD', engine='cupy')
+PSTDspace = space.Basic3D((Nx,Ny,Nz), (dx,dy,dz), dt, Tstep, np.complex64, np.complex64, method='PSTD', engine='cupy')
+Diffspace = space.Empty3D((Nx,Ny,Nz), (dx,dy,dz), dt, Tstep, np.complex64, np.complex64)
+
+FDTDspace.malloc()
+PSTDspace.malloc()
 
 # Put structures
-Box1_srt = (round(222*um/dx), round( 0*um/dy), round(  0*um/dz))
-Box1_end = (round(272*um/dx), round(96*um/dy), round( 96*um/dz))
-#Box = structure.Box(Space, Box1_srt, Box1_end, 4., 1.)
+#Box1_srt = (round(222*um/dx), round( 0*um/dy), round(  0*um/dz))
+#Box1_end = (round(272*um/dx), round(96*um/dy), round( 96*um/dz))
+#Box = structure.Box(FDTDspace, Box1_srt, Box1_end, 4., 1.)
 
 # Set PML and PBC
-Space.set_PML({'x':'+-','y':'','z':''}, 10)
-#Space.set_PML({'x':'+-','y':'+-','z':'+-'}, 10)
+FDTDspace.set_PML({'x':'+-','y':'','z':''}, 10)
+PSTDspace.set_PML({'x':'+-','y':'','z':''}, 10)
 
 # Save eps, mu and PML data.
-#Space.save_PML_parameters('./')
-#Space.save_eps_mu(savedir)
+#FDTDspace.save_PML_parameters('./')
+#FDTDspace.save_eps_mu(savedir)
 
 # Set the type of input source.
 smoothing = source.Smoothing(dt, 1000)
@@ -105,57 +109,67 @@ mmt = (kx, ky, kz)
 #mmt = (0, 0, kz)
 
 region = {'x':False, 'y':False, 'z':True}
-Space.apply_BPBC(region, BBC=True, PBC=False)
+FDTDspace.apply_BPBC(region, BBC=True, PBC=False)
+PSTDspace.apply_BPBC(region, BBC=True, PBC=False)
 
 # plain wave normal to x.
-Space.set_src((src_xpos, 0, 0), (src_xpos+1, Ny, Nz), mmt) # Plane wave for Ey, x-direction.
+FDTDspace.set_src((src_xpos, 0, 0), (src_xpos+1, Ny, Nz), mmt) # Plane wave for Ey, x-direction.
+PSTDspace.set_src((src_xpos, 0, 0), (src_xpos+1, Ny, Nz), mmt) # Plane wave for Ey, x-direction.
 
 # plain wave normal to y.
-#Space.set_src((1, src_ypos, 0), (Nx, src_ypos+1, Nz-0), mmt) # Plane wave for Ez, y-direction.
+#FDTDspace.set_src((1, src_ypos, 0), (Nx, src_ypos+1, Nz-0), mmt) # Plane wave for Ez, y-direction.
 
 # plain wave normal to z.
-#Space.set_src((0, 0, 40), (Nx, Ny, 41), mmt) # Plane wave for Ez, y-direction.
+#FDTDspace.set_src((0, 0, 40), (Nx, Ny, 41), mmt) # Plane wave for Ez, y-direction.
 
 # Line source along y axis.
-#Space.set_src((src_xpos, 0, Space.Nzc), (src_xpos+1, Space.Ny, Space.Nzc+1))
+#FDTDspace.set_src((src_xpos, 0, FDTDspace.Nzc), (src_xpos+1, FDTDspace.Ny, FDTDspace.Nzc+1))
 
 # Line source along z axis.
-#Space.set_src((src_xpos, Space.Nyc, 0), (src_xpos+1, Space.Nyc+1, Space.Nz))
+#FDTDspace.set_src((src_xpos, FDTDspace.Nyc, 0), (src_xpos+1, FDTDspace.Nyc+1, FDTDspace.Nz))
 
 # Set Poynting vector calculator.
 leftx, rightx = int(Nx/4), int(Nx*3/4)
 lefty, righty = int(Ny/4), int(Ny*3/4)
 leftz, rightz = int(Nz/4), int(Nz*3/4)
 
-#Sx_R_getter = rft.Sx("SF_R", "./graph/Sx", Space, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, 'cupy')
+#Sx_R_getter = rft.Sx("SF_R", "./graph/Sx", FDTDspace, (rightx, lefty, leftz), (rightx+1, righty, rightz), freqs, 'cupy')
 
 # Set plotfield options
-graphtool = plotfield.Graphtool(Space, 'TF', savedir)
+FDTDgraphtool = plotfield.Graphtool(FDTDspace, 'FDTD', savedir)
+PSTDgraphtool = plotfield.Graphtool(PSTDspace, 'PSTD', savedir)
+Diffgraphtool = plotfield.Graphtool(Diffspace, 'Diff', savedir)
 
 # Save what time the simulation begins.
 start_time = datetime.datetime.now()
 
 # time loop begins
-for tstep in range(Space.tsteps+1):
+for tstep in range(FDTDspace.tsteps+1):
 
     # At the start point
     if tstep == 0:
-        Space.MPIcomm.Barrier()
-        if Space.MPIrank == 0:
-            print("Total time step: %d" %(Space.tsteps))
-            print(("Size of a total field array : %05.2f Mbytes" %(Space.TOTAL_NUM_GRID_SIZE)))
+        FDTDspace.MPIcomm.Barrier()
+        if FDTDspace.MPIrank == 0:
+            print("Total time step: %d" %(FDTDspace.tsteps))
+            print(("Size of a total field array : %05.2f Mbytes" %(FDTDspace.TOTAL_NUM_GRID_SIZE)))
             print("Simulation start: {}".format(datetime.datetime.now()))
         
     #pulse = Src.pulse_re(tstep, pick_pos)
     pulse = Src.signal(tstep) * smoothing.apply(tstep)
     #pulse = Src.signal(tstep)
 
-    #Space.put_src('Ex', pulse, 'soft')
-    Space.put_src('Ey', pulse, 'soft')
-    #Space.put_src('Ez', pulse, 'soft')
+    #FDTDspace.put_src('Ex', pulse, 'soft')
+    FDTDspace.put_src('Ey', pulse, 'soft')
+    PSTDspace.put_src('Ey', pulse, 'soft')
+    #FDTDspace.put_src('Ez', pulse, 'soft')
 
-    Space.updateH(tstep)
-    Space.updateE(tstep)
+    FDTDspace.updateH(tstep)
+    PSTDspace.updateH(tstep)
+
+    FDTDspace.updateE(tstep)
+    PSTDspace.updateE(tstep)
+
+    Diffspace.get_SF(PSTDspace, FDTDspace)
 
     #Sx_R_calculator.do_RFT(tstep)
 
@@ -163,24 +177,28 @@ for tstep in range(Space.tsteps+1):
     if tstep % plot_per == 0:
 
         #Ex = graphtool.gather('Ex')
-        #graphtool.plot2D3D(Ex, tstep, xidx=Space.Nxc, colordeep=3., stride=2, zlim=3.)
+        #graphtool.plot2D3D(Ex, tstep, xidx=FDTDspace.Nxc, colordeep=3., stride=2, zlim=3.)
 
-        Ey = graphtool.gather('Ey')
-        graphtool.plot2D3D(Ey, tstep, yidx=Space.Nyc, colordeep=2., stride=2, zlim=2.)
-        #graphtool.plot2D3D(Ey, tstep, zidx=Space.Nzc, colordeep=3., stride=2, zlim=3.)
+        Ey = Diffgraphtool.gather('Ey')
+        Diffgraphtool.plot2D3D(Ey, tstep, yidx=FDTDspace.Nyc, colordeep=2., stride=2, zlim=2.)
+        Ey = FDTDgraphtool.gather('Ey')
+        FDTDgraphtool.plot2D3D(Ey, tstep, yidx=FDTDspace.Nyc, colordeep=2., stride=2, zlim=2.)
+        Ey = PSTDgraphtool.gather('Ey')
+        PSTDgraphtool.plot2D3D(Ey, tstep, yidx=FDTDspace.Nyc, colordeep=2., stride=2, zlim=2.)
+        #graphtool.plot2D3D(Ey, tstep, zidx=FDTDspace.Nzc, colordeep=3., stride=2, zlim=3.)
         
         #Ez = graphtool.gather('Ez')
-        #graphtool.plot2D3D(Ez, tstep, xidx=Space.Nxc, colordeep=3., stride=2, zlim=3.)
-        #graphtool.plot2D3D(Ez, tstep, zidx=Space.Nzc, colordeep=3., stride=2, zlim=3.)
+        #graphtool.plot2D3D(Ez, tstep, xidx=FDTDspace.Nxc, colordeep=3., stride=2, zlim=3.)
+        #graphtool.plot2D3D(Ez, tstep, zidx=FDTDspace.Nzc, colordeep=3., stride=2, zlim=3.)
 
-        if Space.MPIrank == 0:
+        if FDTDspace.MPIrank == 0:
 
             interval_time = datetime.datetime.now()
-            print(("time: %s, step: %05d, %5.2f%%" %(interval_time-start_time, tstep, 100.*tstep/Space.tsteps)))
+            print(("time: %s, step: %05d, %5.2f%%" %(interval_time-start_time, tstep, 100.*tstep/FDTDspace.tsteps)))
 
 #Sx_R_calculator.get_Sx()
 
-if Space.MPIrank == 0:
+if FDTDspace.MPIrank == 0:
 
     # Simulation finished time
     finished_time = datetime.datetime.now()
@@ -202,8 +220,8 @@ if Space.MPIrank == 0:
     cal_time = finished_time - start_time
     f = open( record_path,'a')
     f.write("{:2d}\t\t{:04d}\t{:04d}\t{:04d}\t{:5.2e}\t{:5.2e}\t{:5.2e}\t{:06d}\t\t{}\t\t{:06.3f}\t\t\t{:06.3f}\n" \
-                .format(Space.MPIsize, Space.Nx, Space.Ny, Space.Nz,\
-                    Space.dx, Space.dy, Space.dz, Space.tsteps, cal_time, me_vmsmem_GB, me_rssmem_GB))
+                .format(FDTDspace.MPIsize, FDTDspace.Nx, FDTDspace.Ny, FDTDspace.Nz,\
+                    FDTDspace.dx, FDTDspace.dy, FDTDspace.dz, FDTDspace.tsteps, cal_time, me_vmsmem_GB, me_rssmem_GB))
     f.close()
     
     print("Simulation finished: {}".format(datetime.datetime.now()))
