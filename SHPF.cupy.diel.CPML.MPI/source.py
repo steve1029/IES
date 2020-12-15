@@ -2,6 +2,182 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.constants import c, mu_0, epsilon_0
 
+class Setter:
+
+    def __init__(self, space, src_srt, src_end, mmt):
+        """Set the position, type of the source and field.
+
+        PARAMETERS
+        ----------
+        self.space: Space object.
+
+        src_srt: tuple
+
+        src_end: tuple
+            A tuple indicating the location of a point, like (x,y,z).
+            The elements designate the position of the source in the field.
+            
+            ex)
+                1. point source
+                    src_srt: (30, 30, 30), src_end: (31, 31, 31)
+                2. line source
+                    src_srt: (30, 30, 0), src_end: (30, 30, Space.Nz)
+                3. plane wave
+                    src_srt: (30,0,0), src_end: (30, Space.Ny, Space.Nz)
+
+        mmt: tuple.
+            momentum vector (kx,ky,kz). Only non-zero when the source is monochromatic.
+
+        RETURNS
+        -------
+        None
+        """
+
+        self.space = space
+        self.xp = self.space.xp
+
+        assert len(src_srt) == 3, "src_srt argument is a list or tuple with length 3."
+        assert len(src_end) == 3, "src_end argument is a list or tuple with length 3."
+
+        self.who_put_src = None
+
+        self.src_xsrt = int(src_srt[0] / self.space.dx)
+        self.src_ysrt = int(src_srt[1] / self.space.dy)
+        self.src_zsrt = int(src_srt[2] / self.space.dz)
+
+        self.src_xend = int(src_end[0] / self.space.dx)
+        self.src_yend = int(src_end[1] / self.space.dy)
+        self.src_zend = int(src_end[2] / self.space.dz)
+
+        #----------------------------------------------------------------------#
+        #--------- All ranks should know who put src to plot src graph --------#
+        #----------------------------------------------------------------------#
+
+        self.space.MPIcomm.Barrier()
+
+        for rank in range(self.space.MPIsize):
+
+            my_xsrt = self.space.myNx_indice[rank][0]
+            my_xend = self.space.myNx_indice[rank][1]
+
+            # case 1. x position of source is fixed.
+            if self.src_xsrt == (self.src_xend-1):
+
+                if self.src_xsrt >= my_xsrt and self.src_xend <= my_xend:
+                    self.who_put_src   = rank
+
+                    if self.space.MPIrank == self.who_put_src:
+
+                        self.my_src_xsrt = self.src_xsrt - my_xsrt
+                        self.my_src_xend = self.src_xend - my_xsrt
+
+                        self.src = self.xp.zeros(self.space.tsteps, dtype=self.space.field_dtype)
+
+                        #print("rank{:>2}: src_xsrt : {}, my_src_xsrt: {}, my_src_xend: {}"\
+                        #       .format(self.MPIrank, self.src_xsrt, self.my_src_xsrt, self.my_src_xend))
+                    else:
+                        pass
+                        #print("rank {:>2}: I don't put source".format(self.MPIrank))
+
+                else: continue
+
+            # case 2. x position of source has range.
+            elif self.src_xsrt < self.src_xend:
+                assert self.space.MPIsize == 1
+
+                self.who_put_src = 0
+                self.my_src_xsrt = self.src_xsrt
+                self.my_src_xend = self.src_xend
+
+                self.src = self.xp.zeros(self.space.tsteps, dtype=self.space.field_dtype)
+
+            # case 3. x position of source is reversed.
+            elif self.src_xsrt > self.src_xend:
+                raise ValueError("src_end[0] should be bigger than src_srt[0]")
+
+            else:
+                raise IndexError("x location of the source is not defined!")
+
+        #--------------------------------------------------------------------------#
+        #--------- Apply phase difference according to the incident angle ---------#
+        #--------------------------------------------------------------------------#
+
+        kx = mmt[0]
+        ky = mmt[1]
+        kz = mmt[2]
+
+        self.space.mmt = mmt
+
+        if self.space.MPIrank == self.who_put_src:
+
+            self.px = self.xp.exp(+1j*kx*self.xp.arange(self.my_src_xsrt, self.my_src_xend)*self.space.dx)
+            self.py = self.xp.exp(+1j*ky*self.xp.arange(self.   src_ysrt, self.   src_yend)*self.space.dy)
+            self.pz = self.xp.exp(+1j*kz*self.xp.arange(self.   src_zsrt, self.   src_zend)*self.space.dz)
+
+            xdist = self.my_src_xend-self.my_src_xsrt
+            ydist = self.   src_yend-self.   src_ysrt
+            zdist = self.   src_zend-self.   src_zsrt
+
+            if xdist == 1: self.px = self.xp.exp(1j*kx*self.xp.arange(1)*self.space.dx)
+            if ydist == 1: self.py = self.xp.exp(1j*ky*self.xp.arange(1)*self.space.dy)
+            if zdist == 1: self.pz = self.xp.exp(1j*kz*self.xp.arange(1)*self.space.dz)
+
+    def put_src(self, where, pulse, put_type):
+        """Put source at the designated postion set by set_src method.
+        
+        PARAMETERS
+        ----------  
+        where : string
+            ex)
+                'Ex' or 'ex'
+                'Ey' or 'ey'
+                'Ez' or 'ez'
+
+        pulse : float
+            float returned by source.pulse.
+
+        put_type : string
+            'soft' or 'hard'
+
+        """
+        #------------------------------------------------------------#
+        #--------- Put the source into the designated field ---------#
+        #------------------------------------------------------------#
+
+        self.put_type = put_type
+        self.where = where
+        self.pulse = pulse
+
+        if self.space.MPIrank == self.who_put_src:
+
+            x = slice(self.my_src_xsrt, self.my_src_xend)
+            y = slice(self.   src_ysrt, self.   src_yend)
+            z = slice(self.   src_zsrt, self.   src_zend)
+
+            self.pulse *= self.px[:,None,None] * self.py[None,:,None] * self.pz[None,None,:]
+
+            if   self.put_type == 'soft':
+
+                if (self.where == 'Ex') or (self.where == 'ex'): self.space.Ex[x,y,z] += self.pulse
+                if (self.where == 'Ey') or (self.where == 'ey'): self.space.Ey[x,y,z] += self.pulse
+                if (self.where == 'Ez') or (self.where == 'ez'): self.space.Ez[x,y,z] += self.pulse
+                if (self.where == 'Hx') or (self.where == 'hx'): self.space.Hx[x,y,z] += self.pulse
+                if (self.where == 'Hy') or (self.where == 'hy'): self.space.Hy[x,y,z] += self.pulse
+                if (self.where == 'Hz') or (self.where == 'hz'): self.space.Hz[x,y,z] += self.pulse
+
+            elif self.put_type == 'hard':
+    
+                if (self.where == 'Ex') or (self.where == 'ex'): self.space.Ex[x,y,z] = self.pulse
+                if (self.where == 'Ey') or (self.where == 'ey'): self.space.Ey[x,y,z] = self.pulse
+                if (self.where == 'Ez') or (self.where == 'ez'): self.space.Ez[x,y,z] = self.pulse
+                if (self.where == 'Hx') or (self.where == 'hx'): self.space.Hx[x,y,z] = self.pulse
+                if (self.where == 'Hy') or (self.where == 'hy'): self.space.Hy[x,y,z] = self.pulse
+                if (self.where == 'Hz') or (self.where == 'hz'): self.space.Hz[x,y,z] = self.pulse
+
+            else:
+                raise ValueError("Please insert 'soft' or 'hard'")
+
+
 class Gaussian:
     
     def __init__(self, dt, center_wv, spread, pick_pos, dtype):
@@ -18,14 +194,14 @@ class Gaussian:
         self.ts = 1./self.ws
         self.tc = self.pick_pos * self.dt   
 
-    def pulse_re(self,step,pick_pos):
+    def pulse_re(self,step):
         
         pulse_re = np.exp((-.5) * (((step*self.dt-self.tc)*self.ws)**2)) * \
                     np.cos(self.w0*(step*self.dt-self.tc))
 
         return pulse_re
 
-    def pulse_im(self,step,pick_pos):
+    def pulse_im(self,step):
         
         pulse_im = np.exp((-.5) * (((step*self.dt-self.tc)*self.ws)**2)) * \
                     np.sin(self.w0*(step*self.dt-self.tc))
@@ -183,3 +359,15 @@ class Smoothing:
         else: smoother = 1.
 
         return smoother
+
+
+class Delta:
+
+    def __init__(self, pick):
+
+        self.pick = pick
+
+    def apply(self, tstep):
+
+        if tstep == self.pick: return 1.
+        else: return 0.

@@ -385,6 +385,33 @@ class Basic3D:
         
         return
 
+    def save_eps_mu(self, path):
+        """Save eps_r and mu_r to check
+
+        """
+
+        try: import h5py
+        except ImportError as e:
+            print("rank {:>2}\tPlease install h5py and hdfviewer to save data." .format(self.MPIrank))
+            return
+        save_dir = path+'eps_mu/'       
+
+        if os.path.exists(save_dir) == False: os.mkdir(save_dir)
+        else: pass
+
+        f = h5py.File(save_dir+'eps_r_mu_r_rank{:>02d}.h5' .format(self.MPIrank), 'w')
+
+        f.create_dataset('eps_Ex',  data=self.eps_Ex)
+        f.create_dataset('eps_Ey',  data=self.eps_Ey)
+        f.create_dataset('eps_Ez',  data=self.eps_Ez)
+        f.create_dataset( 'mu_Hx',  data=self. mu_Hx)
+        f.create_dataset( 'mu_Hy',  data=self. mu_Hy)
+        f.create_dataset( 'mu_Hz',  data=self. mu_Hz)
+            
+        self.MPIcomm.Barrier()
+
+        return
+
     def apply_BPBC(self, region, BBC, PBC):
         """Apply Bloch Boundary Condition or Periodic Boundary condition.
 
@@ -452,202 +479,6 @@ class Basic3D:
                 self.apply_BPBCz = False
 
         return
-
-    def save_eps_mu(self, path):
-        """Save eps_r and mu_r to check
-
-        """
-
-        try: import h5py
-        except ImportError as e:
-            print("rank {:>2}\tPlease install h5py and hdfviewer to save data." .format(self.MPIrank))
-            return
-        save_dir = path+'eps_mu/'       
-
-        if os.path.exists(save_dir) == False: os.mkdir(save_dir)
-        else: pass
-
-        f = h5py.File(save_dir+'eps_r_mu_r_rank{:>02d}.h5' .format(self.MPIrank), 'w')
-
-        f.create_dataset('eps_Ex',  data=self.eps_Ex)
-        f.create_dataset('eps_Ey',  data=self.eps_Ey)
-        f.create_dataset('eps_Ez',  data=self.eps_Ez)
-        f.create_dataset( 'mu_Hx',  data=self. mu_Hx)
-        f.create_dataset( 'mu_Hy',  data=self. mu_Hy)
-        f.create_dataset( 'mu_Hz',  data=self. mu_Hz)
-            
-        self.MPIcomm.Barrier()
-
-        return
-
-    def set_src(self, src_srt, src_end, mmt):
-        """Set the position, type of the source and field.
-
-        PARAMETERS
-        ----------
-        src_srt : tuple
-
-        src_end   : tuple
-
-            A tuple which has three ints as its elements.
-            The elements defines the position of the source in the field.
-            
-            ex)
-                1. point source
-                    src_srt: (30, 30, 30), src_end: (30, 30, 30)
-                2. line source
-                    src_srt: (30, 30, 0), src_end: (30, 30, Space.Nz)
-                3. plane wave
-                    src_srt: (30,0,0), src_end: (30, Space.Ny, Space.Nz)
-
-        mmt: tuple.
-            momentum vector (kx,ky,kz). Only non-zero when the source is monochromatic.
-
-        RETURNS
-        -------
-        None
-        """
-
-        assert len(src_srt) == 3, "src_srt argument is a list or tuple with length 3."
-        assert len(src_end) == 3, "src_end argument is a list or tuple with length 3."
-
-        self.who_put_src = None
-
-        self.src_srt  = src_srt
-        self.src_xsrt = src_srt[0]
-        self.src_ysrt = src_srt[1]
-        self.src_zsrt = src_srt[2]
-
-        self.src_end  = src_end
-        self.src_xend = src_end[0]
-        self.src_yend = src_end[1]
-        self.src_zend = src_end[2]
-
-        #----------------------------------------------------------------------#
-        #--------- All ranks should know who put src to plot src graph --------#
-        #----------------------------------------------------------------------#
-
-        self.MPIcomm.Barrier()
-        for rank in range(self.MPIsize):
-
-            my_xsrt = self.myNx_indice[rank][0]
-            my_xend = self.myNx_indice[rank][1]
-
-            # case 1. x position of source is fixed.
-            if self.src_xsrt == (self.src_xend-1):
-
-                if self.src_xsrt >= my_xsrt and self.src_xend <= my_xend:
-                    self.who_put_src   = rank
-
-                    if self.MPIrank == self.who_put_src:
-                        self.my_src_xsrt = self.src_xsrt - my_xsrt
-                        self.my_src_xend = self.src_xend - my_xsrt
-
-                        self.src = self.xp.zeros(self.tsteps, dtype=self.field_dtype)
-
-                        #print("rank{:>2}: src_xsrt : {}, my_src_xsrt: {}, my_src_xend: {}"\
-                        #       .format(self.MPIrank, self.src_xsrt, self.my_src_xsrt, self.my_src_xend))
-                    else:
-                        pass
-                        #print("rank {:>2}: I don't put source".format(self.MPIrank))
-
-                else: continue
-
-            # case 2. x position of source has range.
-            elif self.src_xsrt < self.src_xend:
-                assert self.MPIsize == 1
-
-                self.who_put_src = 0
-                self.my_src_xsrt = self.src_xsrt
-                self.my_src_xend = self.src_xend
-
-                self.src = self.xp.zeros(self.tsteps, dtype=self.field_dtype)
-
-            # case 3. x position of source is reversed.
-            elif self.src_xsrt > self.src_xend:
-                raise ValueError("src_end[0] is bigger than src_srt[0]")
-
-            else:
-                raise IndexError("x position of src is not defined!")
-
-        #--------------------------------------------------------------------------#
-        #--------- Apply phase difference according to the incident angle ---------#
-        #--------------------------------------------------------------------------#
-
-        kx = mmt[0]
-        ky = mmt[1]
-        kz = mmt[2]
-
-        self.mmt = mmt
-
-        if self.MPIrank == self.who_put_src:
-
-            self.px = np.exp(+1j*kx*self.xp.arange(self.my_src_xsrt, self.my_src_xend)*self.dx)
-            self.py = np.exp(+1j*ky*self.xp.arange(self.   src_ysrt, self.   src_yend)*self.dy)
-            self.pz = np.exp(+1j*kz*self.xp.arange(self.   src_zsrt, self.   src_zend)*self.dz)
-
-            xdist = self.my_src_xend-self.my_src_xsrt
-            ydist = self.   src_yend-self.   src_ysrt
-            zdist = self.   src_zend-self.   src_zsrt
-
-            if xdist == 1: self.px = np.exp(1j*kx*self.xp.arange(1)*self.dx)
-            if ydist == 1: self.py = np.exp(1j*ky*self.xp.arange(1)*self.dy)
-            if zdist == 1: self.pz = np.exp(1j*kz*self.xp.arange(1)*self.dz)
-
-    def put_src(self, where, pulse, put_type):
-        """Put source at the designated postion set by set_src method.
-        
-        PARAMETERS
-        ----------  
-        where : string
-            ex)
-                'Ex' or 'ex'
-                'Ey' or 'ey'
-                'Ez' or 'ez'
-
-        pulse : float
-            float returned by source.pulse.
-
-        put_type : string
-            'soft' or 'hard'
-
-        """
-        #------------------------------------------------------------#
-        #--------- Put the source into the designated field ---------#
-        #------------------------------------------------------------#
-
-        self.put_type = put_type
-        self.where = where
-        self.pulse = pulse
-
-        if self.MPIrank == self.who_put_src:
-
-            x = slice(self.my_src_xsrt, self.my_src_xend)
-            y = slice(self.   src_ysrt, self.   src_yend)
-            z = slice(self.   src_zsrt, self.   src_zend)
-
-            self.pulse *= self.px[:,None,None] * self.py[None,:,None] * self.pz[None,None,:]
-
-            if   self.put_type == 'soft':
-
-                if (self.where == 'Ex') or (self.where == 'ex'): self.Ex[x,y,z] += self.pulse
-                if (self.where == 'Ey') or (self.where == 'ey'): self.Ey[x,y,z] += self.pulse
-                if (self.where == 'Ez') or (self.where == 'ez'): self.Ez[x,y,z] += self.pulse
-                if (self.where == 'Hx') or (self.where == 'hx'): self.Hx[x,y,z] += self.pulse
-                if (self.where == 'Hy') or (self.where == 'hy'): self.Hy[x,y,z] += self.pulse
-                if (self.where == 'Hz') or (self.where == 'hz'): self.Hz[x,y,z] += self.pulse
-
-            elif self.put_type == 'hard':
-    
-                if (self.where == 'Ex') or (self.where == 'ex'): self.Ex[x,y,z] = self.pulse
-                if (self.where == 'Ey') or (self.where == 'ey'): self.Ey[x,y,z] = self.pulse
-                if (self.where == 'Ez') or (self.where == 'ez'): self.Ez[x,y,z] = self.pulse
-                if (self.where == 'Hx') or (self.where == 'hx'): self.Hx[x,y,z] = self.pulse
-                if (self.where == 'Hy') or (self.where == 'hy'): self.Hy[x,y,z] = self.pulse
-                if (self.where == 'Hz') or (self.where == 'hz'): self.Hz[x,y,z] = self.pulse
-
-            else:
-                raise ValueError("Please insert 'soft' or 'hard'")
 
     def updateH(self,tstep) :
         
@@ -2330,6 +2161,40 @@ class Basic3D:
 
         self.psi_hyx_p[psiidx] = (self.PMLbx[odd,None] * self.psi_hyx_p[psiidx]) + (self.PMLax[odd,None] * self.diffxEz[myidx])
         self.Hy[myidx] += CHy2 * (-((1./self.PMLkappax[odd,None] - 1.) * self.diffxEz[myidx]) - self.psi_hyx_p[psiidx])
+
+    def memloc_field_at_point(self, loc):
+
+        self.point_loc = (int(loc[0]/self.dx), int(loc[1]/self.dy), int(loc[2]/self.dz))
+
+        x = self.point_loc[0]
+        y = self.point_loc[1]
+        z = self.point_loc[2]
+
+        xsrt = self.myNx_indice[self.MPIrank][0]
+        xend = self.myNx_indice[self.MPIrank][1]
+
+        if x >= xsrt and x < xend:
+
+            self.field_at_point = self.xp.zeros(self.tsteps)
+
+            return self.field_at_point
+
+        else: return None
+
+    def get_field_at_point(self, field_at_point, field, tstep):
+
+        if type(field_at_point) != None: 
+
+            x = self.point_loc[0]
+            y = self.point_loc[1]
+            z = self.point_loc[2]
+
+            xsrt = self.myNx_indice[self.MPIrank][0]
+
+            myx = x - xsrt
+            field_at_point[tstep] = field[myx,y,z]
+
+        else: pass
 
 
 class Empty3D(Basic3D):
