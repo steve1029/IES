@@ -83,6 +83,7 @@ class Setter:
 
             # case 2. x position of source has range.
             elif self.src_xsrt < self.src_xend:
+
                 assert self.space.MPIsize == 1
 
                 self.who_put_src = 0
@@ -114,9 +115,9 @@ class Setter:
             self.py = self.xp.exp(+1j*ky*self.xp.arange(self.   src_ysrt, self.   src_yend)*self.space.dy)
             self.pz = self.xp.exp(+1j*kz*self.xp.arange(self.   src_zsrt, self.   src_zend)*self.space.dz)
 
-            xdist = self.my_src_xend-self.my_src_xsrt
-            ydist = self.   src_yend-self.   src_ysrt
-            zdist = self.   src_zend-self.   src_zsrt
+            xdist = self.my_src_xend - self.my_src_xsrt
+            ydist = self.   src_yend - self.   src_ysrt
+            zdist = self.   src_zend - self.   src_zsrt
 
             if xdist == 1: self.px = self.xp.exp(1j*kx*self.xp.arange(1)*self.space.dx)
             if ydist == 1: self.py = self.xp.exp(1j*ky*self.xp.arange(1)*self.space.dy)

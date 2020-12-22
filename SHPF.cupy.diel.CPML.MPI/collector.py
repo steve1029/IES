@@ -179,15 +179,15 @@ class FieldAtPoint(collector):
             xend = self.lxloc[1]
 
             f = slice(0,None)
-            Fidx = [self.xloc, self.yloc, self.zloc]
+            Fidx = [self.lxloc, self.yloc, self.zloc]
 
-            self.Ex_t[tstep] = self.space.Ex[self.xloc, self.yloc, self.zloc]
-            self.Ey_t[tstep] = self.space.Ey[self.xloc, self.yloc, self.zloc]
-            self.Ez_t[tstep] = self.space.Ez[self.xloc, self.yloc, self.zloc]
+            self.Ex_t[tstep] = self.space.Ex[xsrt, self.yloc, self.zloc]
+            self.Ey_t[tstep] = self.space.Ey[xsrt, self.yloc, self.zloc]
+            self.Ez_t[tstep] = self.space.Ez[xsrt, self.yloc, self.zloc]
 
-            self.Hx_t[tstep] = self.space.Hx[self.xloc, self.yloc, self.zloc]
-            self.Hy_t[tstep] = self.space.Hy[self.xloc, self.yloc, self.zloc]
-            self.Hz_t[tstep] = self.space.Hz[self.xloc, self.yloc, self.zloc]
+            self.Hx_t[tstep] = self.space.Hx[xsrt, self.yloc, self.zloc]
+            self.Hy_t[tstep] = self.space.Hy[xsrt, self.yloc, self.zloc]
+            self.Hz_t[tstep] = self.space.Hz[xsrt, self.yloc, self.zloc]
 
             #self.DFT_Ex += self.space.Ex[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
             #self.DFT_Ey += self.space.Ey[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
@@ -237,35 +237,45 @@ class FieldAtPoint(collector):
 
     def plot_spectrum(self):
 
-        self.Ex_w_shift = cp.asnumpy(self.Ex_w_shift)
-        self.Ey_w_shift = cp.asnumpy(self.Ey_w_shift)
-        self.Ez_w_shift = cp.asnumpy(self.Ez_w_shift)
+        if self.gxloc != None:
 
-        self.Hx_w_shift = cp.asnumpy(self.Hx_w_shift)
-        self.Hy_w_shift = cp.asnumpy(self.Hy_w_shift)
-        self.Hz_w_shift = cp.asnumpy(self.Hz_w_shift)
+            self.Ex_w_shift = cp.asnumpy(self.Ex_w_shift)
+            self.Ey_w_shift = cp.asnumpy(self.Ey_w_shift)
+            self.Ez_w_shift = cp.asnumpy(self.Ez_w_shift)
 
-        fftfreq = np.fft.fftfreq(len(self.Ex_t), self.space.dt)
+            self.Hx_w_shift = cp.asnumpy(self.Hx_w_shift)
+            self.Hy_w_shift = cp.asnumpy(self.Hy_w_shift)
+            self.Hz_w_shift = cp.asnumpy(self.Hz_w_shift)
 
-        fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(24,16))
+            fftfreq = np.fft.fftfreq(len(self.Ex_t), self.space.dt)
 
-        axes[0,0].plot(fftfreq, abs(self.Ex_w_shift), label='Ex_w')
-        axes[0,1].plot(fftfreq, abs(self.Ey_w_shift), label='Ey_w')
-        axes[0,2].plot(fftfreq, abs(self.Ez_w_shift), label='Ez_w')
+            fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(24,16))
 
-        axes[1,0].plot(fftfreq, abs(self.Hx_w_shift), label='Hx_w')
-        axes[1,1].plot(fftfreq, abs(self.Hy_w_shift), label='Hy_w')
-        axes[1,2].plot(fftfreq, abs(self.Hz_w_shift), label='Hz_w')
+            axes[0,0].plot(fftfreq, abs(self.Ex_w_shift), label='Ex_w')
+            axes[0,1].plot(fftfreq, abs(self.Ey_w_shift), label='Ey_w')
+            axes[0,2].plot(fftfreq, abs(self.Ez_w_shift), label='Ez_w')
 
-        axes[0,0].legend(loc='best')
-        axes[0,1].legend(loc='best')
-        axes[0,2].legend(loc='best')
+            axes[1,0].plot(fftfreq, abs(self.Hx_w_shift), label='Hx_w')
+            axes[1,1].plot(fftfreq, abs(self.Hy_w_shift), label='Hy_w')
+            axes[1,2].plot(fftfreq, abs(self.Hz_w_shift), label='Hz_w')
 
-        axes[1,0].legend(loc='best')
-        axes[1,1].legend(loc='best')
-        axes[1,2].legend(loc='best')
+            axes[0,0].legend(loc='best')
+            axes[0,1].legend(loc='best')
+            axes[0,2].legend(loc='best')
 
-        fig.savefig("../graph/field_at_point.png")
+            axes[1,0].legend(loc='best')
+            axes[1,1].legend(loc='best')
+            axes[1,2].legend(loc='best')
+
+            axes[0,0].set_xlim(5.5e13,6.e13)
+            axes[0,1].set_xlim(5.5e13,6.e13)
+            axes[0,2].set_xlim(5.5e13,6.e13)
+
+            axes[1,0].set_xlim(5.5e13,6.e13)
+            axes[1,1].set_xlim(5.5e13,6.e13)
+            axes[1,2].set_xlim(5.5e13,6.e13)
+
+            fig.savefig("../graph/field_at_point.png")
 
  
 class Sx(collector):

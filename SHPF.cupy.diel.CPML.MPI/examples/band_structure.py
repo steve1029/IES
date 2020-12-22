@@ -43,22 +43,21 @@ TF.malloc()
 ########## Set PML and PBC
 TF.set_PML({'x':'+-','y':'','z':''}, 10)
 
-region = {'x':False, 'y':False, 'z':True}
+region = {'x':False, 'y':True, 'z':True}
 TF.apply_BPBC(region, BBC=True, PBC=False)
 
-########## Save eps, mu and PML data.
+########## Save PML data.
 #TF.save_pml_parameters('./')
-#TF.save_eps_mu(savedir)
 
 #------------------------------------------------------------------#
 #--------------------- Source object settings ---------------------#
 #------------------------------------------------------------------#
 
 ########## Gaussian source
-#smth = source.Smoothing(dt, 1000)
-#src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
-#src.plot_pulse(Tsteps, freqs, savedir)
-#wvlen = 300*um
+smth = source.Smoothing(dt, 1000)
+src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
+src.plot_pulse(Tsteps, freqs, savedir)
+wvlen = 300*um
 
 ########## Sine source
 #src = source.Sine(dt, np.float64)
@@ -71,15 +70,15 @@ TF.apply_BPBC(region, BBC=True, PBC=False)
 #src.set_wvlen(wvlen)
 
 ########## Delta source
-src = source.Delta(1000)
-wvlen = 300*um
+#src = source.Delta(1000)
+#wvlen = 300*um
 
 ########## Momentum of the source.
 # mmt for plane wave normal to x axis
 # phi is the angle between k0 vector and xz-plane.
 # theta is the angle between k0cos(phi) and x-axis.
 k0 = 2*np.pi / wvlen
-phi, theta = 0*np.pi/180, -30*np.pi/180
+phi, theta = 0*np.pi/180, 0*np.pi/180
 #phi, theta = 0, 0
 kx = k0 * np.cos(phi) * np.cos(theta)
 ky = k0 * np.sin(phi)
@@ -88,14 +87,19 @@ kz = k0 * np.cos(phi) * np.sin(theta)
 mmt = (kx, ky, kz)
 
 ########## Plane wave normal to x-axis.
-#TF.set_src((xpos, 0, 0), (xpos+1, Ny, Nz), mmt)
+setter = source.Setter(TF, (200*um, 0, 0), (210*um, Ly, Lz), mmt)
 
 ########## Line src along y-axis.
-setter1 = source.Setter(TF, (500*um, 0, 700*um), (510*um, Ly, 710*um), mmt)
-setter2 = source.Setter(TF, (600*um, 0, 300*um), (610*um, Ly, 310*um), mmt)
-setter3 = source.Setter(TF, (300*um, 0, 400*um), (310*um, Ly, 410*um), mmt)
-setter4 = source.Setter(TF, (700*um, 0, 800*um), (710*um, Ly, 810*um), mmt)
-setter5 = source.Setter(TF, (650*um, 0,1100*um), (660*um, Ly,1110*um), mmt)
+"""
+setter1 = source.Setter(TF, (400*um, 0, 200*um), (410*um, Ly, 210*um), mmt)
+setter2 = source.Setter(TF, (400*um, 0, 300*um), (410*um, Ly, 310*um), mmt)
+setter3 = source.Setter(TF, (400*um, 0, 400*um), (410*um, Ly, 410*um), mmt)
+setter4 = source.Setter(TF, (400*um, 0, 500*um), (410*um, Ly, 510*um), mmt)
+setter5 = source.Setter(TF, (400*um, 0, 600*um), (410*um, Ly, 610*um), mmt)
+setter6 = source.Setter(TF, (400*um, 0, 700*um), (410*um, Ly, 710*um), mmt)
+setter7 = source.Setter(TF, (400*um, 0, 800*um), (410*um, Ly, 810*um), mmt)
+setter8 = source.Setter(TF, (400*um, 0, 900*um), (410*um, Ly, 910*um), mmt)
+"""
 
 ########## Line src along z-axis.
 #TF.set_src_pos((xpos, ypos, 0), (xpos+1, ypos+1, Nz))
@@ -107,15 +111,27 @@ setter5 = source.Setter(TF, (650*um, 0,1100*um), (660*um, Ly,1110*um), mmt)
 #-------------------- Structure object settings -------------------#
 #------------------------------------------------------------------#
 
-srt = ( 800*um,    0*um,    0*um)
-end = (1000*um, 1280*um, 1280*um)
-box = structure.Box(TF, srt, end, 4., 1.)
+########## Box
+#srt = ( 800*um,    0*um,    0*um)
+#end = (1000*um, 1280*um, 1280*um)
+#box = structure.Box(TF, srt, end, 4., 1.)
 
-radius = 100*um
-height = (800*um, 1000*um)
-llm = (0*um, 0*um)
-dc = (640*um, 640*um)
-cylinder = structure.Cylinder_slab(TF, radius, height, llm, dc, 1., 1.)
+########## Cylinder
+radius = 50*um
+height = (0*um, Ly)
+center1 = ( 300*um, 640*um)
+center2 = ( 500*um, 640*um)
+center3 = ( 700*um, 640*um)
+center4 = ( 900*um, 640*um)
+center5 = (1100*um, 640*um)
+cylinder1 = structure.Cylinder(TF, 'y', radius, height, center1, 8.9, 1.)
+cylinder2 = structure.Cylinder(TF, 'y', radius, height, center2, 8.9, 1.)
+cylinder3 = structure.Cylinder(TF, 'y', radius, height, center3, 8.9, 1.)
+cylinder4 = structure.Cylinder(TF, 'y', radius, height, center4, 8.9, 1.)
+cylinder5 = structure.Cylinder(TF, 'y', radius, height, center5, 8.9, 1.)
+
+########## Save eps, mu data.
+#TF.save_eps_mu(savedir)
 
 #------------------------------------------------------------------#
 #-------------------- Collector object settings -------------------#
@@ -150,13 +166,39 @@ for tstep in range(Tsteps):
             print("Simulation start: {}".format(datetime.datetime.now()))
         
     # pulse for gaussian wave
-    #pulse_re = src.pulse_re(tstep) * smth.apply(tstep)
-    pulse_re = src.apply(tstep)
+    pulse_re = src.pulse_re(tstep) * smth.apply(tstep)
+    #pulse_re = src.apply(tstep)
+
+    setter.put_src('Ey', pulse_re, 'soft')
+
+    """
+    setter1.put_src('Ex', pulse_re, 'soft')
+    setter2.put_src('Ex', pulse_re, 'soft')
+    setter3.put_src('Ex', pulse_re, 'soft')
+    setter4.put_src('Ex', pulse_re, 'soft')
+    setter5.put_src('Ex', pulse_re, 'soft')
+    setter6.put_src('Ex', pulse_re, 'soft')
+    setter7.put_src('Ex', pulse_re, 'soft')
+    setter8.put_src('Ex', pulse_re, 'soft')
 
     setter1.put_src('Ey', pulse_re, 'soft')
     setter2.put_src('Ey', pulse_re, 'soft')
     setter3.put_src('Ey', pulse_re, 'soft')
     setter4.put_src('Ey', pulse_re, 'soft')
+    setter5.put_src('Ey', pulse_re, 'soft')
+    setter6.put_src('Ey', pulse_re, 'soft')
+    setter7.put_src('Ey', pulse_re, 'soft')
+    setter8.put_src('Ey', pulse_re, 'soft')
+
+    setter1.put_src('Ez', pulse_re, 'soft')
+    setter2.put_src('Ez', pulse_re, 'soft')
+    setter3.put_src('Ez', pulse_re, 'soft')
+    setter4.put_src('Ez', pulse_re, 'soft')
+    setter5.put_src('Ez', pulse_re, 'soft')
+    setter6.put_src('Ez', pulse_re, 'soft')
+    setter7.put_src('Ez', pulse_re, 'soft')
+    setter8.put_src('Ez', pulse_re, 'soft')
+    """
 
     TF.updateH(tstep)
     TF.updateE(tstep)
@@ -212,8 +254,8 @@ if TF.MPIrank == 0:
     finished_time = datetime.datetime.now()
 
     # Record simulation size and operation time
-    if not os.path.exists("./record") : os.mkdir("./record")
-    record_path = "./record/record_%s.txt" %(datetime.date.today())
+    if not os.path.exists("../record") : os.mkdir("../record")
+    record_path = "../record/record_%s.txt" %(datetime.date.today())
 
     if not os.path.exists(record_path):
         f = open( record_path,'a')
