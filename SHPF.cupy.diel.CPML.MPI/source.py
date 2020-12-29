@@ -41,13 +41,13 @@ class Setter:
 
         self.who_put_src = None
 
-        self.src_xsrt = int(src_srt[0] / self.space.dx)
-        self.src_ysrt = int(src_srt[1] / self.space.dy)
-        self.src_zsrt = int(src_srt[2] / self.space.dz)
+        self.src_xsrt = round(src_srt[0] / self.space.dx)
+        self.src_ysrt = round(src_srt[1] / self.space.dy)
+        self.src_zsrt = round(src_srt[2] / self.space.dz)
 
-        self.src_xend = int(src_end[0] / self.space.dx)
-        self.src_yend = int(src_end[1] / self.space.dy)
-        self.src_zend = int(src_end[2] / self.space.dz)
+        self.src_xend = round(src_end[0] / self.space.dx)
+        self.src_yend = round(src_end[1] / self.space.dy)
+        self.src_zend = round(src_end[2] / self.space.dz)
 
         #----------------------------------------------------------------------#
         #--------- All ranks should know who put src to plot src graph --------#

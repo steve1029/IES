@@ -397,8 +397,8 @@ class Sphere(Structure):
         dy = self.space.dy
         dz = self.space.dz
 
-        xsrt = center[0] - int(radius/dx) # Global srt index of the structure.
-        xend = center[0] + int(radius/dx) # Global end index of the structure.
+        xsrt = center[0] - round(radius/dx) # Global srt index of the structure.
+        xend = center[0] + round(radius/dx) # Global end index of the structure.
 
         assert xsrt >= 0
         assert xend < self.space.Nx
@@ -452,11 +452,11 @@ class Sphere(Structure):
 
             lxloc = np.arange(self.lxloc[0], self.lxloc[1])
 
-            portion_srt  = self.gxloc[0] - center[0] + int(radius/dx)
-            portion_end  = self.gxloc[1] - center[0] + int(radius/dx)
+            portion_srt  = self.gxloc[0] - center[0] + round(radius/dx)
+            portion_end  = self.gxloc[1] - center[0] + round(radius/dx)
             self.portion = np.arange(portion_srt, portion_end)
 
-            rx = abs(self.portion - int(radius/dx))
+            rx = abs(self.portion - round(radius/dx))
             rr = np.zeros_like(rx, dtype=np.float64)
             theta = np.zeros_like(rx, dtype=np.float64)
 
@@ -523,8 +523,8 @@ class Cylinder(Structure):
             ry = center[0]/dy
             rz = center[1]/dz
 
-            gxsrts = round(height[0]/dx) # Global srt index of the structure.
-            gxends = round(height[1]/dx) # Global end index of the structure.
+            gxsrts = round(height[0]/dx)   # Global srt index of the structure.
+            gxends = round(height[1]/dx)-1 # Global end index of the structure.
 
             self.gxloc, self.lxloc = Structure._get_local_x_loc(self, gxsrts, gxends)
 
@@ -545,8 +545,11 @@ class Cylinder(Structure):
 
         elif axis == 'y':
 
-            gxsrt = int(center[0]/dx) - int(radius/dx) # Global srt index of the structure.
-            gxend = int(center[0]/dx) + int(radius/dx) # Global end index of the structure.
+            gxsrt = round(center[0]/dx) - round(radius/dx) # Global srt index of the structure.
+            gxend = round(center[0]/dx) + round(radius/dx) # Global end index of the structure.
+
+            if gxsrt < 0: gxsrt = 0
+            if gxend >= self.space.Nx: gxend = self.space.Nx-1
 
             self.gxloc, self.lxloc = Structure._get_local_x_loc(self, gxsrt, gxend)
 
@@ -554,11 +557,11 @@ class Cylinder(Structure):
 
                 lxloc = np.arange(self.lxloc[0], self.lxloc[1])
 
-                portion_srt  = self.gxloc[0] - int(center[0]/dx) + int(radius/dx)
-                portion_end  = self.gxloc[1] - int(center[0]/dx) + int(radius/dx)
+                portion_srt  = self.gxloc[0] - round(center[0]/dx) + round(radius/dx)
+                portion_end  = self.gxloc[1] - round(center[0]/dx) + round(radius/dx)
                 self.portion = np.arange(portion_srt, portion_end)
 
-                rx = abs(self.portion - int(radius/dx)) * dx
+                rx = abs(self.portion - round(radius/dx)) * dx
                 rz = np.zeros_like(rx, dtype=np.float64)
                 theta = np.zeros_like(rx, dtype=np.float64)
 

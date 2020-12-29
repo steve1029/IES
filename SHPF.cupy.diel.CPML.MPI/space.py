@@ -60,9 +60,9 @@ class Basic3D:
         self.TOTAL_NUM_GRID = self.Nx * self.Ny * self.Nz
         self.TOTAL_NUM_GRID_SIZE = (self.field_dtype(1).nbytes * self.TOTAL_NUM_GRID) / 1024 / 1024
         
-        self.Nxc = int(self.Nx / 2)
-        self.Nyc = int(self.Ny / 2)
-        self.Nzc = int(self.Nz / 2)
+        self.Nxc = round(self.Nx / 2)
+        self.Nyc = round(self.Ny / 2)
+        self.Nzc = round(self.Nz / 2)
         
         self.gridgap = gridgap
         self.dx = self.gridgap[0]
@@ -121,7 +121,7 @@ class Basic3D:
         ################# Set the loc_grid each node should possess ################
         ############################################################################
 
-        self.myNx     = int(self.Nx/self.MPIsize)
+        self.myNx     = round(self.Nx/self.MPIsize)
         self.loc_grid = (self.myNx, self.Ny, self.Nz)
 
         self.Ex = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
@@ -1586,10 +1586,10 @@ class Basic3D:
 
     def _exchange_BBCy(self, k, newL, fx, fy, fz, recv1, recv2, mpi):
 
-        p0 = [ 0, slice(0,None), slice(0,None)]
-        p1 = [ 1, slice(0,None), slice(0,None)]
-        m1 = [-1, slice(0,None), slice(0,None)]
-        m2 = [-2, slice(0,None), slice(0,None)]
+        p0 = [slice(0,None), 0, slice(0,None)]
+        p1 = [slice(0,None), 1, slice(0,None)]
+        m1 = [slice(0,None),-1, slice(0,None)]
+        m2 = [slice(0,None),-2, slice(0,None)]
 
         fx[m1] = fx[p1] * self.xp.exp(+1j*k*newL) 
         fy[m1] = fy[p1] * self.xp.exp(+1j*k*newL) 
@@ -2228,7 +2228,7 @@ class Basic3D:
 
     def memloc_field_at_point(self, loc):
 
-        self.point_loc = (int(loc[0]/self.dx), int(loc[1]/self.dy), int(loc[2]/self.dz))
+        self.point_loc = (round(loc[0]/self.dx), round(loc[1]/self.dy), round(loc[2]/self.dz))
 
         x = self.point_loc[0]
         y = self.point_loc[1]

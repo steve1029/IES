@@ -18,8 +18,8 @@ savedir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/'
 nm = 1e-9
 um = 1e-6
 
-Nx, Ny, Nz = 256, 8, 256
-dx, dy, dz = 5*um, 5*um, 5*um
+Nx, Ny, Nz = 8, 256, 256
+dx, dy, dz = 5*nm, 5*nm, 5*nm
 Lx, Ly, Lz = Nx*dx, Ny*dy, Nz*dz
 
 courant = 1./4
@@ -44,10 +44,10 @@ TF.apply_BPBC(region, BBC=True, PBC=False)
 #------------------------------------------------------------------#
 
 ########## Gaussian source
-wvc = 300*um
-interval = 2
-spread   = 0.3
-pick_pos = 1000
+#wvc = 300*um
+#interval = 2
+#spread   = 0.3
+#pick_pos = 1000
 #wvlens = np.arange(200,600, interval)*um
 #freqs = c / wvlens
 #np.save("../graph/freqs", freqs)
@@ -68,15 +68,16 @@ pick_pos = 1000
 
 ########## Delta source
 src = source.Delta(1000)
-wvlen = 2*Lx
+wvlen = 2*Lz
 
 ########## Momentum of the source.
+k0 = 2*np.pi / wvlen
+phi, theta = 0*np.pi/180, 0*np.pi/180
+phi, theta = 0, 0
+
 # mmt for plane wave normal to x axis
 # phi is the angle between k0 vector and xz-plane.
 # theta is the angle between k0cos(phi) and x-axis.
-#k0 = 2*np.pi / wvlen
-#phi, theta = 0*np.pi/180, 0*np.pi/180
-#phi, theta = 0, 0
 #kx = k0 * np.cos(phi) * np.cos(theta)
 #ky = k0 * np.sin(phi)
 #kz = k0 * np.cos(phi) * np.sin(theta)
@@ -84,12 +85,16 @@ wvlen = 2*Lx
 # mmt for plane wave normal to y axis
 # phi is the angle between k0 vector and xy-plane.
 # theta is the angle between k0cos(phi) and y-axis.
-k0 = 2*np.pi / wvlen
-phi, theta = 0*np.pi/180, 0*np.pi/180
-#phi, theta = 0, 0
-kx = k0 * np.cos(phi) * np.sin(theta)
-ky = k0 * np.cos(phi) * np.cos(theta)
-kz = k0 * np.sin(phi)
+#kx = k0 * np.cos(phi) * np.sin(theta)
+#ky = k0 * np.cos(phi) * np.cos(theta)
+#kz = k0 * np.sin(phi)
+
+# mmt for plane wave normal to z axis
+# phi is the angle between k0 vector and yz-plane.
+# theta is the angle between k0cos(phi) and z-axis.
+kx = k0 * np.sin(phi)
+ky = k0 * np.cos(phi) * np.sin(theta)
+kz = k0 * np.cos(phi) * np.cos(theta)
 
 mmt = (kx, ky, kz)
 
@@ -100,15 +105,13 @@ mmt = (kx, ky, kz)
 #setter = source.Setter(TF, (0, 63*um, 0), (Lx, 64*um, Lz), mmt)
 
 ########## Line src along x-axis.
-"""
-setter1 = source.Setter(TF, (0*um,  30*um,  30*um), (31*um,  31*um,  31*um), mmt)
-setter2 = source.Setter(TF, (0*um,  30*um, 200*um), (31*um,  31*um, 201*um), mmt)
-setter3 = source.Setter(TF, (0*um, 127*um, 127*um), (31*um, 128*um, 128*um), mmt)
-setter4 = source.Setter(TF, (0*um, 200*um, 200*um), (31*um, 201*um, 201*um), mmt)
-"""
+setter1 = source.Setter(TF, (0,  100*nm,  100*nm), (Lx,  105*um, 105*um), mmt)
+#setter2 = source.Setter(TF, (0*um,  30*um, 200*um), (31*um,  31*um, 201*um), mmt)
+#setter3 = source.Setter(TF, (0*um, 127*um, 127*um), (31*um, 128*um, 128*um), mmt)
+#setter4 = source.Setter(TF, (0*um, 200*um, 200*um), (31*um, 201*um, 201*um), mmt)
 
 ########## Line src along y-axis.
-setter1 = source.Setter(TF, (640*um, 0, 640*um), (645*um, Ly, 645*um), mmt)
+#setter1 = source.Setter(TF, (640*um, 0, 640*um), (645*um, Ly, 645*um), mmt)
 #setter2 = source.Setter(TF, (400*um, 0, 300*um), (410*um, Ly, 310*um), mmt)
 #setter3 = source.Setter(TF, (400*um, 0, 400*um), (410*um, Ly, 410*um), mmt)
 #setter4 = source.Setter(TF, (400*um, 0, 500*um), (410*um, Ly, 510*um), mmt)
@@ -129,25 +132,25 @@ setter1 = source.Setter(TF, (640*um, 0, 640*um), (645*um, Ly, 645*um), mmt)
 #box = structure.Box(TF, srt, end, 4., 1.)
 
 ########## Cylinder
-radius = 256*um
-height = ( 0, Ly)
-center1 = (  0, 0)
-center2 = (  0, Lz)
-center3 = ( Lx, 0)
-center4 = ( Lx, Lz)
-cylinder1 = structure.Cylinder(TF, 'y', radius, height, center1, 8.9, 1.)
-cylinder2 = structure.Cylinder(TF, 'y', radius, height, center2, 8.9, 1.)
-cylinder3 = structure.Cylinder(TF, 'y', radius, height, center3, 8.9, 1.)
-cylinder4 = structure.Cylinder(TF, 'y', radius, height, center4, 8.9, 1.)
+radius = 114.8*nm
+height = (0, Lx)
+center1 = ( Ly/2, Lz/2)
+#center2 = (  0, Lz)
+#center3 = ( Lx, 0)
+#center4 = ( Lx, Lz)
+cylinder1 = structure.Cylinder(TF, 'x', radius, height, center1, 8.9, 1.)
+#cylinder2 = structure.Cylinder(TF, 'y', radius, height, center2, 8.9, 1.)
+#cylinder3 = structure.Cylinder(TF, 'y', radius, height, center3, 8.9, 1.)
+#cylinder4 = structure.Cylinder(TF, 'y', radius, height, center4, 8.9, 1.)
 
 ########## Save eps, mu data.
-#TF.save_eps_mu(savedir)
+TF.save_eps_mu(savedir)
 
 #------------------------------------------------------------------#
 #-------------------- Collector object settings -------------------#
 #------------------------------------------------------------------#
 
-loc = (Lx/2, Ly/2, Lz/2)
+loc = (Lx/2, 200*nm, 200*nm)
 field_at_point = collector.FieldAtPoint("fap1", "../graph/fap", TF, loc, 'cupy')
 
 #------------------------------------------------------------------#
@@ -215,17 +218,17 @@ for tstep in range(Tsteps):
     # Plot the field profile
     if tstep % plot_per == 0:
 
-        #Ex = TFgraphtool.gather('Ex')
-        #TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=2., stride=2, zlim=2.)
+        Ex = TFgraphtool.gather('Ex')
+        TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=2., stride=2, zlim=2.)
         #TFgraphtool.plot2D3D(Ey, tstep, yidx=TF.Nyc, colordeep=1., stride=2, zlim=1.)
         #TFgraphtool.plot2D3D(Ez, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D(Hx, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D(Hy, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D(Hz, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
 
-        Ey = TFgraphtool.gather('Ey')
+        #Ey = TFgraphtool.gather('Ey')
         #TFgraphtool.plot2D3D(Ex, tstep, yidx=TF.Nyc, colordeep=2., stride=1, zlim=2.)
-        TFgraphtool.plot2D3D(Ey, tstep, yidx=TF.Nyc, colordeep=1., stride=2, zlim=1.)
+        #TFgraphtool.plot2D3D(Ey, tstep, yidx=TF.Nyc, colordeep=1., stride=2, zlim=1.)
         #TFgraphtool.plot2D3D(Ez, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D(Hx, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D(Hy, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)

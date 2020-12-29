@@ -6,19 +6,15 @@ import matplotlib.pyplot as plt
 
 class collector:
 
-    def __init__(self, name, path, space, freqs, engine):
+    def __init__(self, name, path, space, engine):
 
         self.engine = engine
         if self.engine == 'cupy' : self.xp = cp
         else: self.xp = np
 
         self.name = name
-        self.Nf = len(freqs)
         self.space = space
         self.path = path
-
-        if self.engine == 'cupy': self.freqs = cp.asarray(freqs)
-        else: self.freqs = freqs
 
         # Make a directory to save data.
         if self.space.MPIrank == 0:
@@ -123,7 +119,7 @@ class collector:
 
 class FieldAtPoint(collector):
 
-    def __init__(self, name, path, space, loc, freqs, engine):
+    def __init__(self, name, path, space, loc, engine):
         """Collector object to collect the fields at a point.
 
         Args:
@@ -134,8 +130,6 @@ class FieldAtPoint(collector):
             loc: float
                 location of a collector.
 
-            freqs: ndarray
-
             engine: string
                 choose 'numpy' or 'cupy'.
 
@@ -143,14 +137,14 @@ class FieldAtPoint(collector):
             None
         """
 
-        collector.__init__(self, name, path, space, freqs, engine)
+        collector.__init__(self, name, path, space, engine)
 
         # Location of the structure.
-        self.xloc = int(loc[0]/space.dx)
-        self.yloc = int(loc[1]/space.dy)
-        self.zloc = int(loc[2]/space.dz)
+        self.xloc = round(loc[0]/space.dx)
+        self.yloc = round(loc[1]/space.dy)
+        self.zloc = round(loc[2]/space.dz)
 
-        self.gxloc, self.lxloc = collector._get_local_x_loc(self, self.xloc, self.xloc+1)
+        self.gxloc, self.lxloc = collector._get_local_x_loc(self, self.xloc, self.xloc)
 
         if self.gxloc != None:
 
@@ -161,14 +155,6 @@ class FieldAtPoint(collector):
             self.Hx_t = self.xp.zeros(space.tsteps, dtype=space.field_dtype)
             self.Hy_t = self.xp.zeros(space.tsteps, dtype=space.field_dtype)
             self.Hz_t = self.xp.zeros(space.tsteps, dtype=space.field_dtype)
-
-            #self.DFT_Ex = self.xp.zeros(self.Nf, dtype=self.space.field_dtype)
-            #self.DFT_Ey = self.xp.zeros(self.Nf, dtype=self.space.field_dtype)
-            #self.DFT_Ez = self.xp.zeros(self.Nf, dtype=self.space.field_dtype)
-
-            #self.DFT_Hx = self.xp.zeros(self.Nf, dtype=self.space.field_dtype)
-            #self.DFT_Hy = self.xp.zeros(self.Nf, dtype=self.space.field_dtype)
-            #self.DFT_Hz = self.xp.zeros(self.Nf, dtype=self.space.field_dtype)
 
     def get_field(self, tstep):
 
@@ -188,14 +174,6 @@ class FieldAtPoint(collector):
             self.Hx_t[tstep] = self.space.Hx[xsrt, self.yloc, self.zloc]
             self.Hy_t[tstep] = self.space.Hy[xsrt, self.yloc, self.zloc]
             self.Hz_t[tstep] = self.space.Hz[xsrt, self.yloc, self.zloc]
-
-            #self.DFT_Ex += self.space.Ex[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
-            #self.DFT_Ey += self.space.Ey[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
-            #self.DFT_Ez += self.space.Ez[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
-
-            #self.DFT_Hx += self.space.Hx[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
-            #self.DFT_Hy += self.space.Hy[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
-            #self.DFT_Hz += self.space.Hz[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
     def get_spectrum(self):
 
@@ -235,48 +213,6 @@ class FieldAtPoint(collector):
             self.xp.save("{}/{}_Hy_w_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Hy_w)
             self.xp.save("{}/{}_Hz_w_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Hz_w)
 
-    def plot_spectrum(self):
-
-        if self.gxloc != None:
-
-            self.Ex_w_shift = cp.asnumpy(self.Ex_w_shift)
-            self.Ey_w_shift = cp.asnumpy(self.Ey_w_shift)
-            self.Ez_w_shift = cp.asnumpy(self.Ez_w_shift)
-
-            self.Hx_w_shift = cp.asnumpy(self.Hx_w_shift)
-            self.Hy_w_shift = cp.asnumpy(self.Hy_w_shift)
-            self.Hz_w_shift = cp.asnumpy(self.Hz_w_shift)
-
-            fftfreq = np.fft.fftfreq(len(self.Ex_t), self.space.dt)
-
-            fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(24,16))
-
-            axes[0,0].plot(fftfreq, abs(self.Ex_w_shift), label='Ex_w')
-            axes[0,1].plot(fftfreq, abs(self.Ey_w_shift), label='Ey_w')
-            axes[0,2].plot(fftfreq, abs(self.Ez_w_shift), label='Ez_w')
-
-            axes[1,0].plot(fftfreq, abs(self.Hx_w_shift), label='Hx_w')
-            axes[1,1].plot(fftfreq, abs(self.Hy_w_shift), label='Hy_w')
-            axes[1,2].plot(fftfreq, abs(self.Hz_w_shift), label='Hz_w')
-
-            axes[0,0].legend(loc='best')
-            axes[0,1].legend(loc='best')
-            axes[0,2].legend(loc='best')
-
-            axes[1,0].legend(loc='best')
-            axes[1,1].legend(loc='best')
-            axes[1,2].legend(loc='best')
-
-            axes[0,0].set_xlim(5.5e13,6.e13)
-            axes[0,1].set_xlim(5.5e13,6.e13)
-            axes[0,2].set_xlim(5.5e13,6.e13)
-
-            axes[1,0].set_xlim(5.5e13,6.e13)
-            axes[1,1].set_xlim(5.5e13,6.e13)
-            axes[1,2].set_xlim(5.5e13,6.e13)
-
-            fig.savefig("../graph/field_at_point.png")
-
  
 class Sx(collector):
 
@@ -306,17 +242,21 @@ class Sx(collector):
             None
         """
 
-        collector.__init__(self, name, path, space, freqs, engine)
+        collector.__init__(self, name, path, space, engine)
+
+        self.Nf = len(freqs)
+        if self.engine == 'cupy': self.freqs = cp.asarray(freqs)
+        else: self.freqs = freqs
 
         # Start loc of the structure.
-        self.xsrt = int(xloc  /space.dx)
-        self.ysrt = int(srt[0]/space.dy)
-        self.zsrt = int(srt[1]/space.dz)
+        self.xsrt = round(xloc  /space.dx)
+        self.ysrt = round(srt[0]/space.dy)
+        self.zsrt = round(srt[1]/space.dz)
 
         # End loc of the structure.
         self.xend = self.xsrt + 1
-        self.yend = int(end[0]/space.dy)
-        self.zend = int(end[1]/space.dz)
+        self.yend = round(end[0]/space.dy)
+        self.zend = round(end[1]/space.dz)
 
         self.gxloc, self.lxloc = collector._get_local_x_loc(self, self.xsrt, self.xend)
 
@@ -392,17 +332,21 @@ class Sy(collector):
             None
         """
 
-        collector.__init__(self, name, path, space, freqs, engine)
+        collector.__init__(self, name, path, space, engine)
+
+        self.Nf = len(freqs)
+        if self.engine == 'cupy': self.freqs = cp.asarray(freqs)
+        else: self.freqs = freqs
 
         # Start loc of the structure.
-        self.xsrt = int(srt[0]/space.dx)
-        self.ysrt = int(  yloc/space.dy)
-        self.zsrt = int(srt[1]/space.dz)
+        self.xsrt = round(srt[0]/space.dx)
+        self.ysrt = round(  yloc/space.dy)
+        self.zsrt = round(srt[1]/space.dz)
 
         # End loc of the structure.
-        self.xend = int(end[0]/space.dx)
+        self.xend = round(end[0]/space.dx)
         self.yend = self.ysrt+1
-        self.zend = int(end[1]/space.dz)
+        self.zend = round(end[1]/space.dz)
 
         # Local variables for readable code.
         xsrt = self.xsrt
@@ -574,16 +518,20 @@ class Sz(collector):
             None
         """
 
-        collector.__init__(self, name, path, space, freqs, engine)
+        collector.__init__(self, name, path, space, engine)
+
+        self.Nf = len(freqs)
+        if self.engine == 'cupy': self.freqs = cp.asarray(freqs)
+        else: self.freqs = freqs
 
         # Start loc of the structure.
-        self.xsrt = int(srt[0]/space.dx)
-        self.ysrt = int(srt[1]/space.dy)
-        self.zsrt = int(  zloc/space.dz)
+        self.xsrt = round(srt[0]/space.dx)
+        self.ysrt = round(srt[1]/space.dy)
+        self.zsrt = round(  zloc/space.dz)
 
         # End loc of the structure.
-        self.xend = int(end[0]/space.dx)
-        self.yend = int(end[1]/space.dz)
+        self.xend = round(end[0]/space.dx)
+        self.yend = round(end[1]/space.dz)
         self.zend = self.zsrt + 1
 
         # Local variables for readable code.
