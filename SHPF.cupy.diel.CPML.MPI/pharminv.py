@@ -56,7 +56,7 @@ class PlotHarminv:
 
         print(name, ':')
         for i in range(harm.freq.size):
-            print("NFreq: %8.5f, Freq: %8.5e, Decay:%5.2e, Q:%4.2f, Amp:%4.2f, Phase:%4.2f, Err:%5.3f" % (nfreqs[i], harm.freq[i], \
+            print("NFreq: %8.5f, Freq: %8.5e, Decay:%6.2e, Q:%6.2e, Amp:%6.2e, Phase:%6.2e, Err:%6.2e" % (nfreqs[i], harm.freq[i], \
                 harm.decay[i], harm.Q[i], harm.amplitude[i], harm.phase[i], harm.error[i]))
 
     def plot_fft_all(self, loc, xlim):
@@ -99,19 +99,23 @@ class PlotHarminv:
         axes[1,1].set_xlim(xlim[0],xlim[1])
         axes[1,2].set_xlim(xlim[0],xlim[1])
 
-        fig.savefig("./graph/field_at_point.png", bbox_inches='tight')
+        fig.savefig(self.savedir+"field_at_point.png", bbox_inches='tight')
 
 if __name__ == '__main__':
 
     um = 1e-6
-    Nx, Ny, Nz = 256, 8, 356
-    dx, dy, dz = 5*um, 5*um, 5*um
-    Lx, Ly, Lz = Nx*dx, Ny*dy, Nz*dz
+    nm = 1e-9
+
+    Lx, Ly, Lz = 574/32*nm, 574*nm, 574*nm
+    Nx, Ny, Nz = 8, 256, 256
+    dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz 
 
     courant = 1./4
     dt = courant * min(dx,dy,dz) /c
 
-    loc = './graph/fap/'
+    fmax = 1./2/dt
+
+    loc = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/graph/'
     test = PlotHarminv(loc, dt, '00')
-    test.try_harminv('Ex', -12e11, 12e11, Lx)
-    test.plot_fft_all(loc, [0.8e14, None])
+    test.try_harminv('Ex', 0, fmax, Lx)
+    test.plot_fft_all(loc, [None, None])

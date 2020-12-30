@@ -18,9 +18,9 @@ savedir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/'
 nm = 1e-9
 um = 1e-6
 
+Lx, Ly, Lz = 574/32*nm, 574*nm, 574*nm
 Nx, Ny, Nz = 8, 256, 256
-dx, dy, dz = 5*nm, 5*nm, 5*nm
-Lx, Ly, Lz = Nx*dx, Ny*dy, Nz*dz
+dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz 
 
 courant = 1./4
 dt = courant * min(dx,dy,dz) / c
@@ -31,9 +31,9 @@ TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.comp
 TF.malloc()
 
 ########## Set PML and PBC
-TF.set_PML({'x':'','y':'','z':''}, 10)
+TF.set_PML({'x':'','y':'','z':'+-'}, 10)
 
-region = {'x':True, 'y':True, 'z':True}
+region = {'x':True, 'y':True, 'z':False}
 TF.apply_BPBC(region, BBC=True, PBC=False)
 
 ########## Save PML data.
@@ -44,15 +44,16 @@ TF.apply_BPBC(region, BBC=True, PBC=False)
 #------------------------------------------------------------------#
 
 ########## Gaussian source
-#wvc = 300*um
+#wvc = 200*nm
 #interval = 2
 #spread   = 0.3
 #pick_pos = 1000
-#wvlens = np.arange(200,600, interval)*um
+#wvlens = np.arange(100,500, interval)*nm
 #freqs = c / wvlens
 #np.save("../graph/freqs", freqs)
 #src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
 #src.plot_pulse(Tsteps, freqs, savedir)
+#wvlen = wvc 
 
 ########## Sine source
 #smth = source.Smoothing(dt, 1000)
@@ -61,19 +62,18 @@ TF.apply_BPBC(region, BBC=True, PBC=False)
 #src.set_wvlen(wvlen)
 
 ########## Harmonic source
-#smth = source.Smoothing(dt, 1000)
-#src = source.Harmonic(dt)
-#wvlen = 64/np.sqrt(3)*um
-#src.set_wvlen(wvlen)
+smth = source.Smoothing(dt, 1000)
+src = source.Harmonic(dt)
+wvlen = 200*nm
+src.set_wvlen(wvlen)
 
 ########## Delta source
-src = source.Delta(1000)
-wvlen = 2*Lz
+#src = source.Delta(1000)
+#wvlen = 2*Lz
 
 ########## Momentum of the source.
 k0 = 2*np.pi / wvlen
-phi, theta = 0*np.pi/180, 0*np.pi/180
-phi, theta = 0, 0
+phi, theta = 0*np.pi/180, 30*np.pi/180
 
 # mmt for plane wave normal to x axis
 # phi is the angle between k0 vector and xz-plane.
@@ -104,8 +104,11 @@ mmt = (kx, ky, kz)
 ########## Plane wave normal to y-axis.
 #setter = source.Setter(TF, (0, 63*um, 0), (Lx, 64*um, Lz), mmt)
 
+########## Plane wave normal to z-axis.
+setter1 = source.Setter(TF, (0, 0, 50*nm), (Lx, Ly, 50*nm+dx), mmt)
+
 ########## Line src along x-axis.
-setter1 = source.Setter(TF, (0,  100*nm,  100*nm), (Lx,  105*um, 105*um), mmt)
+#setter1 = source.Setter(TF, (0,  100*nm,  100*nm), (Lx,  105*nm, 105*nm), mmt)
 #setter2 = source.Setter(TF, (0*um,  30*um, 200*um), (31*um,  31*um, 201*um), mmt)
 #setter3 = source.Setter(TF, (0*um, 127*um, 127*um), (31*um, 128*um, 128*um), mmt)
 #setter4 = source.Setter(TF, (0*um, 200*um, 200*um), (31*um, 201*um, 201*um), mmt)
@@ -134,11 +137,11 @@ setter1 = source.Setter(TF, (0,  100*nm,  100*nm), (Lx,  105*um, 105*um), mmt)
 ########## Cylinder
 radius = 114.8*nm
 height = (0, Lx)
-center1 = ( Ly/2, Lz/2)
+center1 = (Ly/2, Lz/2)
 #center2 = (  0, Lz)
 #center3 = ( Lx, 0)
 #center4 = ( Lx, Lz)
-cylinder1 = structure.Cylinder(TF, 'x', radius, height, center1, 8.9, 1.)
+#cylinder1 = structure.Cylinder(TF, 'x', radius, height, center1, 8.9, 1.)
 #cylinder2 = structure.Cylinder(TF, 'y', radius, height, center2, 8.9, 1.)
 #cylinder3 = structure.Cylinder(TF, 'y', radius, height, center3, 8.9, 1.)
 #cylinder4 = structure.Cylinder(TF, 'y', radius, height, center4, 8.9, 1.)
@@ -151,7 +154,7 @@ TF.save_eps_mu(savedir)
 #------------------------------------------------------------------#
 
 loc = (Lx/2, 200*nm, 200*nm)
-field_at_point = collector.FieldAtPoint("fap1", "../graph/fap", TF, loc, 'cupy')
+field_at_point = collector.FieldAtPoint("fap1", savedir+"graph/", TF, loc, 'cupy')
 
 #------------------------------------------------------------------#
 #-------------------- Graphtool object settings -------------------#
@@ -180,26 +183,23 @@ for tstep in range(Tsteps):
             print("Simulation start: {}".format(datetime.datetime.now()))
         
     # pulse for gaussian wave.
-    #pulse_re = src.pulse_re(tstep) * smth.apply(tstep)
-    #pulse_re = src.apply(tstep)
+    #pulse_re = src.pulse_re(tstep)
 
     # pulse for Sine or Harmonic wave.
-    #pulse_re = src.signal(tstep) * smth.apply(tstep)
+    pulse_re = src.signal(tstep) * smth.apply(tstep)
 
     # pulse for Delta function wave.
-    pulse_re = src.apply(tstep)
+    #pulse_re = src.apply(tstep)
 
     #setter.put_src('Ex', pulse_re, 'soft')
 
-    """
     setter1.put_src('Ex', pulse_re, 'soft')
+    """
     setter2.put_src('Ex', pulse_re, 'soft')
     setter3.put_src('Ex', pulse_re, 'soft')
     setter4.put_src('Ex', pulse_re, 'soft')
-    """
 
     setter1.put_src('Ey', pulse_re, 'soft')
-    """
     setter2.put_src('Ey', pulse_re, 'soft')
     setter3.put_src('Ey', pulse_re, 'soft')
     setter4.put_src('Ey', pulse_re, 'soft')
@@ -219,7 +219,7 @@ for tstep in range(Tsteps):
     if tstep % plot_per == 0:
 
         Ex = TFgraphtool.gather('Ex')
-        TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=2., stride=2, zlim=2.)
+        TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=2., stride=3, zlim=2.)
         #TFgraphtool.plot2D3D(Ey, tstep, yidx=TF.Nyc, colordeep=1., stride=2, zlim=1.)
         #TFgraphtool.plot2D3D(Ez, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D(Hx, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
