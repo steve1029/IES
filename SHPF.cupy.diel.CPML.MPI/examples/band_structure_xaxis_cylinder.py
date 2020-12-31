@@ -26,7 +26,7 @@ courant = 1./4
 dt = courant * min(dx,dy,dz) / c
 Tsteps = int(sys.argv[1])
 
-TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.complex64, method='FDTD', engine='cupy')
+TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.complex64, method='SHPF', engine='cupy')
 
 TF.malloc()
 
