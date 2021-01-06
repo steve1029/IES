@@ -56,7 +56,7 @@ class PlotHarminv:
 
         print(name, ':')
         for i in range(harm.freq.size):
-            print("NFreq: %8.5f, Freq: %8.5e, Decay:%6.2e, Q:%6.2e, Amp:%6.2e, Phase:%6.2e, Err:%6.2e" % (nfreqs[i], harm.freq[i], \
+            print("NFreq: %7.5f, Freq: %10.7e, Decay:%6.2e, Q:%6.2e, Amp:%6.2e, Phase:%6.2e, Err:%6.2e" % (nfreqs[i], harm.freq[i], \
                 harm.decay[i], harm.Q[i], harm.amplitude[i], harm.phase[i], harm.error[i]))
 
     def plot_fft_all(self, loc, xlim):
@@ -106,8 +106,8 @@ if __name__ == '__main__':
     um = 1e-6
     nm = 1e-9
 
-    Lx, Ly, Lz = 574/32*nm, 574*nm, 574*nm
-    Nx, Ny, Nz = 8, 256, 256
+    Lx, Ly, Lz = 574/8*nm, 574*nm, 574*nm
+    Nx, Ny, Nz = 32, 256, 256
     dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz 
 
     courant = 1./4
@@ -115,7 +115,9 @@ if __name__ == '__main__':
 
     fmax = 1./2/dt
 
+    print(fmax, c)
+
     loc = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/graph/'
     test = PlotHarminv(loc, dt, '00')
-    test.try_harminv('Ex', 0, fmax, Lx)
-    test.plot_fft_all(loc, [None, None])
+    test.try_harminv('Ex', 1e14, 6e16, Ly)
+    test.plot_fft_all(loc, [2.65e17, 2.68e17])

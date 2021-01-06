@@ -18,8 +18,8 @@ savedir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/'
 nm = 1e-9
 um = 1e-6
 
-Lx, Ly, Lz = 574/32*nm, 574*nm, 574*nm
-Nx, Ny, Nz = 8, 256, 256
+Lx, Ly, Lz = 574/8*nm, 574*nm, 574*nm
+Nx, Ny, Nz = 32, 256, 256
 dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz 
 
 courant = 1./4
@@ -31,9 +31,9 @@ TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.comp
 TF.malloc()
 
 ########## Set PML and PBC
-TF.set_PML({'x':'','y':'','z':'+-'}, 10)
+TF.set_PML({'x':'+-','y':'','z':'+-'}, 10)
 
-region = {'x':True, 'y':True, 'z':False}
+region = {'x':False, 'y':True, 'z':False}
 TF.apply_BPBC(region, BBC=True, PBC=False)
 
 ########## Save PML data.
@@ -64,7 +64,7 @@ TF.apply_BPBC(region, BBC=True, PBC=False)
 ########## Harmonic source
 smth = source.Smoothing(dt, 1000)
 src = source.Harmonic(dt)
-wvlen = 200*nm
+wvlen = 287*nm
 src.set_wvlen(wvlen)
 
 ########## Delta source
@@ -161,7 +161,7 @@ field_at_point = collector.FieldAtPoint("fap1", savedir+"graph/", TF, loc, 'cupy
 #------------------------------------------------------------------#
 
 # Set plotfield options
-plot_per = 1000
+plot_per = 100
 TFgraphtool = plotfield.Graphtool(TF, 'TF', savedir)
 
 #------------------------------------------------------------------#

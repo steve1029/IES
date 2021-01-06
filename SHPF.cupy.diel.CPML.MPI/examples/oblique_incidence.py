@@ -113,7 +113,7 @@ mmt = (kx, ky, kz)
 ########## Plane wave normal to y-axis.
 #setter = source.Setter(TF, (0, 400*um, 0), (Lx, 410*um, Lz), mmt)
 
-########## Plane wave normal to y-axis.
+########## Plane wave normal to z-axis.
 setter = source.Setter(TF, (0, 0, 200*um), (Lx, Ly, 210*um), mmt)
 
 ########## Line src along y-axis.
