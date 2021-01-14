@@ -18,8 +18,8 @@ savedir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/'
 nm = 1e-9
 um = 1e-6
 
-Lx, Ly, Lz = 574/32*nm, 574*nm, 574*nm
-Nx, Ny, Nz = 8, 256, 256
+Lx, Ly, Lz = 574/8*nm, 574*nm, 574*nm
+Nx, Ny, Nz = 32, 256, 256
 dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz 
 
 courant = 1./4
@@ -31,9 +31,9 @@ TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.comp
 TF.malloc()
 
 ########## Set PML and PBC
-TF.set_PML({'x':'','y':'','z':'+-'}, 10)
+TF.set_PML({'x':'','y':'','z':''}, 10)
 
-region = {'x':True, 'y':True, 'z':False}
+region = {'x':True, 'y':True, 'z':True}
 TF.apply_BPBC(region, BBC=True, PBC=False)
 
 ########## Save PML data.
@@ -65,17 +65,17 @@ TF.apply_BPBC(region, BBC=True, PBC=False)
 smth = source.Smoothing(dt, 1000)
 
 src = source.Harmonic(dt)
-wvlen = 200*nm
+wvlen = 1000*nm
 src.set_wvlen(wvlen)
 
 src1 = source.Harmonic(dt)
-src1.set_wvlen(250*nm)
+src1.set_wvlen(2500*nm)
 
 src2 = source.Harmonic(dt)
-src2.set_wvlen(300*nm)
+src2.set_wvlen(3000*nm)
 
 src3 = source.Harmonic(dt)
-src3.set_wvlen(120*nm)
+src3.set_wvlen(1200*nm)
 
 ########## Delta source
 #src = source.Delta(1000)
@@ -166,8 +166,14 @@ TF.save_eps_mu(savedir)
 #-------------------- Collector object settings -------------------#
 #------------------------------------------------------------------#
 
-loc = (Lx/2, 450*nm, 450*nm)
-field_at_point = collector.FieldAtPoint("fap1", savedir+"graph/", TF, loc, 'cupy')
+loc1 = (Lx/2, 450*nm, 450*nm)
+loc2 = (Lx/2, 70*nm, 70*nm)
+loc3 = (Lx/2, 200*nm, 170*nm)
+loc4 = (Lx/3, 380*nm, 270*nm)
+fap1 = collector.FieldAtPoint("fap1", savedir+"graph/", TF, loc1, 'cupy')
+fap2 = collector.FieldAtPoint("fap2", savedir+"graph/", TF, loc2, 'cupy')
+fap3 = collector.FieldAtPoint("fap3", savedir+"graph/", TF, loc3, 'cupy')
+fap4 = collector.FieldAtPoint("fap4", savedir+"graph/", TF, loc4, 'cupy')
 
 #------------------------------------------------------------------#
 #-------------------- Graphtool object settings -------------------#
@@ -208,9 +214,9 @@ for tstep in range(Tsteps):
     #pulse_re = src.apply(tstep)
 
     setter .put_src('Ex', pulse , 'soft')
-    setter1.put_src('Ex', pulse1, 'soft')
-    setter2.put_src('Ex', pulse2, 'soft')
-    setter3.put_src('Ex', pulse3, 'soft')
+    #setter1.put_src('Ex', pulse1, 'soft')
+    #setter2.put_src('Ex', pulse2, 'soft')
+    #setter3.put_src('Ex', pulse3, 'soft')
     """
     setter2.put_src('Ex', pulse_re, 'soft')
     setter3.put_src('Ex', pulse_re, 'soft')
@@ -230,13 +236,17 @@ for tstep in range(Tsteps):
     TF.updateH(tstep)
     TF.updateE(tstep)
 
-    field_at_point.get_field(tstep)
+    fap1.get_time_signal(tstep)
+    fap2.get_time_signal(tstep)
+    fap3.get_time_signal(tstep)
+    fap4.get_time_signal(tstep)
 
     # Plot the field profile
     if tstep % plot_per == 0:
 
         Ex = TFgraphtool.gather('Ex')
-        TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=2., stride=3, zlim=2.)
+        TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=None, stride=3, zlim=2.)
+        #TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=2., stride=3, zlim=2.)
         #TFgraphtool.plot2D3D(Ey, tstep, yidx=TF.Nyc, colordeep=1., stride=2, zlim=1.)
         #TFgraphtool.plot2D3D(Ez, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D(Hx, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
@@ -276,7 +286,10 @@ for tstep in range(Tsteps):
 #--------------------------- Data analysis ------------------------#
 #------------------------------------------------------------------#
 
-field_at_point.get_spectrum()
+fap1.save_time_signal(binary=True, txt=True)
+fap2.save_time_signal(binary=True, txt=True)
+fap3.save_time_signal(binary=True, txt=True)
+fap4.save_time_signal(binary=True, txt=True)
 
 #------------------------------------------------------------------#
 #------------------- Record simulation history --------------------#

@@ -156,7 +156,7 @@ class FieldAtPoint(collector):
             self.Hy_t = self.xp.zeros(space.tsteps, dtype=space.field_dtype)
             self.Hz_t = self.xp.zeros(space.tsteps, dtype=space.field_dtype)
 
-    def get_field(self, tstep):
+    def get_time_signal(self, tstep):
 
         if self.gxloc != None:
 
@@ -175,45 +175,67 @@ class FieldAtPoint(collector):
             self.Hy_t[tstep] = self.space.Hy[xsrt, self.yloc, self.zloc]
             self.Hz_t[tstep] = self.space.Hz[xsrt, self.yloc, self.zloc]
 
-    def get_spectrum(self):
+    def save_time_signal(self, **kwargs):
 
         self.space.MPIcomm.barrier()
+        self.binary = True
+        self.txt = False
+
+        if kwargs.get('binary') != None: 
+
+            hey = kwargs.get('binary')
+
+            assert hey == True or hey == False
+            self.binary =  hey
+
+        if kwargs.get('txt') != None: 
+
+            hey = kwargs.get('txt')
+
+            assert hey == True or hey == False
+            self.txt =  hey
 
         if self.gxloc != None:
 
-            self.Ex_w = self.xp.fft.fft(self.Ex_t)
-            self.Ey_w = self.xp.fft.fft(self.Ey_t)
-            self.Ez_w = self.xp.fft.fft(self.Ez_t)
+            if self.binary == True:
 
-            self.Hx_w = self.xp.fft.fft(self.Hx_t)
-            self.Hy_w = self.xp.fft.fft(self.Hy_t)
-            self.Hz_w = self.xp.fft.fft(self.Hz_t)
+                self.xp.save("{}/{}_Ex_t.npy" .format(self.path, self.name), self.Ex_t)
+                self.xp.save("{}/{}_Ey_t.npy" .format(self.path, self.name), self.Ey_t)
+                self.xp.save("{}/{}_Ez_t.npy" .format(self.path, self.name), self.Ez_t)
 
-            self.Ex_w_shift = self.xp.fft.fftshift(self.Ex_w)
-            self.Ey_w_shift = self.xp.fft.fftshift(self.Ey_w)
-            self.Ez_w_shift = self.xp.fft.fftshift(self.Ez_w)
+                self.xp.save("{}/{}_Hx_t.npy" .format(self.path, self.name), self.Hx_t)
+                self.xp.save("{}/{}_Hy_t.npy" .format(self.path, self.name), self.Hy_t)
+                self.xp.save("{}/{}_Hz_t.npy" .format(self.path, self.name), self.Hz_t)
 
-            self.Hx_w_shift = self.xp.fft.fftshift(self.Hx_w)
-            self.Hy_w_shift = self.xp.fft.fftshift(self.Hy_w)
-            self.Hz_w_shift = self.xp.fft.fftshift(self.Hz_w)
+            if self.txt == True:
 
-            self.xp.save("{}/{}_Ex_t_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Ex_t)
-            self.xp.save("{}/{}_Ey_t_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Ey_t)
-            self.xp.save("{}/{}_Ez_t_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Ez_t)
+                if self.xp == cp: 
 
-            self.xp.save("{}/{}_Hx_t_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Hx_t)
-            self.xp.save("{}/{}_Hy_t_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Hy_t)
-            self.xp.save("{}/{}_Hz_t_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Hz_t)
+                    self.Ex_t = self.xp.asnumpy(self.Ex_t)
+                    self.Ey_t = self.xp.asnumpy(self.Ey_t)
+                    self.Ez_t = self.xp.asnumpy(self.Ez_t)
 
-            self.xp.save("{}/{}_Ex_w_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Ex_w)
-            self.xp.save("{}/{}_Ey_w_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Ey_w)
-            self.xp.save("{}/{}_Ez_w_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Ez_w)
+                    self.Hx_t = self.xp.asnumpy(self.Hx_t)
+                    self.Hy_t = self.xp.asnumpy(self.Hy_t)
+                    self.Hz_t = self.xp.asnumpy(self.Hz_t)
 
-            self.xp.save("{}/{}_Hx_w_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Hx_w)
-            self.xp.save("{}/{}_Hy_w_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Hy_w)
-            self.xp.save("{}/{}_Hz_w_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.Hz_w)
+                Ext_name_rank = "{}/{}_Ex_t.txt" .format(self.path, self.name)
+                Eyt_name_rank = "{}/{}_Ey_t.txt" .format(self.path, self.name)
+                Ezt_name_rank = "{}/{}_Ez_t.txt" .format(self.path, self.name)
 
- 
+                Hxt_name_rank = "{}/{}_Hx_t.txt" .format(self.path, self.name)
+                Hyt_name_rank = "{}/{}_Hy_t.txt" .format(self.path, self.name)
+                Hzt_name_rank = "{}/{}_Hz_t.txt" .format(self.path, self.name)
+
+                np.savetxt(Ext_name_rank, self.Ex_t, newline='\n', fmt='%1.15f+%1.15fi')
+                np.savetxt(Eyt_name_rank, self.Ey_t, newline='\n', fmt='%1.15f+%1.15fi')
+                np.savetxt(Ezt_name_rank, self.Ez_t, newline='\n', fmt='%1.15f+%1.15fi')
+
+                np.savetxt(Hxt_name_rank, self.Hx_t, newline='\n', fmt='%1.15f+%1.15fi')
+                np.savetxt(Hyt_name_rank, self.Hy_t, newline='\n', fmt='%1.15f+%1.15fi')
+                np.savetxt(Hzt_name_rank, self.Hz_t, newline='\n', fmt='%1.15f+%1.15fi')
+
+
 class Sx(collector):
 
     def __init__(self, name, path, space, xloc, srt, end, freqs, engine):

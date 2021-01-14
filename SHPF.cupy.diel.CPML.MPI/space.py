@@ -31,7 +31,7 @@ class Basic3D:
             -------------------
 
             courant : float
-                Set the courant number. For HPF, default is 1./4 and for FDTD, default is 1./2
+                Set the courant number. For HPF, default is 1/4.
 
         RETURNS
         -------
