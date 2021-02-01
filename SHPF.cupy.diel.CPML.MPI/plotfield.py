@@ -157,7 +157,7 @@ class Graphtool(object):
             if plane == 'yz':
 
                 image11 = ax11.imshow(self.plane_to_plot.T, vmax=colordeep, vmin=-colordeep, cmap=cmap, aspect=aspect)
-                ax12.plot_wireframe(Y, X, self.plane_to_plot[Y, X], color=lc, rstride=stride, cstride=stride)
+                ax12.plot_wireframe(Y, X, self.plane_to_plot[X, Y], color=lc, rstride=stride, cstride=stride)
 
                 divider11 = make_axes_locatable(ax11)
 

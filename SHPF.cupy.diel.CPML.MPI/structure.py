@@ -145,9 +145,9 @@ class Box(Structure):
         zsrt = round(srt[2]/self.space.dz)
 
         # End index of the structure.
-        xend = round(end[0]/self.space.dx)
-        yend = round(end[1]/self.space.dy)
-        zend = round(end[2]/self.space.dz)
+        xend = round(end[0]/self.space.dx)-1
+        yend = round(end[1]/self.space.dy)-1
+        zend = round(end[2]/self.space.dz)-1
 
         assert xsrt < xend
         assert ysrt < yend

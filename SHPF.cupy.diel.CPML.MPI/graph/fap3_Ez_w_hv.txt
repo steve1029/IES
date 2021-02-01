@@ -1,2 +1,0 @@
-frequency, decay constant, Q, amplitude, phase, error
- ** On entry to ZGEBAL parameter number  3 had an illegal value
