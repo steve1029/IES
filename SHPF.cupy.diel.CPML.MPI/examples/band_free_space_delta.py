@@ -26,14 +26,14 @@ courant = 1./4
 dt = courant * min(dx,dy,dz) / c
 Tsteps = int(sys.argv[2])
 
-TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.complex64, method='FDTD', engine='cupy')
+TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.complex64, method='SHPF', engine='cupy')
 
 TF.malloc()
 
 ########## Set PML and PBC
-TF.set_PML({'x':'','y':'','z':'+-'}, 10)
+TF.set_PML({'x':'+-','y':'','z':'+-'}, 10)
 
-region = {'x':True, 'y':True, 'z':False}
+region = {'x':False, 'y':True, 'z':False}
 TF.apply_BPBC(region, BBC=True, PBC=False)
 
 ########## Save PML data.
@@ -75,7 +75,7 @@ src4 = source.Delta(80)
 #wvlen = Lz/2
 
 ########## Momentum of the source.
-wvlen = int(sys.argv[1])*nm
+wvlen = float(sys.argv[1])*nm
 k0 = 2*np.pi / wvlen
 phi, theta = 0*np.pi/180, 90*np.pi/180
 
@@ -140,7 +140,7 @@ srt2 = (0, 430.5*nm, 0)
 end2 = (Lx, Ly, Lz)
 
 box1 = structure.Box(TF, srt1, end1, 13., 1.)
-box1 = structure.Box(TF, srt2, end2, 13., 1.)
+box2 = structure.Box(TF, srt2, end2, 13., 1.)
 
 ########## Cylinder
 radius = 114.8*nm
@@ -167,11 +167,12 @@ center1 = (Ly/2, Lz/2)
 loc1 = (Lx/2, 120*nm, 40*nm)
 loc2 = (Lx/2, 200*nm, 60*nm)
 loc3 = (Lx/2, 370*nm, 100*nm)
-loc4 = (Lx/3, 500*nm,  90*nm)
-fap1 = collector.FieldAtPoint("fap1", savedir+"graph/{:04d}" .format(int(wvlen/nm)), TF, loc1, 'cupy')
-fap2 = collector.FieldAtPoint("fap2", savedir+"graph/{:04d}" .format(int(wvlen/nm)), TF, loc2, 'cupy')
-fap3 = collector.FieldAtPoint("fap3", savedir+"graph/{:04d}" .format(int(wvlen/nm)), TF, loc3, 'cupy')
-fap4 = collector.FieldAtPoint("fap4", savedir+"graph/{:04d}" .format(int(wvlen/nm)), TF, loc4, 'cupy')
+loc4 = (Lx/2, 500*nm,  90*nm)
+
+fap1 = collector.FieldAtPoint("fap1", savedir+"graph/{:04d}" .format(round(wvlen/nm)), TF, loc1, 'cupy')
+fap2 = collector.FieldAtPoint("fap2", savedir+"graph/{:04d}" .format(round(wvlen/nm)), TF, loc2, 'cupy')
+fap3 = collector.FieldAtPoint("fap3", savedir+"graph/{:04d}" .format(round(wvlen/nm)), TF, loc3, 'cupy')
+fap4 = collector.FieldAtPoint("fap4", savedir+"graph/{:04d}" .format(round(wvlen/nm)), TF, loc4, 'cupy')
 
 #------------------------------------------------------------------#
 #-------------------- Graphtool object settings -------------------#

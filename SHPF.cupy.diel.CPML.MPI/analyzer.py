@@ -365,10 +365,10 @@ class CsvDataCollector(SpectrumAnalyzer):
         self.loaddir = loaddir
 
         try: 
-            self.tsteps = len(np.load(self.loaddir+"{}/{}_Ex_t.npy" .format(wvlens[0], names[0])))
+            self.tsteps = len(np.load(self.loaddir+"{:04d}/{}_Ex_t.npy" .format(wvlens[0], names[0])))
         except FileNotFoundError:
-            print("{} is not found. Tsteps are gotten from {}." .format(wvlens[0], wvlens[1]))
-            self.tsteps = len(np.load(self.loaddir+"{}/{}_Ex_t.npy" .format(wvlens[1], names[0])))
+            print("{:04d} is not found. Tsteps are gotten from {:04d}." .format(wvlens[0], wvlens[1]))
+            self.tsteps = len(np.load(self.loaddir+"{:04d}/{}_Ex_t.npy" .format(wvlens[1], names[0])))
 
         self.wvlens = np.concatenate((wvlens, np.array([574, 1148, 2296, 3899, 4592])), axis=0)
         self.names = names
@@ -377,8 +377,8 @@ class CsvDataCollector(SpectrumAnalyzer):
 
         for i, wvlen in enumerate(self.wvlens):
 
-            if os.path.exists(self.loaddir+"{}" .format(wvlen)) == False:
-                print("{} are not found. Continue with {}." .format(wvlen, wvlens[i+1]))
+            if os.path.exists(self.loaddir+"{:04d}" .format(wvlen)) == False and i < (len(self.wvlens)-1):
+                print("{:04d} are not found. Continue with {:04d}." .format(wvlen, wvlens[i+1]))
                 continue
 
             self.Ex_w = np.zeros(self.tsteps, dtype=np.complex128)
@@ -391,13 +391,13 @@ class CsvDataCollector(SpectrumAnalyzer):
 
             for name in self.names:
 
-                self.Ext_npyname = self.loaddir+"{}/{}_Ex_t.npy" .format(wvlen, name)
-                self.Eyt_npyname = self.loaddir+"{}/{}_Ey_t.npy" .format(wvlen, name)
-                self.Ezt_npyname = self.loaddir+"{}/{}_Ez_t.npy" .format(wvlen, name)
+                self.Ext_npyname = self.loaddir+"{:04d}/{}_Ex_t.npy" .format(wvlen, name)
+                self.Eyt_npyname = self.loaddir+"{:04d}/{}_Ey_t.npy" .format(wvlen, name)
+                self.Ezt_npyname = self.loaddir+"{:04d}/{}_Ez_t.npy" .format(wvlen, name)
 
-                self.Hxt_npyname = self.loaddir+"{}/{}_Hx_t.npy" .format(wvlen, name)
-                self.Hyt_npyname = self.loaddir+"{}/{}_Hy_t.npy" .format(wvlen, name)
-                self.Hzt_npyname = self.loaddir+"{}/{}_Hz_t.npy" .format(wvlen, name)
+                self.Hxt_npyname = self.loaddir+"{:04d}/{}_Hx_t.npy" .format(wvlen, name)
+                self.Hyt_npyname = self.loaddir+"{:04d}/{}_Hy_t.npy" .format(wvlen, name)
+                self.Hzt_npyname = self.loaddir+"{:04d}/{}_Hz_t.npy" .format(wvlen, name)
 
                 self.Ex_w += np.fft.fft(np.load(self.Ext_npyname))/len(name)
                 self.Ey_w += np.fft.fft(np.load(self.Eyt_npyname))/len(name)
@@ -423,7 +423,7 @@ class CsvDataCollector(SpectrumAnalyzer):
             df['Hz_w'] = abs(self.Hz_w)
 
             df.to_csv("{}/{:04d}_avg_fft_results.csv" .format(self.loaddir, wvlen))
-            self.plot_avg_fft([-1, 1], [-0.1, 2], "{}_avg_fft.png" .format(wvlen))
+            self.plot_avg_fft([-1, 1], [-0.1, 2], "{:04d}_avg_fft.png" .format(wvlen))
             print("{:04d} csv and graph are created." .format(wvlen))
 
     def plot_avg_fft(self, xlim, ylim, file_name):
@@ -554,7 +554,7 @@ if __name__ == '__main__':
     test4.plot_fft_result([-1, 1], [-.1, 2], "fap4_fft_2.png", norm_freq=True)
     """
 
-    wvlens = np.arange(3900, 6001, 100)
+    wvlens = np.arange(574, 601, 100)
     names = ['fap1', 'fap2', 'fap3', 'fap4']
 
     xlim = [-1,1]

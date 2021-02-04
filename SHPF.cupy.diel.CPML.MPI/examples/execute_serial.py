@@ -34,6 +34,7 @@ if __name__ == '__main__':
     print("{} will be executed from {} nm to {} nm." .format(filename, wvlens[0], wvlens[-1]))
 
     for i, value in enumerate(wvlens):
+
         #out = exe_wait('mpirun.openmpi -host yboot,y205,y206,y207,y208 python3 %s' %(filename))
         out = exe_wait('python3 {} {} {}' .format(filename, value, tsteps))
         if out == None: raise Exception
