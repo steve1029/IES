@@ -18,22 +18,22 @@ savedir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/'
 nm = 1e-9
 um = 1e-6
 
-Lx, Ly, Lz = 574/8*nm, 574*nm, 574*nm
-Nx, Ny, Nz = 32, 256, 256
+Lx, Ly, Lz = 574/8*nm, 574*nm, 574/4*nm
+Nx, Ny, Nz = 32, 256, 64
 dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz 
 
 courant = 1./4
 dt = courant * min(dx,dy,dz) / c
-Tsteps = int(sys.argv[1])
+Tsteps = int(sys.argv[2])
 
-TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.complex64, method='SHPF', engine='cupy')
+TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.complex64, method='FDTD', engine='cupy')
 
 TF.malloc()
 
 ########## Set PML and PBC
-TF.set_PML({'x':'+-','y':'','z':'+-'}, 10)
+TF.set_PML({'x':'','y':'','z':'+-'}, 10)
 
-region = {'x':False, 'y':True, 'z':False}
+region = {'x':True, 'y':True, 'z':False}
 TF.apply_BPBC(region, BBC=True, PBC=False)
 
 ########## Save PML data.
@@ -57,23 +57,27 @@ TF.apply_BPBC(region, BBC=True, PBC=False)
 
 ########## Sine source
 #smth = source.Smoothing(dt, 1000)
-#src = source.Sine(dt, np.float64)
-#wvlen = 300*um
-#src.set_wvlen(wvlen)
+#src1 = source.Sine(dt, np.float64)
+#wvlen = 250*nm
+#src1.set_wvlen(wvlen)
 
 ########## Harmonic source
-smth = source.Smoothing(dt, 1000)
-src = source.Harmonic(dt)
-wvlen = 287*nm
-src.set_wvlen(wvlen)
+#smth = source.Smoothing(dt, 1000)
+#src1 = source.Harmonic(dt)
+#wvlen = 250*nm
+#src1.set_wvlen(wvlen)
 
 ########## Delta source
-#src = source.Delta(1000)
-#wvlen = 2*Lz
+src1 = source.Delta(10)
+src2 = source.Delta(30)
+src3 = source.Delta(40)
+src4 = source.Delta(80)
+#wvlen = Lz/2
 
 ########## Momentum of the source.
+wvlen = float(sys.argv[1])*nm
 k0 = 2*np.pi / wvlen
-phi, theta = 0*np.pi/180, 30*np.pi/180
+phi, theta = 0*np.pi/180, 90*np.pi/180
 
 # mmt for plane wave normal to x axis
 # phi is the angle between k0 vector and xz-plane.
@@ -105,13 +109,13 @@ mmt = (kx, ky, kz)
 #setter = source.Setter(TF, (0, 63*um, 0), (Lx, 64*um, Lz), mmt)
 
 ########## Plane wave normal to z-axis.
-setter1 = source.Setter(TF, (0, 0, 50*nm), (Lx, Ly, 50*nm+dx), mmt)
+#setter1 = source.Setter(TF, (0, 0, 100*nm), (Lx, Ly, 100*nm+dx), mmt)
 
 ########## Line src along x-axis.
-#setter1 = source.Setter(TF, (0,  100*nm,  100*nm), (Lx,  105*nm, 105*nm), mmt)
-#setter2 = source.Setter(TF, (0*um,  30*um, 200*um), (31*um,  31*um, 201*um), mmt)
-#setter3 = source.Setter(TF, (0*um, 127*um, 127*um), (31*um, 128*um, 128*um), mmt)
-#setter4 = source.Setter(TF, (0*um, 200*um, 200*um), (31*um, 201*um, 201*um), mmt)
+setter1 = source.Setter(TF, (0,  97*nm, 100*nm), (Lx,  97*nm+dy, 100*nm+dz), mmt)
+setter2 = source.Setter(TF, (0,  50*nm,  30*nm), (Lx,  50*nm+dy,  30*nm+dz), mmt)
+setter3 = source.Setter(TF, (0, 430*nm, 120*nm), (Lx, 430*nm+dy, 120*nm+dz), mmt)
+setter4 = source.Setter(TF, (0, 300*nm,  66*nm), (Lx, 300*nm+dy,  66*nm+dz), mmt)
 
 ########## Line src along y-axis.
 #setter1 = source.Setter(TF, (640*um, 0, 640*um), (645*um, Ly, 645*um), mmt)
@@ -130,38 +134,52 @@ setter1 = source.Setter(TF, (0, 0, 50*nm), (Lx, Ly, 50*nm+dx), mmt)
 #------------------------------------------------------------------#
 
 ########## Box
-#srt = ( 800*um,    0*um,    0*um)
-#end = (1000*um, 1280*um, 1280*um)
-#box = structure.Box(TF, srt, end, 4., 1.)
+srt1 = (0, 0, 0)
+end1 = (Lx, 143.5*nm, Lz)
+srt2 = (0, 430.5*nm, 0)
+end2 = (Lx, Ly, Lz)
+
+box1 = structure.Box(TF, srt1, end1, 13., 1.)
+box2 = structure.Box(TF, srt2, end2, 13., 1.)
 
 ########## Cylinder
 radius = 114.8*nm
 height = (0, Lx)
 center1 = (Ly/2, Lz/2)
-#center2 = (  0, Lz)
-#center3 = ( Lx, 0)
-#center4 = ( Lx, Lz)
+#center1 = ( 0, 0)
+#center2 = ( 0, Lz)
+#center3 = ( Ly, 0)
+#center4 = ( Ly, Lz)
 #cylinder1 = structure.Cylinder(TF, 'x', radius, height, center1, 8.9, 1.)
-#cylinder2 = structure.Cylinder(TF, 'y', radius, height, center2, 8.9, 1.)
-#cylinder3 = structure.Cylinder(TF, 'y', radius, height, center3, 8.9, 1.)
-#cylinder4 = structure.Cylinder(TF, 'y', radius, height, center4, 8.9, 1.)
+#cylinder1 = structure.Cylinder(TF, 'x', radius, height, center1, 8.9, 1.)
+#cylinder2 = structure.Cylinder(TF, 'x', radius, height, center2, 8.9, 1.)
+#cylinder3 = structure.Cylinder(TF, 'x', radius, height, center3, 8.9, 1.)
+#cylinder4 = structure.Cylinder(TF, 'x', radius, height, center4, 8.9, 1.)
 
 ########## Save eps, mu data.
-TF.save_eps_mu(savedir)
+#TF.save_eps_mu(savedir)
+#sys.exit()
 
 #------------------------------------------------------------------#
 #-------------------- Collector object settings -------------------#
 #------------------------------------------------------------------#
 
-loc = (Lx/2, 200*nm, 200*nm)
-field_at_point = collector.FieldAtPoint("fap1", savedir+"graph/", TF, loc, 'cupy')
+loc1 = (Lx/2, 120*nm, 40*nm)
+loc2 = (Lx/2, 200*nm, 60*nm)
+loc3 = (Lx/2, 370*nm, 100*nm)
+loc4 = (Lx/2, 500*nm,  90*nm)
+
+fap1 = collector.FieldAtPoint("fap1", savedir+"graph/{:04d}" .format(round(wvlen/nm)), TF, loc1, 'cupy')
+fap2 = collector.FieldAtPoint("fap2", savedir+"graph/{:04d}" .format(round(wvlen/nm)), TF, loc2, 'cupy')
+fap3 = collector.FieldAtPoint("fap3", savedir+"graph/{:04d}" .format(round(wvlen/nm)), TF, loc3, 'cupy')
+fap4 = collector.FieldAtPoint("fap4", savedir+"graph/{:04d}" .format(round(wvlen/nm)), TF, loc4, 'cupy')
 
 #------------------------------------------------------------------#
 #-------------------- Graphtool object settings -------------------#
 #------------------------------------------------------------------#
 
 # Set plotfield options
-plot_per = 100
+plot_per = 1000
 TFgraphtool = plotfield.Graphtool(TF, 'TF', savedir)
 
 #------------------------------------------------------------------#
@@ -186,19 +204,20 @@ for tstep in range(Tsteps):
     #pulse_re = src.pulse_re(tstep)
 
     # pulse for Sine or Harmonic wave.
-    pulse_re = src.signal(tstep) * smth.apply(tstep)
+    #pulse1 = src1.signal(tstep) * smth.apply(tstep)
 
     # pulse for Delta function wave.
-    #pulse_re = src.apply(tstep)
+    pulse1 = src1.apply(tstep)
+    pulse2 = src2.apply(tstep)
+    pulse3 = src3.apply(tstep)
+    pulse4 = src4.apply(tstep)
 
-    #setter.put_src('Ex', pulse_re, 'soft')
+    setter1.put_src('Ex', pulse1, 'soft')
+    setter2.put_src('Ex', pulse2, 'soft')
+    setter3.put_src('Ex', pulse3, 'soft')
+    setter4.put_src('Ex', pulse4, 'soft')
 
-    setter1.put_src('Ex', pulse_re, 'soft')
     """
-    setter2.put_src('Ex', pulse_re, 'soft')
-    setter3.put_src('Ex', pulse_re, 'soft')
-    setter4.put_src('Ex', pulse_re, 'soft')
-
     setter1.put_src('Ey', pulse_re, 'soft')
     setter2.put_src('Ey', pulse_re, 'soft')
     setter3.put_src('Ey', pulse_re, 'soft')
@@ -213,13 +232,16 @@ for tstep in range(Tsteps):
     TF.updateH(tstep)
     TF.updateE(tstep)
 
-    field_at_point.get_field(tstep)
+    fap1.get_time_signal(tstep)
+    fap2.get_time_signal(tstep)
+    fap3.get_time_signal(tstep)
+    fap4.get_time_signal(tstep)
 
     # Plot the field profile
     if tstep % plot_per == 0:
 
-        Ex = TFgraphtool.gather('Ex')
-        TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=2., stride=3, zlim=2.)
+        #Ex = TFgraphtool.gather('Ex')
+        #TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=1e-2, stride=3, zlim=1e-2)
         #TFgraphtool.plot2D3D(Ey, tstep, yidx=TF.Nyc, colordeep=1., stride=2, zlim=1.)
         #TFgraphtool.plot2D3D(Ez, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D(Hx, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
@@ -259,7 +281,10 @@ for tstep in range(Tsteps):
 #--------------------------- Data analysis ------------------------#
 #------------------------------------------------------------------#
 
-field_at_point.get_spectrum()
+fap1.save_time_signal(binary=True, txt=False)
+fap2.save_time_signal(binary=True, txt=False)
+fap3.save_time_signal(binary=True, txt=False)
+fap4.save_time_signal(binary=True, txt=False)
 
 #------------------------------------------------------------------#
 #------------------- Record simulation history --------------------#

@@ -332,16 +332,13 @@ class SpectrumAnalyzer:
 
 class CsvDataCollector(SpectrumAnalyzer):
 
-    def __init__(self, loaddir, wvlens, unit, names, dt, lattice_constant):
+    def __init__(self, loaddir, unit, names, dt, lattice_constant):
         """Load all .npy files and make averages .csv file.
 
         Parameters
         ----------
         loaddir: str
             The location of the .npy data files.
-
-        wvlens: 1d numpy array
-            Wavelength of the .npy data.
 
         names: list
             Name of the FieldAtPoint object.
@@ -364,67 +361,91 @@ class CsvDataCollector(SpectrumAnalyzer):
         self.lc = lattice_constant
         self.loaddir = loaddir
 
-        try: 
-            self.tsteps = len(np.load(self.loaddir+"{:04d}/{}_Ex_t.npy" .format(wvlens[0], names[0])))
-        except FileNotFoundError:
-            print("{:04d} is not found. Tsteps are gotten from {:04d}." .format(wvlens[0], wvlens[1]))
-            self.tsteps = len(np.load(self.loaddir+"{:04d}/{}_Ex_t.npy" .format(wvlens[1], names[0])))
+        self.folders = os.listdir(self.loaddir)
+        useless = []
 
-        self.wvlens = np.concatenate((wvlens, np.array([574, 1148, 2296, 3899, 4592])), axis=0)
+        for folder in self.folders:
+
+            try: 
+                self.tsteps = len(np.load(self.loaddir+"{}/{}_Ex_t.npy" .format(folder, names[0])))
+            except Exception as err:
+                useless.append(folder)
+                #print(err)
+                print("{} is not found. Get total time step from the next folder." .format(folder))
+                continue
+
+        for ul in useless: self.folders.remove(ul)
+
         self.names = names
+        self.wvlens = []
+
+        for fname in self.folders:
+
+            try:
+
+                if fname[5] == '0': wvlen = fname[6:10]
+                else: wvlen = fname[5:10]
+
+                self.wvlens.append(int(wvlen))
+
+            except: continue
+
+        self.wvlens = np.sort(np.array(self.wvlens))
 
     def get_csv(self):
 
-        for i, wvlen in enumerate(self.wvlens):
+        for i, folder in enumerate(self.folders):
 
-            if os.path.exists(self.loaddir+"{:04d}" .format(wvlen)) == False and i < (len(self.wvlens)-1):
-                print("{:04d} are not found. Continue with {:04d}." .format(wvlen, wvlens[i+1]))
+            try:
+
+                self.Ex_w = np.zeros(self.tsteps, dtype=np.complex128)
+                self.Ey_w = np.zeros(self.tsteps, dtype=np.complex128)
+                self.Ez_w = np.zeros(self.tsteps, dtype=np.complex128)
+
+                self.Hx_w = np.zeros(self.tsteps, dtype=np.complex128)
+                self.Hy_w = np.zeros(self.tsteps, dtype=np.complex128)
+                self.Hz_w = np.zeros(self.tsteps, dtype=np.complex128)
+
+                for name in self.names:
+
+                    self.Ext_npyname = self.loaddir+"{}/{}_Ex_t.npy" .format(folder, name)
+                    self.Eyt_npyname = self.loaddir+"{}/{}_Ey_t.npy" .format(folder, name)
+                    self.Ezt_npyname = self.loaddir+"{}/{}_Ez_t.npy" .format(folder, name)
+
+                    self.Hxt_npyname = self.loaddir+"{}/{}_Hx_t.npy" .format(folder, name)
+                    self.Hyt_npyname = self.loaddir+"{}/{}_Hy_t.npy" .format(folder, name)
+                    self.Hzt_npyname = self.loaddir+"{}/{}_Hz_t.npy" .format(folder, name)
+
+                    self.Ex_w += np.fft.fft(np.load(self.Ext_npyname))/len(name)
+                    self.Ey_w += np.fft.fft(np.load(self.Eyt_npyname))/len(name)
+                    self.Ez_w += np.fft.fft(np.load(self.Ezt_npyname))/len(name)
+
+                    self.Hx_w += np.fft.fft(np.load(self.Hxt_npyname))/len(name)
+                    self.Hy_w += np.fft.fft(np.load(self.Hyt_npyname))/len(name)
+                    self.Hz_w += np.fft.fft(np.load(self.Hzt_npyname))/len(name)
+
+                self.fftfreq = np.fft.fftfreq(self.tsteps, self.dt)
+                self.nfreqs = self.normalized_freq(self.fftfreq, self.lc)
+
+                df = pd.DataFrame()
+
+                df['Nfreqs'] = self.nfreqs
+                df['freqs'] = self.fftfreq
+
+                df['Ex_w'] = abs(self.Ex_w)
+                df['Ey_w'] = abs(self.Ey_w)
+                df['Ez_w'] = abs(self.Ez_w)
+                df['Hx_w'] = abs(self.Hx_w)
+                df['Hy_w'] = abs(self.Hy_w)
+                df['Hz_w'] = abs(self.Hz_w)
+
+                df.to_csv("{}/{:05d}_avg_fft_results.csv" .format(self.loaddir, self.wvlens[i]))
+                self.plot_avg_fft([-1, 1], [-0.1, 2], "{:05d}_avg_fft.png" .format(self.wvlens[i]))
+                print("{:05d} csv and graph are created." .format(self.wvlens[i]))
+
+            except Exception as err: 
+                print(err)
                 continue
-
-            self.Ex_w = np.zeros(self.tsteps, dtype=np.complex128)
-            self.Ey_w = np.zeros(self.tsteps, dtype=np.complex128)
-            self.Ez_w = np.zeros(self.tsteps, dtype=np.complex128)
-
-            self.Hx_w = np.zeros(self.tsteps, dtype=np.complex128)
-            self.Hy_w = np.zeros(self.tsteps, dtype=np.complex128)
-            self.Hz_w = np.zeros(self.tsteps, dtype=np.complex128)
-
-            for name in self.names:
-
-                self.Ext_npyname = self.loaddir+"{:04d}/{}_Ex_t.npy" .format(wvlen, name)
-                self.Eyt_npyname = self.loaddir+"{:04d}/{}_Ey_t.npy" .format(wvlen, name)
-                self.Ezt_npyname = self.loaddir+"{:04d}/{}_Ez_t.npy" .format(wvlen, name)
-
-                self.Hxt_npyname = self.loaddir+"{:04d}/{}_Hx_t.npy" .format(wvlen, name)
-                self.Hyt_npyname = self.loaddir+"{:04d}/{}_Hy_t.npy" .format(wvlen, name)
-                self.Hzt_npyname = self.loaddir+"{:04d}/{}_Hz_t.npy" .format(wvlen, name)
-
-                self.Ex_w += np.fft.fft(np.load(self.Ext_npyname))/len(name)
-                self.Ey_w += np.fft.fft(np.load(self.Eyt_npyname))/len(name)
-                self.Ez_w += np.fft.fft(np.load(self.Ezt_npyname))/len(name)
-
-                self.Hx_w += np.fft.fft(np.load(self.Hxt_npyname))/len(name)
-                self.Hy_w += np.fft.fft(np.load(self.Hyt_npyname))/len(name)
-                self.Hz_w += np.fft.fft(np.load(self.Hzt_npyname))/len(name)
-
-            self.fftfreq = np.fft.fftfreq(self.tsteps, self.dt)
-            self.nfreqs = self.normalized_freq(self.fftfreq, self.lc)
-
-            df = pd.DataFrame()
-
-            df['Nfreqs'] = self.nfreqs
-            df['freqs'] = self.fftfreq
-
-            df['Ex_w'] = abs(self.Ex_w)
-            df['Ey_w'] = abs(self.Ey_w)
-            df['Ez_w'] = abs(self.Ez_w)
-            df['Hx_w'] = abs(self.Hx_w)
-            df['Hy_w'] = abs(self.Hy_w)
-            df['Hz_w'] = abs(self.Hz_w)
-
-            df.to_csv("{}/{:04d}_avg_fft_results.csv" .format(self.loaddir, wvlen))
-            self.plot_avg_fft([-1, 1], [-0.1, 2], "{:04d}_avg_fft.png" .format(wvlen))
-            print("{:04d} csv and graph are created." .format(wvlen))
 
     def plot_avg_fft(self, xlim, ylim, file_name):
 
@@ -506,8 +527,8 @@ if __name__ == '__main__':
     um = 1e-6
     nm = 1e-9
 
-    Lx, Ly, Lz = 574/8*nm, 574*nm, 574/4*nm
-    Nx, Ny, Nz = 32, 256, 64
+    Lx, Ly, Lz = 574/8*nm, 574*nm, 574*nm
+    Nx, Ny, Nz = 32, 256, 256
     dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz 
 
     courant = 1./4
@@ -519,10 +540,9 @@ if __name__ == '__main__':
     fmin = -5e14 
     fmax = +5e14
 
-    loaddir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/graph/'
+    loaddir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/graph/wvlen1148_phi0_theta90/'
     savedir = loaddir
 
-    """
     test = SpectrumAnalyzer(loaddir, savedir, 'fap1')
     #test.use_harminv(Q, E, dt, fmin, fmax, nf=nf)
     test.use_pharminv('Ex', dt, fmin, fmax, Ly, nf=nf, phase=True, wvlen=True)
@@ -552,8 +572,8 @@ if __name__ == '__main__':
     test4.use_fft(dt, Ly)
     test4.plot_fft_result([fmin, fmax], [-.1, 2],"fap4_fft_1.png", norm_freq=False)
     test4.plot_fft_result([-1, 1], [-.1, 2], "fap4_fft_2.png", norm_freq=True)
-    """
 
+    """
     wvlens = np.arange(574, 601, 100)
     names = ['fap1', 'fap2', 'fap3', 'fap4']
 
@@ -564,3 +584,4 @@ if __name__ == '__main__':
     test = CsvDataCollector(loaddir, wvlens, 'nm', names, dt, Ly)
     test.get_csv()
     #test.plot_peak(0.5)
+    """
