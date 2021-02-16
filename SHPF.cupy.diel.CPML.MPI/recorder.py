@@ -26,9 +26,15 @@ class Recorder:
 
         cal_time = finished_time - start_time
         f = open( record_path,'a')
-        f.write("{:2d}\t\t{:04d}\t{:04d}\t{:04d}\t{:5.2e}\t{:5.2e}\t{:5.2e}\t{:06d}\t\t{}\t\t{:>6}\t\t{:06.3f}\t\t\t{:06.3f}\n" \
-                    .format(space.MPIsize, space.Nx, space.Ny, space.Nz,\
-                        space.dx, space.dy, space.dz, space.tsteps, cal_time, space.method, me_vmsmem_GB, me_rssmem_GB))
+
+        if space.dimension == 3:
+            f.write("{:2d}\t\t{:04d}\t{:04d}\t{:04d}\t{:5.2e}\t{:5.2e}\t{:5.2e}\t{:06d}\t\t{}\t\t{:>6}\t\t{:06.3f}\t\t\t{:06.3f}\n" \
+                        .format(space.MPIsize, space.Nx, space.Ny, space.Nz,\
+                            space.dx, space.dy, space.dz, space.tsteps, cal_time, space.method, me_vmsmem_GB, me_rssmem_GB))
+        if space.dimension == 2:
+            f.write("{:2d}\t\t{:04d}\t{:04d}\t{:4}\t{:5.2e}\t{:5.2e}\t{:>8}\t{:06d}\t\t{}\t\t{:>6}\t\t{:06.3f}\t\t\t{:06.3f}\n" \
+                        .format(space.MPIsize, space.Nx, space.Ny, 'None',\
+                            space.dx, space.dy, 'None', space.tsteps, cal_time, space.method, me_vmsmem_GB, me_rssmem_GB))
         f.close()
         
         print("Simulation specifications are recorded. {}".format(datetime.datetime.now()))

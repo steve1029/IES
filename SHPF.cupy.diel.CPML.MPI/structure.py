@@ -481,7 +481,99 @@ class Sphere(Structure):
 
         return
 
-class Cylinder(Structure):
+
+class Cylinder2D(Structure):
+
+    def __init__(self, space, radius, center, eps_r, mu_r):
+        """Cylinder object in Basic2D structure.
+
+        Parameters
+        ----------
+        space: Basic2D object.
+            Any two-dimensional space object.
+
+        radius: float.
+
+        center: tuple.
+            a (x,z) or (y,z) coordinate of the center of the cylinder.
+
+        eps_r: float.
+
+        mu_r: float.
+
+        Returns
+        -------
+        None.
+   
+        """
+
+        Structure.__init__(self, space)
+        assert space.dimension == 2
+
+        self.eps_r = eps_r
+        self. mu_r =  mu_r
+
+        dx = self.space.dx
+        dy = self.space.dy
+
+        rx = center[0]/dx
+        ry = center[1]/dy
+
+        if space.mode == 'TM':
+
+            for i in range(self.space.Nx):
+                for j in range(self.space.Ny):
+
+                    if (((i-rx)*dx)**2 + ((j-ry)*dy)**2) <= (radius**2):
+
+                        self.space.eps_Ez[i, j] = self.eps_r * epsilon_0
+                        self.space. mu_Hx[i, j] = self. mu_r * mu_0
+                        self.space. mu_Hy[i, j] = self. mu_r * mu_0
+
+        if space.mode == 'TE':
+
+            for i in range(self.space.Nx):
+                for j in range(self.space.Ny):
+
+                    if (((i-rx)*dx)**2 + ((j-ry)*dy)**2) <= (radius**2):
+
+                        self.space.eps_Ex[i, j] = self.eps_r * epsilon_0
+                        self.space.eps_Ey[i, j] = self.eps_r * epsilon_0
+                        self.space. mu_Hz[i, j] = self. mu_r * mu_0
+        return
+
+
+class Circle(Cylinder2D):
+
+    def __init__(self, space, radius, center, eps_r, mu_r):
+        """Circle object in Basic2D structure.
+        This class inherits Cylinder2D object 
+        which is effectively the same in 2D space.
+
+        Parameters
+        ----------
+        space: Basic2D object.
+            Any two-dimensional space object.
+
+        radius: float.
+
+        center: tuple.
+            a (x,z) or (y,z) coordinate of the center of the cylinder.
+
+        eps_r: float.
+
+        mu_r: float.
+
+        Returns
+        -------
+        None.
+   
+        """
+
+        Cylinder2D.__init__(self, space, radius, center, eps_r, mu_r)
+
+
+class Cylinder3D(Structure):
 
     def __init__(self, space, axis, radius, height, center, eps_r, mu_r):
         """Cylinder object in Basic3D structure.

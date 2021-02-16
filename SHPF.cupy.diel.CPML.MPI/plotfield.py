@@ -69,7 +69,8 @@ class Graphtool(object):
             self.integrated = np.zeros((self.Space.grid), dtype=self.Space.field_dtype)
 
             for MPIrank in range(self.Space.MPIsize):
-                self.integrated[self.Space.myNx_slices[MPIrank],:,:] = gathered[MPIrank]
+                if self.Space.dimension == 3: self.integrated[self.Space.myNx_slices[MPIrank],:,:] = gathered[MPIrank]
+                if self.Space.dimension == 2: self.integrated[self.Space.myNx_slices[MPIrank],:] = gathered[MPIrank]
 
                 #if MPIrank == 1: print(MPIrank, gathered[MPIrank][xidx,yidx,zidx])
 
@@ -109,26 +110,49 @@ class Graphtool(object):
                 elif key == 'cmap': cmap = value
                 elif key == 'lc': lc = value
 
-            if xidx != None : 
-                assert type(xidx) == int
-                yidx  = slice(None,None) # indices from beginning to end
-                zidx  = slice(None,None)
-                plane = 'yz'
-                col = np.arange(self.Space.Ny)
-                row = np.arange(self.Space.Nz)
-                plane_to_plot = np.zeros((len(col),len(row)), dtype=np.float32)
 
-            elif yidx != None :
-                assert type(yidx) == int
-                xidx  = slice(None,None)
-                zidx  = slice(None,None)
-                plane = 'xz'
-                col = np.arange(self.Space.Nx)
-                row = np.arange(self.Space.Nz)
-                plane_to_plot = np.zeros((len(row), len(col)), dtype=np.float32)
+            #####################################################################################
+            ######### Build up total field with the parts of the grid from slave nodes ##########
+            #####################################################################################
 
-            elif zidx != None :
-                assert type(zidx) == int
+            if self.Space.dimension == 3:
+
+                if xidx != None: 
+                    assert type(xidx) == int
+                    yidx  = slice(None,None) # indices from beginning to end
+                    zidx  = slice(None,None)
+                    plane = 'yz'
+                    col = np.arange(self.Space.Ny)
+                    row = np.arange(self.Space.Nz)
+                    plane_to_plot = np.zeros((len(col),len(row)), dtype=np.float32)
+
+                elif yidx != None :
+                    assert type(yidx) == int
+                    xidx  = slice(None,None)
+                    zidx  = slice(None,None)
+                    plane = 'xz'
+                    col = np.arange(self.Space.Nx)
+                    row = np.arange(self.Space.Nz)
+                    plane_to_plot = np.zeros((len(row), len(col)), dtype=np.float32)
+
+                elif zidx != None :
+                    assert type(zidx) == int
+                    xidx  = slice(None,None)
+                    yidx  = slice(None,None)
+                    plane = 'xy'
+                    col = np.arange(self.Space.Nx)
+                    row = np.arange(self.Space.Ny)
+                    plane_to_plot = np.zeros((len(row),len(col)), dtype=np.float32)
+            
+                elif (xidx,yidx,zidx) == (None,None,None):
+                    raise ValueError("Plane is not defined. Please insert one of x,y or z index of the plane.")
+
+                if integrated.dtype == np.complex64 or integrated.dtype == np.complex128:
+                    self.plane_to_plot = integrated[xidx, yidx, zidx].real
+                else: self.plane_to_plot = integrated[xidx, yidx, zidx]
+
+            elif self.Space.dimension == 2:
+
                 xidx  = slice(None,None)
                 yidx  = slice(None,None)
                 plane = 'xy'
@@ -136,16 +160,9 @@ class Graphtool(object):
                 row = np.arange(self.Space.Ny)
                 plane_to_plot = np.zeros((len(row),len(col)), dtype=np.float32)
         
-            elif (xidx,yidx,zidx) == (None,None,None):
-                raise ValueError("Plane is not defined. Please insert one of x,y or z index of the plane.")
-
-            #####################################################################################
-            ######### Build up total field with the parts of the grid from slave nodes ##########
-            #####################################################################################
-
-            if integrated.dtype == np.complex64 or integrated.dtype == np.complex128:
-                self.plane_to_plot = integrated[xidx, yidx, zidx].real
-            else: self.plane_to_plot = integrated[xidx, yidx, zidx]
+                if integrated.dtype == np.complex64 or integrated.dtype == np.complex128:
+                    self.plane_to_plot = integrated[xidx, yidx].real
+                else: self.plane_to_plot = integrated[xidx, yidx]
 
             X, Y = np.meshgrid(col, row, indexing='xy', sparse=True)
             today = datetime.date.today()

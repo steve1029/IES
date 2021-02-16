@@ -31,8 +31,8 @@ TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.comp
 TF.malloc()
 
 ########## Set Boundary Condition.
-TF.apply_PML({'x':'','y':'+-','z':''}, 10)
-TF.apply_BBC({'x':True, 'y':False, 'z':True})
+TF.apply_PML({'x':'+-','y':'+-','z':''}, 10)
+TF.apply_BBC({'x':False, 'y':False, 'z':True})
 TF.apply_PBC({'x':False, 'y':False, 'z':False})
 
 ########## Save PML data.

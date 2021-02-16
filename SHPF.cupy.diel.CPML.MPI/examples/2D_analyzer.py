@@ -11,8 +11,8 @@ import analyzer as az
 um = 1e-6
 nm = 1e-9
 
-Lx, Ly, Lz = 574/8*nm, 574*nm, 574*nm
-Nx, Ny, Nz = 32, 256, 256
+Lx, Ly, Lz = 574/128*nm, 574*nm, 574*nm
+Nx, Ny, Nz = 2, 256, 256
 dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz 
 
 courant = 1./4

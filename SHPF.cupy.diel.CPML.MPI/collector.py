@@ -138,11 +138,20 @@ class FieldAtPoint(collector):
         """
 
         collector.__init__(self, name, path, space, engine)
+        self.loc = loc
 
         # Location of the structure.
-        self.xloc = round(loc[0]/space.dx)
-        self.yloc = round(loc[1]/space.dy)
-        self.zloc = round(loc[2]/space.dz)
+
+        if len(self.loc) == 3:
+
+            self.xloc = round(loc[0]/space.dx)
+            self.yloc = round(loc[1]/space.dy)
+            self.zloc = round(loc[2]/space.dz)
+
+        elif len(self.loc) == 2:
+
+            self.xloc = round(loc[0]/space.dx)
+            self.yloc = round(loc[1]/space.dy)
 
         self.gxloc, self.lxloc = collector._get_local_x_loc(self, self.xloc, self.xloc)
 
@@ -165,15 +174,30 @@ class FieldAtPoint(collector):
             xend = self.lxloc[1]
 
             f = slice(0,None)
-            Fidx = [self.lxloc, self.yloc, self.zloc]
 
-            self.Ex_t[tstep] = self.space.Ex[xsrt, self.yloc, self.zloc]
-            self.Ey_t[tstep] = self.space.Ey[xsrt, self.yloc, self.zloc]
-            self.Ez_t[tstep] = self.space.Ez[xsrt, self.yloc, self.zloc]
+            if self.space.dimension == 3:
 
-            self.Hx_t[tstep] = self.space.Hx[xsrt, self.yloc, self.zloc]
-            self.Hy_t[tstep] = self.space.Hy[xsrt, self.yloc, self.zloc]
-            self.Hz_t[tstep] = self.space.Hz[xsrt, self.yloc, self.zloc]
+                self.Ex_t[tstep] = self.space.Ex[xsrt, self.yloc, self.zloc]
+                self.Ey_t[tstep] = self.space.Ey[xsrt, self.yloc, self.zloc]
+                self.Ez_t[tstep] = self.space.Ez[xsrt, self.yloc, self.zloc]
+
+                self.Hx_t[tstep] = self.space.Hx[xsrt, self.yloc, self.zloc]
+                self.Hy_t[tstep] = self.space.Hy[xsrt, self.yloc, self.zloc]
+                self.Hz_t[tstep] = self.space.Hz[xsrt, self.yloc, self.zloc]
+
+            elif self.space.dimension == 2:
+
+                if self.space.mode == 'TM':
+
+                    self.Ez_t[tstep] = self.space.Ez[xsrt, self.yloc]
+                    self.Hx_t[tstep] = self.space.Hx[xsrt, self.yloc]
+                    self.Hy_t[tstep] = self.space.Hy[xsrt, self.yloc]
+
+                if self.space.mode == 'TE':
+
+                    self.Ex_t[tstep] = self.space.Ex[xsrt, self.yloc]
+                    self.Ey_t[tstep] = self.space.Ey[xsrt, self.yloc]
+                    self.Hz_t[tstep] = self.space.Hz[xsrt, self.yloc]
 
     def save_time_signal(self, **kwargs):
 

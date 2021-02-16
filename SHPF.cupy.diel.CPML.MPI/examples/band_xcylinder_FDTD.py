@@ -18,8 +18,8 @@ savedir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/'
 nm = 1e-9
 um = 1e-6
 
-Lx, Ly, Lz = 574/8*nm, 574*nm, 574*nm
-Nx, Ny, Nz = 32, 256, 256
+Lx, Ly, Lz = 574/128*nm, 574*nm, 574*nm
+Nx, Ny, Nz = 2, 256, 256
 dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz 
 
 courant = 1./4
@@ -32,7 +32,7 @@ TF.malloc()
 
 ########## Set PML and PBC
 TF.apply_PML({'x':'','y':'','z':''}, 10)
-TF.apply_BBC({'x':True, 'y':True, 'z':True})
+TF.apply_BBC({'x':False, 'y':True, 'z':True})
 TF.apply_PBC({'x':False, 'y':False, 'z':False})
 
 ########## Save PML data.
@@ -179,7 +179,7 @@ fap5 = collector.FieldAtPoint("fap5", savedir+"graph/{}" .format(filename), TF, 
 #------------------------------------------------------------------#
 
 # Set plotfield options
-plot_per = 1000
+plot_per = 100
 TFgraphtool = plotfield.Graphtool(TF, 'TF', savedir)
 
 #------------------------------------------------------------------#
@@ -241,8 +241,8 @@ for tstep in range(Tsteps):
     # Plot the field profile
     if tstep % plot_per == 0:
 
-        #Ex = TFgraphtool.gather('Ex')
-        #TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=1e-2, stride=3, zlim=1e-2)
+        Ex = TFgraphtool.gather('Ex')
+        TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=1e-2, stride=3, zlim=1e-2)
         #TFgraphtool.plot2D3D(Ey, tstep, yidx=TF.Nyc, colordeep=1., stride=2, zlim=1.)
         #TFgraphtool.plot2D3D(Ez, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D(Hx, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
@@ -292,5 +292,4 @@ fap5.save_time_signal(binary=True, txt=False)
 #------------------- Record simulation history --------------------#
 #------------------------------------------------------------------#
 
-if TF.MPIrank == 0: 
-    recording = recorder.Recorder(TF, start_time, "../record/")
+if TF.MPIrank == 0: recording = recorder.Recorder(TF, start_time, "../record/")

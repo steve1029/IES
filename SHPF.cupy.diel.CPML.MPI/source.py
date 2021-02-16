@@ -36,18 +36,23 @@ class Setter:
         self.space = space
         self.xp = self.space.xp
 
-        assert len(src_srt) == 3, "src_srt argument is a list or tuple with length 3."
-        assert len(src_end) == 3, "src_end argument is a list or tuple with length 3."
+        assert len(src_srt) == 2, "src_srt argument is a list or tuple with length 3."
+        assert len(src_end) == 2, "src_end argument is a list or tuple with length 3."
 
         self.who_put_src = None
 
+        # For 2D simulation.
         self.src_xsrt = round(src_srt[0] / self.space.dx)
         self.src_ysrt = round(src_srt[1] / self.space.dy)
-        self.src_zsrt = round(src_srt[2] / self.space.dz)
 
         self.src_xend = round(src_end[0] / self.space.dx)
         self.src_yend = round(src_end[1] / self.space.dy)
-        self.src_zend = round(src_end[2] / self.space.dz)
+
+        # For 3D simluation.
+        if space.dimension == 3:
+
+            self.src_zsrt = round(src_srt[2] / self.space.dz)
+            self.src_zend = round(src_end[2] / self.space.dz)
 
         #----------------------------------------------------------------------#
         #--------- All ranks should know who put src to plot src graph --------#
@@ -103,25 +108,33 @@ class Setter:
         #--------- Apply phase difference according to the incident angle ---------#
         #--------------------------------------------------------------------------#
 
-        kx = mmt[0]
-        ky = mmt[1]
-        kz = mmt[2]
-
         self.space.mmt = mmt
 
         if self.space.MPIrank == self.who_put_src:
 
+            kx = mmt[0]
+            ky = mmt[1]
+
+            # For 2D simualtion.
             self.px = self.xp.exp(+1j*kx*self.xp.arange(self.my_src_xsrt, self.my_src_xend)*self.space.dx)
             self.py = self.xp.exp(+1j*ky*self.xp.arange(self.   src_ysrt, self.   src_yend)*self.space.dy)
-            self.pz = self.xp.exp(+1j*kz*self.xp.arange(self.   src_zsrt, self.   src_zend)*self.space.dz)
 
             xdist = self.my_src_xend - self.my_src_xsrt
             ydist = self.   src_yend - self.   src_ysrt
-            zdist = self.   src_zend - self.   src_zsrt
 
             if xdist == 1: self.px = self.xp.exp(1j*kx*self.xp.arange(1)*self.space.dx)
             if ydist == 1: self.py = self.xp.exp(1j*ky*self.xp.arange(1)*self.space.dy)
-            if zdist == 1: self.pz = self.xp.exp(1j*kz*self.xp.arange(1)*self.space.dz)
+
+            # For 3D simualtion.
+            if space.dimension == 3:
+
+                kz = mmt[2]
+
+                self.pz = self.xp.exp(+1j*kz*self.xp.arange(self.src_zsrt, self.src_zend)*self.space.dz)
+
+                zdist = self.src_zend - self.src_zsrt
+
+                if zdist == 1: self.pz = self.xp.exp(1j*kz*self.xp.arange(1)*self.space.dz)
 
     def put_src(self, where, pulse, put_type):
         """Put source at the designated postion set by set_src method.
@@ -151,32 +164,64 @@ class Setter:
 
         if self.space.MPIrank == self.who_put_src:
 
-            x = slice(self.my_src_xsrt, self.my_src_xend)
-            y = slice(self.   src_ysrt, self.   src_yend)
-            z = slice(self.   src_zsrt, self.   src_zend)
+            # For 2D simulation.
+            if self.space.dimension == 2:
 
-            self.pulse *= self.px[:,None,None] * self.py[None,:,None] * self.pz[None,None,:]
+                x = slice(self.my_src_xsrt, self.my_src_xend)
+                y = slice(self.   src_ysrt, self.   src_yend)
 
-            if   self.put_type == 'soft':
+                self.pulse *= self.px[:,None] * self.py[None,:]
 
-                if (self.where == 'Ex') or (self.where == 'ex'): self.space.Ex[x,y,z] += self.pulse
-                if (self.where == 'Ey') or (self.where == 'ey'): self.space.Ey[x,y,z] += self.pulse
-                if (self.where == 'Ez') or (self.where == 'ez'): self.space.Ez[x,y,z] += self.pulse
-                if (self.where == 'Hx') or (self.where == 'hx'): self.space.Hx[x,y,z] += self.pulse
-                if (self.where == 'Hy') or (self.where == 'hy'): self.space.Hy[x,y,z] += self.pulse
-                if (self.where == 'Hz') or (self.where == 'hz'): self.space.Hz[x,y,z] += self.pulse
+                if   self.put_type == 'soft':
 
-            elif self.put_type == 'hard':
-    
-                if (self.where == 'Ex') or (self.where == 'ex'): self.space.Ex[x,y,z] = self.pulse
-                if (self.where == 'Ey') or (self.where == 'ey'): self.space.Ey[x,y,z] = self.pulse
-                if (self.where == 'Ez') or (self.where == 'ez'): self.space.Ez[x,y,z] = self.pulse
-                if (self.where == 'Hx') or (self.where == 'hx'): self.space.Hx[x,y,z] = self.pulse
-                if (self.where == 'Hy') or (self.where == 'hy'): self.space.Hy[x,y,z] = self.pulse
-                if (self.where == 'Hz') or (self.where == 'hz'): self.space.Hz[x,y,z] = self.pulse
+                    if (self.where == 'Ex') or (self.where == 'ex'): self.space.Ex[x,y] += self.pulse
+                    if (self.where == 'Ey') or (self.where == 'ey'): self.space.Ey[x,y] += self.pulse
+                    if (self.where == 'Ez') or (self.where == 'ez'): self.space.Ez[x,y] += self.pulse
+                    if (self.where == 'Hx') or (self.where == 'hx'): self.space.Hx[x,y] += self.pulse
+                    if (self.where == 'Hy') or (self.where == 'hy'): self.space.Hy[x,y] += self.pulse
+                    if (self.where == 'Hz') or (self.where == 'hz'): self.space.Hz[x,y] += self.pulse
 
-            else:
-                raise ValueError("Please insert 'soft' or 'hard'")
+                elif self.put_type == 'hard':
+        
+                    if (self.where == 'Ex') or (self.where == 'ex'): self.space.Ex[x,y] = self.pulse
+                    if (self.where == 'Ey') or (self.where == 'ey'): self.space.Ey[x,y] = self.pulse
+                    if (self.where == 'Ez') or (self.where == 'ez'): self.space.Ez[x,y] = self.pulse
+                    if (self.where == 'Hx') or (self.where == 'hx'): self.space.Hx[x,y] = self.pulse
+                    if (self.where == 'Hy') or (self.where == 'hy'): self.space.Hy[x,y] = self.pulse
+                    if (self.where == 'Hz') or (self.where == 'hz'): self.space.Hz[x,y] = self.pulse
+
+                else:
+                    raise ValueError("Please insert 'soft' or 'hard'")
+
+            # For 3D simulation.
+            if self.space.dimension) == 3:
+
+                x = slice(self.my_src_xsrt, self.my_src_xend)
+                y = slice(self.   src_ysrt, self.   src_yend)
+                z = slice(self.   src_zsrt, self.   src_zend)
+
+                self.pulse *= self.px[:,None,None] * self.py[None,:,None] * self.pz[None,None,:]
+
+                if   self.put_type == 'soft':
+
+                    if (self.where == 'Ex') or (self.where == 'ex'): self.space.Ex[x,y,z] += self.pulse
+                    if (self.where == 'Ey') or (self.where == 'ey'): self.space.Ey[x,y,z] += self.pulse
+                    if (self.where == 'Ez') or (self.where == 'ez'): self.space.Ez[x,y,z] += self.pulse
+                    if (self.where == 'Hx') or (self.where == 'hx'): self.space.Hx[x,y,z] += self.pulse
+                    if (self.where == 'Hy') or (self.where == 'hy'): self.space.Hy[x,y,z] += self.pulse
+                    if (self.where == 'Hz') or (self.where == 'hz'): self.space.Hz[x,y,z] += self.pulse
+
+                elif self.put_type == 'hard':
+        
+                    if (self.where == 'Ex') or (self.where == 'ex'): self.space.Ex[x,y,z] = self.pulse
+                    if (self.where == 'Ey') or (self.where == 'ey'): self.space.Ey[x,y,z] = self.pulse
+                    if (self.where == 'Ez') or (self.where == 'ez'): self.space.Ez[x,y,z] = self.pulse
+                    if (self.where == 'Hx') or (self.where == 'hx'): self.space.Hx[x,y,z] = self.pulse
+                    if (self.where == 'Hy') or (self.where == 'hy'): self.space.Hy[x,y,z] = self.pulse
+                    if (self.where == 'Hz') or (self.where == 'hz'): self.space.Hz[x,y,z] = self.pulse
+
+                else:
+                    raise ValueError("Please insert 'soft' or 'hard'")
 
 
 class Gaussian:
