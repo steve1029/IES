@@ -182,10 +182,10 @@ class Basic2D:
             nax = np.newaxis
             self.ikx = 1j*self.ky[:,nax]
             self.iky = 1j*self.ky[nax,:]
-            self.xpshift = self.xp.exp(self.ikx*-self.dx/2)[:,None]
-            self.xmshift = self.xp.exp(self.ikx*+self.dx/2)[:,None]
-            self.ypshift = self.xp.exp(self.iky*-self.dy/2)[None,:]
-            self.ymshift = self.xp.exp(self.iky*+self.dy/2)[None,:]
+            self.xpshift = self.xp.exp(self.ikx*+self.dx/2)[:,None]
+            self.xmshift = self.xp.exp(self.ikx*-self.dx/2)[:,None]
+            self.ypshift = self.xp.exp(self.iky*+self.dy/2)[None,:]
+            self.ymshift = self.xp.exp(self.iky*-self.dy/2)[None,:]
 
         if self.mode == 'TM':
 
@@ -460,14 +460,6 @@ class Basic2D:
         return
 
     def updateH(self,tstep) :
-        
-        #----------------------------------------------------------------------#
-        #---------------- Apply BBC when the method is the FDTD ---------------#
-        #----------------------------------------------------------------------#
-
-        if self.method == 'FDTD' and self.BBC_called == True: self._updateH_BBC_FDTD()
-        if self.method == 'FDTD' and self.PBC_called == True: self._updateH_PBC_FDTD()
-        if self.method == 'SHPF' and self.PBC_called == True: self._updateH_PBC_SHPF()
 
         #-----------------------------------------------------------#
         #---------------------- Get derivatives --------------------#
@@ -591,8 +583,20 @@ class Basic2D:
 
             if self.mode == 'TM':
 
-                CHx1 = (2.*self.mu_Hx[:,:-1,] - self.mcon_Hx[:,:-1,]*self.dt) / \
-                       (2.*self.mu_Hx[:,:-1,] + self.mcon_Hx[:,:-1,]*self.dt)
+                CHx1 = (2.*self.mu_Hx - self.mcon_Hx*self.dt) / \
+                       (2.*self.mu_Hx + self.mcon_Hx*self.dt)
+                CHx2 = (-2*self.dt) / (2.*self.mu_Hx + self.mcon_Hx*self.dt)
+
+                CHy1 = (2.*self.mu_Hy - self.mcon_Hy*self.dt) / \
+                       (2.*self.mu_Hy + self.mcon_Hy*self.dt)
+                CHy2 = (-2*self.dt) / (2.*self.mu_Hy + self.mcon_Hy*self.dt)
+
+                self.Hx = CHx1*self.Hx + CHx2*(+self.diffyEz)
+                self.Hy = CHy1*self.Hy + CHy2*(-self.diffxEz)
+
+                """
+                CHx1 = (2.*self.mu_Hx[:,:-1] - self.mcon_Hx[:,:-1]*self.dt) / \
+                       (2.*self.mu_Hx[:,:-1] + self.mcon_Hx[:,:-1]*self.dt)
                 CHx2 = (-2*self.dt) / (2.*self.mu_Hx[:,:-1] + self.mcon_Hx[:,:-1]*self.dt)
 
                 CHy1 = (2.*self.mu_Hy[:-1,:] - self.mcon_Hy[:-1,:]*self.dt) / \
@@ -601,6 +605,7 @@ class Basic2D:
 
                 self.Hx[:,:-1] = CHx1*self.Hx[:,:-1] + CHx2*(+self.diffyEz[:,:-1])
                 self.Hy[:-1,:] = CHy1*self.Hy[:-1,:] + CHy2*(-self.diffxEz[:-1,:])
+                """
 
             if self.mode == 'TE':
 
@@ -611,11 +616,13 @@ class Basic2D:
                 self.Hz[:-1,:-1] = CHz1*self.Hz[:-1,:-1] + CHz2*(self.diffxEy[:-1,:-1]-self.diffyEx[:-1,:-1])
 
         #----------------------------------------------------------------------#
-        #---------------- Apply BBC when the method is the SHPF ---------------#
+        #--------------------------- Apply PBC or BBC -------------------------#
         #----------------------------------------------------------------------#
 
-        if self.method == 'SHPF' and self.BBC_called == True: self._updateH_BBC_SHPF()
+        if self.method == 'FDTD' and self.BBC_called == True: self._updateH_BBC_FDTD()
+        if self.method == 'FDTD' and self.PBC_called == True: self._updateH_PBC_FDTD()
         if self.method == 'PSTD' and self.BBC_called == True: self._updateH_BBC_PSTD()
+        if self.method == 'SPSTD' and self.BBC_called == True: self._updateH_BBC_SPSTD()
 
         #-----------------------------------------------------------#
         #---------------- Apply PML when it is given ---------------#
@@ -639,14 +646,6 @@ class Basic2D:
         Raises:
             Error
         """
-
-        #----------------------------------------------------------------------#
-        #---------------- Apply BBC when the method is the FDTD ---------------#
-        #----------------------------------------------------------------------#
-
-        if self.method == 'FDTD' and self.BBC_called == True: self._updateE_BBC_FDTD()
-        if self.method == 'FDTD' and self.PBC_called == True: self._updateE_PBC_FDTD()
-        if self.method == 'SHPF' and self.PBC_called == True: self._updateE_PBC_SHPF()
 
         #-----------------------------------------------------------#
         #---------------------- Get derivatives --------------------#
@@ -791,6 +790,17 @@ class Basic2D:
 
             if self.mode == 'TM':
 
+                CEz1 = (2.*self.eps_Ez-self.econ_Ez*self.dt) / \
+                       (2.*self.eps_Ez+self.econ_Ez*self.dt)
+                CEz2 = (2.*self.dt) / (2.*self.eps_Ez+self.econ_Ez*self.dt)
+
+                # PEC condition.
+                CEz1[self.eps_Ez > 1e3] = 0.
+                CEz2[self.eps_Ez > 1e3] = 0.
+
+                self.Ez = CEz1 * self.Ez + CEz2 * (self.diffxHy - self.diffyHx)
+
+                """
                 CEz1 = (2.*self.eps_Ez[1:,1:]-self.econ_Ez[1:,1:]*self.dt) / \
                        (2.*self.eps_Ez[1:,1:]+self.econ_Ez[1:,1:]*self.dt)
                 CEz2 = (2.*self.dt) / (2.*self.eps_Ez[1:,1:]+self.econ_Ez[1:,1:]*self.dt)
@@ -800,6 +810,7 @@ class Basic2D:
                 CEz2[self.eps_Ez[1:,1:] > 1e3] = 0.
 
                 self.Ez[1:,1:] = CEz1 * self.Ez[1:,1:] + CEz2 * (self.diffxHy[1:,1:] - self.diffyHx[1:,1:])
+                """
 
             if self.mode == 'TE':
 
@@ -821,11 +832,15 @@ class Basic2D:
                 self.Ey[1:,:] = CEy1 * self.Ey[1:,:] + CEy2 * (self.diffzHx[1:,:] - self.diffxHz[1:,:])
 
         #----------------------------------------------------------------------#
-        #---------------- Apply BBC when the method is the SHPF ---------------#
+        #--------------------------- Apply PBC or BBC -------------------------#
         #----------------------------------------------------------------------#
 
+        if self.method == 'FDTD' and self.BBC_called == True: self._updateE_BBC_FDTD()
+        if self.method == 'FDTD' and self.PBC_called == True: self._updateE_PBC_FDTD()
+        if self.method == 'SHPF' and self.PBC_called == True: self._updateE_PBC_SHPF()
         if self.method == 'SHPF' and self.BBC_called == True: self._updateE_BBC_SHPF()
         if self.method == 'PSTD' and self.BBC_called == True: self._updateE_BBC_PSTD()
+        if self.method == 'SPSTD' and self.BBC_called == True: self._updateE_BBC_SPSTD()
 
         #-----------------------------------------------------------#
         #---------------- Apply PML when it is given ---------------#
@@ -855,7 +870,7 @@ class Basic2D:
 
     def _PML_updateH_px(self):
 
-        if self.method == 'PSTD':
+        if self.method == 'PSTD' or self.method == 'SPSTD':
 
             odd = [slice(0,None,2), None]
 
@@ -903,7 +918,7 @@ class Basic2D:
 
     def _PML_updateE_px(self):
 
-        if self.method == 'SHPF' or self.method == 'PSTD':
+        if self.method == 'SHPF' or self.method == 'PSTD' or self.method == 'SPSTD':
 
             even = [slice(0,None,2), None]
 
@@ -941,7 +956,7 @@ class Basic2D:
 
     def _PML_updateH_mx(self):
 
-        if self.method == 'PSTD':
+        if self.method == 'PSTD' or self.method == 'SPSTD':
 
             even = [slice(-1,None,-2), None]
 
@@ -989,7 +1004,7 @@ class Basic2D:
 
     def _PML_updateE_mx(self):
 
-        if self.method == 'PSTD':
+        if self.method == 'PSTD' or self.method == 'SPSTD':
 
             odd = [slice(-1,None,-2),None]
 
@@ -1037,7 +1052,7 @@ class Basic2D:
 
     def _PML_updateH_py(self):
 
-        if self.method == 'PSTD':
+        if self.method == 'PSTD' or self.method == 'SPSTD':
 
             odd = [None, slice(0,None,2)]
 
@@ -1085,7 +1100,7 @@ class Basic2D:
                 
     def _PML_updateE_py(self):
 
-        if self.method == 'PSTD':
+        if self.method == 'PSTD' or self.method == 'SPSTD':
 
             even = [None,slice(0,None,2)]
 
@@ -1133,7 +1148,7 @@ class Basic2D:
 
     def _PML_updateH_my(self):
 
-        if self.method == 'PSTD':
+        if self.method == 'PSTD' or self.method == 'SPSTD':
 
             even = [None, slice(-1,None,-2)]
 
@@ -1181,7 +1196,7 @@ class Basic2D:
 
     def _PML_updateE_my(self):
 
-        if self.method == 'PSTD':
+        if self.method == 'PSTD' or self.method == 'SPSTD':
 
             odd = [None, slice(-1,None,-2)]
 
@@ -1247,7 +1262,7 @@ class Basic2D:
         f[m1] = f[p1] * self.xp.exp(+1j*k*newL) 
         f[p0] = f[m2] * self.xp.exp(-1j*k*newL)
 
-    def _updateH_BBC_FDTD(self):
+    def _updateE_BBC_FDTD(self):
 
         if self.apply_BBCx == True: 
 
@@ -1281,7 +1296,7 @@ class Basic2D:
                 self._exchange_BBCy(self.mmt[1], newL, self.Ex)
                 self._exchange_BBCy(self.mmt[1], newL, self.Ey)
 
-    def _updateH_PBC_FDTD(self):
+    def _updateE_PBC_FDTD(self):
 
         newL = 0
 
@@ -1330,6 +1345,38 @@ class Basic2D:
             assert self.apply_PBCy == False
             if self.mode == 'TM': self.Hx += -self.dt/self.mu_Hx*1j*(-self.mmt[1]*self.Ez)
             if self.mode == 'TE': self.Hz += -self.dt/self.mu_Hz*1j*(+self.mmt[1]*self.Ex)
+
+    def _updateH_BBC_SPSTD(self):
+
+        #self.Hx[sli1] += -self.dt/self.mu_Hx[sli1]*1j*(self.mmt[1]*self.ez_at_Hx[sli1] - self.mmt[2]*self.ey_at_Hx[sli1])
+        #self.Hy[sli2] += -self.dt/self.mu_Hy[sli2]*1j*(self.mmt[2]*self.ex_at_Hy[sli2] - self.mmt[0]*self.ez_at_Hy[sli2])
+        #self.Hz[sli2] += -self.dt/self.mu_Hz[sli2]*1j*(self.mmt[0]*self.ey_at_Hz[sli2] - self.mmt[1]*self.ex_at_Hz[sli2])
+
+        if self.apply_BBCx == True:
+
+            assert self.apply_PBCx == False
+            if self.mode == 'TM': 
+
+                self.ez_at_Hy = self.ifft(self.xpshift*self.fft(self.Ez, axes=(0,)), axes=(0,))
+                self.Hy += -self.dt/self.mu_Hy*1j*(+self.mmt[0]*self.ez_at_Hy)
+
+            if self.mode == 'TE': 
+
+                self.ey_at_Hz = self.ifft(self.xpshift*self.fft(self.Ez, axes=(0,)), axes=(0,))
+                self.Hz += -self.dt/self.mu_Hz*1j*(-self.mmt[0]*self.ey_at_Hz)
+
+        if self.apply_BBCy == True:
+
+            assert self.apply_PBCy == False
+            if self.mode == 'TM': 
+
+                self.ez_at_Hx = self.ifft(self.ypshift*self.fft(self.Ez, axes=(1,)), axes=(1,))
+                self.Hx += -self.dt/self.mu_Hx*1j*(-self.mmt[1]*self.ez_at_Hx)
+
+            if self.mode == 'TE': 
+
+                self.ex_at_Hz = self.ifft(self.ypshift*self.fft(self.Ex, axes=(1,)), axes=(1,))
+                self.Hz += -self.dt/self.mu_Hz*1j*(+self.mmt[1]*self.ex_at_Hz)
 
     def _updateH_BBC_SHPF(self):
 
@@ -1380,19 +1427,22 @@ class Basic2D:
                 self._exchange_BBCx(self.mmt[0], newL, self.Ex)
                 self._exchange_BBCx(self.mmt[0], newL, self.Ey)
 
-    def _updateE_BBC_FDTD(self):
+    def _updateH_BBC_FDTD(self):
 
         if self.apply_BBCx == True: 
 
             assert self.apply_PBCx == False
-            newL = self.Lx - 2*self.dx
 
-            if self.mode == 'TM':
+            if self.mode == 'TE':
+
+                newL = self.Lx - 2*self.dx
 
                 # Exchange Ex,Ey,Ez at i=0,1 with i=Nx-2, Nx-1.
                 self._exchange_BBCx(self.mmt[0], newL, self.Hz)
 
-            elif self.mode == 'TE':
+            elif self.mode == 'TM':
+
+                newL = self.Lx - 2*self.dx
 
                 # Exchange Ex,Ey,Ez at i=0,1 with i=Nx-2, Nx-1.
                 self._exchange_BBCx(self.mmt[0], newL, self.Hx)
@@ -1401,20 +1451,23 @@ class Basic2D:
         if self.apply_BBCy == True: 
 
             assert self.apply_PBCy == False
-            newL = self.Ly - 2*self.dy
 
-            if self.mode == 'TM':
+            if self.mode == 'TE':
+
+                newL = self.Ly - 2*self.dy
 
                 # Exchange Ex,Ey,Ez at i=0,1 with i=Nx-2, Nx-1.
                 self._exchange_BBCy(self.mmt[1], newL, self.Hz)
 
-            elif self.mode == 'TE':
+            elif self.mode == 'TM':
+
+                newL = self.Ly - 2*self.dy
 
                 # Exchange Ex,Ey,Ez at i=0,1 with i=Nx-2, Nx-1.
                 self._exchange_BBCy(self.mmt[1], newL, self.Hx)
                 self._exchange_BBCy(self.mmt[1], newL, self.Hy)
 
-    def _updateE_PBC_FDTD(self):
+    def _updateH_PBC_FDTD(self):
 
         newL = 0
 
@@ -1422,12 +1475,12 @@ class Basic2D:
 
             assert self.apply_PBCx == False
 
-            if self.mode == 'TM':
+            if self.mode == 'TE':
 
                 # Exchange Ex,Ey,Ez at i=0,1 with i=Nx-2, Nx-1.
                 self._exchange_BBCx(self.mmt[0], newL, self.Hz)
 
-            elif self.mode == 'TE':
+            elif self.mode == 'TM':
 
                 # Exchange Ex,Ey,Ez at i=0,1 with i=Nx-2, Nx-1.
                 self._exchange_BBCx(self.mmt[0], newL, self.Hx)
@@ -1437,12 +1490,12 @@ class Basic2D:
 
             assert self.apply_PBCy == False
 
-            if self.mode == 'TM':
+            if self.mode == 'TE':
 
                 # Exchange Ex,Ey,Ez at i=0,1 with i=Nx-2, Nx-1.
                 self._exchange_BBCy(self.mmt[1], newL, self.Hz)
 
-            elif self.mode == 'TE':
+            elif self.mode == 'TM':
 
                 # Exchange Ex,Ey,Ez at i=0,1 with i=Nx-2, Nx-1.
                 self._exchange_BBCy(self.mmt[1], newL, self.Hx)
@@ -1463,6 +1516,36 @@ class Basic2D:
             
             if self.mode == 'TM': self.Ez += self.dt/self.eps_Ez*1j*(+self.mmt[1]*self.Hx)
             if self.mode == 'TE': self.Ex += self.dt/self.eps_Ex*1j*(-self.mmt[1]*self.Hz)
+
+    def _updateE_BBC_SPSTD(self):
+
+        #self.Ex[sli1] += self.dt/self.eps_Ex[sli1]*1j*(self.mmt[1]*self.hz_at_Ex[sli1] - self.mmt[2]*self.hy_at_Ex[sli1])
+        #self.Ey[sli2] += self.dt/self.eps_Ey[sli2]*1j*(self.mmt[2]*self.hx_at_Ey[sli2] - self.mmt[0]*self.hz_at_Ey[sli2])
+        #self.Ez[sli2] += self.dt/self.eps_Ez[sli2]*1j*(self.mmt[0]*self.hy_at_Ez[sli2] - self.mmt[1]*self.hx_at_Ez[sli2])
+
+        if self.apply_BBCx == True:
+
+            if self.mode == 'TM':
+
+                self.hy_at_Ez = self.ifft(self.xmshift*self.fft(self.Hy, axes=(0,)), axes=(0,))
+                self.Ez += self.dt/self.eps_Ez*1j*(-self.mmt[0]*self.hy_at_Ez)
+
+            if self.mode == 'TE':
+
+                self.hz_at_Ey = self.ifft(self.xmshift*self.fft(self.Hz, axes=(0,)), axes=(0,))
+                self.Ey += self.dt/self.eps_Ey*1j*(+self.mmt[0]*self.hz_at_Ey)
+
+        if self.apply_BBCy == True:
+            
+            if self.mode == 'TM':
+
+                self.hx_at_Ez = self.ifft(self.ymshift*self.fft(self.Hx, axes=(1,)), axes=(1,))
+                self.Ez += self.dt/self.eps_Ez*1j*(+self.mmt[1]*self.hx_at_Ez)
+
+            if self.mode == 'TE':
+
+                self.hz_at_Ex = self.ifft(self.ymshift*self.fft(self.Hz, axes=(1,)), axes=(1,))
+                self.Ex += self.dt/self.eps_Ex*1j*(-self.mmt[1]*self.hz_at_Ez)
 
     def _updateE_BBC_SHPF(self):
 

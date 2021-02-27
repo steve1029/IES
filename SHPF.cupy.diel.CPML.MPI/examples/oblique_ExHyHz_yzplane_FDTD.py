@@ -7,7 +7,7 @@ from mpi4py import MPI
 import matplotlib.pyplot as plt
 from scipy.constants import c
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import source, space, plotfield, structure, collector
+import source, space, plotfield, structure, collector, recorder
 
 #------------------------------------------------------------------#
 #--------------------- Space object settings ----------------------#
@@ -18,8 +18,8 @@ savedir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/'
 nm = 1e-9
 um = 1e-6
 
-Lx, Ly, Lz = 574/8*nm, 574*nm, 574*nm
-Nx, Ny, Nz = 32, 256, 256
+Lx, Ly, Lz = 574/64*nm, 574*nm, 574*nm
+Nx, Ny, Nz = 4, 256, 256
 dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz 
 
 courant = 1./4
@@ -31,10 +31,9 @@ TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.comp
 TF.malloc()
 
 ########## Set PML and PBC
-TF.set_PML({'x':'','y':'','z':''}, 10)
-
-region = {'x':True, 'y':True, 'z':True}
-TF.apply_BPBC(region, BBC=True, PBC=False)
+TF.apply_PML({'x':'','y':'','z':'+-'}, 10)
+TF.apply_BBC({'x':False, 'y':True, 'z':False})
+TF.apply_PBC({'x':True, 'y':False, 'z':False})
 
 ########## Save PML data.
 #TF.save_pml_parameters('./')
@@ -63,9 +62,8 @@ TF.apply_BPBC(region, BBC=True, PBC=False)
 
 ########## Harmonic source
 smth = source.Smoothing(dt, 1000)
-
 src = source.Harmonic(dt)
-wvlen = 1000*nm
+wvlen = 200*nm
 src.set_wvlen(wvlen)
 
 src1 = source.Harmonic(dt)
@@ -180,7 +178,7 @@ fap4 = collector.FieldAtPoint("fap4", savedir+"graph/", TF, loc4, 'cupy')
 #------------------------------------------------------------------#
 
 # Set plotfield options
-plot_per = 1000
+plot_per = 100
 TFgraphtool = plotfield.Graphtool(TF, 'TF', savedir)
 
 #------------------------------------------------------------------#
@@ -205,10 +203,10 @@ for tstep in range(Tsteps):
     #pulse_re = src.pulse_re(tstep)
 
     # pulse for Sine or Harmonic wave.
-    pulse  = src .signal(tstep) * smth.apply(tstep)
-    pulse1 = src1.signal(tstep) * smth.apply(tstep)
-    pulse2 = src2.signal(tstep) * smth.apply(tstep)
-    pulse3 = src3.signal(tstep) * smth.apply(tstep)
+    pulse  = src .apply(tstep) * smth.apply(tstep)
+    pulse1 = src1.apply(tstep) * smth.apply(tstep)
+    pulse2 = src2.apply(tstep) * smth.apply(tstep)
+    pulse3 = src3.apply(tstep) * smth.apply(tstep)
 
     # pulse for Delta function wave.
     #pulse_re = src.apply(tstep)
@@ -245,7 +243,7 @@ for tstep in range(Tsteps):
     if tstep % plot_per == 0:
 
         Ex = TFgraphtool.gather('Ex')
-        TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=None, stride=3, zlim=2.)
+        TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=2., stride=3, zlim=2.)
         #TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=2., stride=3, zlim=2.)
         #TFgraphtool.plot2D3D(Ey, tstep, yidx=TF.Nyc, colordeep=1., stride=2, zlim=1.)
         #TFgraphtool.plot2D3D(Ez, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
@@ -295,30 +293,4 @@ fap4.save_time_signal(binary=True, txt=True)
 #------------------- Record simulation history --------------------#
 #------------------------------------------------------------------#
 
-if TF.MPIrank == 0:
-
-    # Simulation finished time
-    finished_time = datetime.datetime.now()
-
-    # Record simulation size and operation time
-    if not os.path.exists("../record") : os.mkdir("../record")
-    record_path = "../record/record_%s.txt" %(datetime.date.today())
-
-    if not os.path.exists(record_path):
-        f = open( record_path,'a')
-        f.write("{:4}\t{:4}\t{:4}\t{:4}\t{:4}\t\t{:4}\t\t{:4}\t\t{:8}\t{:4}\t\t\t\t{:12}\t{:12}\n\n" \
-            .format("Node","Nx","Ny","Nz","dx","dy","dz","tsteps","Time","VM/Node(GB)","RM/Node(GB)"))
-        f.close()
-
-    me = psutil.Process(os.getpid())
-    me_rssmem_GB = float(me.memory_info().rss)/1024/1024/1024
-    me_vmsmem_GB = float(me.memory_info().vms)/1024/1024/1024
-
-    cal_time = finished_time - start_time
-    f = open( record_path,'a')
-    f.write("{:2d}\t\t{:04d}\t{:04d}\t{:04d}\t{:5.2e}\t{:5.2e}\t{:5.2e}\t{:06d}\t\t{}\t\t{:06.3f}\t\t\t{:06.3f}\n" \
-                .format(TF.MPIsize, TF.Nx, TF.Ny, TF.Nz,\
-                    TF.dx, TF.dy, TF.dz, TF.tsteps, cal_time, me_vmsmem_GB, me_rssmem_GB))
-    f.close()
-    
-    print("Simulation finished: {}".format(datetime.datetime.now()))
+if TF.MPIrank == 0: recording = recorder.Recorder(TF, start_time, "../record/")

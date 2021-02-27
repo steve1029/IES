@@ -36,9 +36,6 @@ class Setter:
         self.space = space
         self.xp = self.space.xp
 
-        assert len(src_srt) == 2, "src_srt argument is a list or tuple with length 3."
-        assert len(src_end) == 2, "src_end argument is a list or tuple with length 3."
-
         self.who_put_src = None
 
         # For 2D simulation.
@@ -69,7 +66,7 @@ class Setter:
             if self.src_xsrt == (self.src_xend-1):
 
                 if self.src_xsrt >= my_xsrt and self.src_xend <= my_xend:
-                    self.who_put_src   = rank
+                    self.who_put_src = rank
 
                     if self.space.MPIrank == self.who_put_src:
 
@@ -194,7 +191,7 @@ class Setter:
                     raise ValueError("Please insert 'soft' or 'hard'")
 
             # For 3D simulation.
-            if self.space.dimension) == 3:
+            if self.space.dimension == 3:
 
                 x = slice(self.my_src_xsrt, self.my_src_xend)
                 y = slice(self.   src_ysrt, self.   src_yend)
@@ -383,7 +380,7 @@ class Harmonic:
         self.omega = 2 * np.pi * self.freq
         self.wvector = 2 * np.pi / self.wvlen
 
-    def signal(self, tstep):
+    def apply(self, tstep):
 
         pulse = np.exp(-1j*self.omega*tstep*self.dt)
 

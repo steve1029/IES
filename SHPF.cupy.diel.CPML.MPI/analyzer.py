@@ -178,11 +178,13 @@ class SpectrumAnalyzer:
 
         phase = False
         wvlen = True
+        printing = False
         nf = 10
 
         if kwargs.get('nf') != None: nf = kwargs.get('nf')
         if kwargs.get('phase') != None: phase = kwargs.get('phase')
         if kwargs.get('wvlen') != None: wvlen = kwargs.get('wvlen')
+        if kwargs.get('printing') != None: printing = kwargs.get('printing')
 
         harm = hv.Harminv(signal=signal, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
 
@@ -191,21 +193,25 @@ class SpectrumAnalyzer:
             wunit = 'km'
             hfreq = harm.freq / 1e3
             wv = c / harm.freq / 1e3
+
         if harm.freq[-1] > 1e6 :
             funit = 'MHz'
             wunit = 'm'
             hfreq = harm.freq / 1e6
             wv = c / harm.freq / 1e0
+
         if harm.freq[-1] > 1e9 :
             funit = 'GHz'
             wunit = 'mm'
             hfreq = harm.freq / 1e9
             wv = c / harm.freq / 1e-3
+
         if harm.freq[-1] > 1e12:
             funit = 'THz'
             wunit = 'um'
             hfreq = harm.freq / 1e12
             wv = c / harm.freq / 1e-6
+
         if harm.freq[-1] > 1e15:
             funit = 'PHz'
             wunit = 'nm'
@@ -214,26 +220,30 @@ class SpectrumAnalyzer:
 
         nfreqs = self.normalized_freq(harm.freq, spacing)
 
-        print(name, ':')
-        for i in range(harm.freq.size):
+        if printing == True:
 
-            if phase == True and wvlen == False:
+            print(name, ':')
+            for i in range(harm.freq.size):
 
-                print("NFreq: {:+6.3f}, Freq: {:+5.3e}{:>4s}, Decay: {:+5.3e}, Q: {:+5.3e}, Amp: {:+5.3e}, Phase: {:+5.3e}, Err: {:+5.3e}"\
-                    .format(nfreqs[i], hfreq[i], unit, harm.decay[i], harm.Q[i], \
-                    harm.amplitude[i], harm.phase[i], harm.error[i]))
+                if phase == True and wvlen == False:
 
-            elif wvlen == True and phase == False:
+                    print("NFreq: {:+7.4f}, Freq: {:+5.3e}{:>4s}, Decay: {:+5.3e}, Q: {:+5.3e}, Amp: {:+5.3e}, Phase: {:+5.3e}, Err: {:+5.3e}"\
+                        .format(nfreqs[i], hfreq[i], unit, harm.decay[i], harm.Q[i], \
+                        harm.amplitude[i], harm.phase[i], harm.error[i]))
 
-                print("NFreq: {:+6.3f}, Freq: {:+5.3e}{:>4s}, WL: {:+5.3e}{:>3s}, Q: {:+5.3e}, Amp: {:+5.3e}, Decay: {:+5.3e}, Err: {:+5.3e}"\
-                    .format(nfreqs[i], hfreq[i], funit, wv[i], wunit, harm.Q[i], \
-                    harm.amplitude[i], harm.decay[i], harm.error[i]))
+                elif wvlen == True and phase == False:
 
-            elif wvlen == True and phase == True:
+                    print("NFreq: {:+7.4f}, Freq: {:+5.3e}{:>4s}, WL: {:+5.3e}{:>3s}, Q: {:+5.3e}, Amp: {:+5.3e}, Decay: {:+5.3e}, Err: {:+5.3e}"\
+                        .format(nfreqs[i], hfreq[i], funit, wv[i], wunit, harm.Q[i], \
+                        harm.amplitude[i], harm.decay[i], harm.error[i]))
 
-                print("NFreq: {:+6.3f}, Freq: {:+5.3e}{:>4s}, WL: {:+5.3e}{:>3s}, Q: {:+5.3e}, Amp: {:+5.3e}, phase: {:+5.3e}, Err: {:+5.3e}"\
-                    .format(nfreqs[i], hfreq[i], funit, wv[i], wunit, harm.Q[i], \
-                    harm.amplitude[i], harm.phase[i], harm.error[i]))
+                elif wvlen == True and phase == True:
+
+                    print("NFreq: {:+7.4f}, Freq: {:+5.3e}{:>4s}, WL: {:+5.3e}{:>3s}, Q: {:+5.3e}, Amp: {:+5.3e}, phase: {:+5.3e}, Err: {:+5.3e}"\
+                        .format(nfreqs[i], hfreq[i], funit, wv[i], wunit, harm.Q[i], \
+                        harm.amplitude[i], harm.phase[i], harm.error[i]))
+
+        return harm
 
     def use_harminv(self, Q, E, dt, fmin, fmax, **kwargs):
 
@@ -258,14 +268,6 @@ class SpectrumAnalyzer:
 
     def plot_fft_result(self, xlim, ylim, file_name, norm_freq=True):
 
-        # FFT frequency shifted data.
-        self.Ex_w_fs = np.fft.fftshift(self.Ex_w)
-        self.Ey_w_fs = np.fft.fftshift(self.Ey_w)
-        self.Ez_w_fs = np.fft.fftshift(self.Ez_w)
-        self.Hx_w_fs = np.fft.fftshift(self.Hx_w)
-        self.Hy_w_fs = np.fft.fftshift(self.Hy_w)
-        self.Hz_w_fs = np.fft.fftshift(self.Hz_w)
-
         fftfreq = np.fft.fftfreq(len(self.Ex_t), self.dt)
         fftfreq_fs = np.fft.fftshift(fftfreq)
 
@@ -282,6 +284,14 @@ class SpectrumAnalyzer:
         axes[1,2].plot(fftfreq, abs(self.Hz_w), '-o', ms=0.5, label='Hz_w')
 
         '''
+        # FFT frequency shifted data.
+        self.Ex_w_fs = np.fft.fftshift(self.Ex_w)
+        self.Ey_w_fs = np.fft.fftshift(self.Ey_w)
+        self.Ez_w_fs = np.fft.fftshift(self.Ez_w)
+        self.Hx_w_fs = np.fft.fftshift(self.Hx_w)
+        self.Hy_w_fs = np.fft.fftshift(self.Hy_w)
+        self.Hz_w_fs = np.fft.fftshift(self.Hz_w)
+
         axes[0,0].plot(fftfreq_fs, abs(self.Ex_w_fs), '-o', ms=0.5, label='Ex_w')
         axes[0,1].plot(fftfreq_fs, abs(self.Ey_w_fs), '-o', ms=0.5, label='Ey_w')
         axes[0,2].plot(fftfreq_fs, abs(self.Ez_w_fs), '-o', ms=0.5, label='Ez_w')
@@ -330,7 +340,7 @@ class SpectrumAnalyzer:
 
         fig.savefig(self.savedir+file_name, bbox_inches='tight')
 
-class CsvDataCollector(SpectrumAnalyzer):
+class CsvCreator(SpectrumAnalyzer):
 
     def __init__(self, loaddir, unit, names, dt, lattice_constant):
         """Load all .npy files and make averages .csv file.
@@ -390,9 +400,158 @@ class CsvDataCollector(SpectrumAnalyzer):
 
             except: continue
 
-        self.wvlens = np.sort(np.array(self.wvlens))
+        self.wvlens = np.array(self.wvlens)
 
-    def get_csv(self):
+    def get_plot_csv(self, dim, mode, xlim, ylim, whos_csv):
+
+        self.fftfreq = np.fft.fftfreq(self.tsteps, self.dt)
+        self.nfreq = self.normalized_freq(self.fftfreq, self.lc)
+
+        for wv, folder in enumerate(self.folders):
+
+            try:
+
+                if dim == 2: nrows, ncols = 3, len(self.names)
+                if dim == 3: nrows, ncols = 6, len(self.names)
+                
+                fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols*8,nrows*8))
+
+                df = pd.DataFrame()
+
+                df['Nfreq'] = self.nfreq
+                df['fftfreq'] = self.fftfreq
+
+                for i, name in enumerate(self.names):
+
+                    self.Ext_npyname = self.loaddir+"{}/{}_Ex_t.npy" .format(folder, name)
+                    self.Eyt_npyname = self.loaddir+"{}/{}_Ey_t.npy" .format(folder, name)
+                    self.Ezt_npyname = self.loaddir+"{}/{}_Ez_t.npy" .format(folder, name)
+
+                    self.Hxt_npyname = self.loaddir+"{}/{}_Hx_t.npy" .format(folder, name)
+                    self.Hyt_npyname = self.loaddir+"{}/{}_Hy_t.npy" .format(folder, name)
+                    self.Hzt_npyname = self.loaddir+"{}/{}_Hz_t.npy" .format(folder, name)
+
+                    # Get average of the len(name) collector objects.
+                    if dim==2 and mode=='TM':
+
+                        self.Ex_w = np.fft.fft(np.load(self.Ext_npyname))
+                        self.Hy_w = np.fft.fft(np.load(self.Hyt_npyname))
+                        self.Hz_w = np.fft.fft(np.load(self.Hzt_npyname))
+
+                        self.abs_Ex_w = abs(self.Ex_w)
+                        self.abs_Hy_w = abs(self.Hy_w)
+                        self.abs_Hz_w = abs(self.Hz_w)
+
+                        if name in whos_csv:
+                            df[name+'_Ex_w'] = self.abs_Ex_w
+                            df[name+'_Hy_w'] = self.abs_Hy_w
+                            df[name+'_Hz_w'] = self.abs_Hz_w
+
+                        axes[0,i].plot(self.nfreq, self.abs_Ex_w, '-o', ms=0.5, label='Ex_w')
+                        axes[1,i].plot(self.nfreq, self.abs_Hy_w, '-o', ms=0.5, label='Hy_w')
+                        axes[2,i].plot(self.nfreq, self.abs_Hz_w, '-o', ms=0.5, label='Hz_w')
+
+                        axes[0,i].set_xlim(xlim[0], xlim[1])
+                        axes[1,i].set_xlim(xlim[0], xlim[1])
+                        axes[2,i].set_xlim(xlim[0], xlim[1])
+
+                        axes[0,i].set_ylim(ylim[0], ylim[1])
+                        axes[1,i].set_ylim(ylim[0]*1e-3, ylim[1]*1e-3)
+                        axes[2,i].set_ylim(ylim[0]*1e-3, ylim[1]*1e-3)
+
+                        axes[0,i].legend(loc='best')
+                        axes[1,i].legend(loc='best')
+                        axes[2,i].legend(loc='best')
+
+                        axes[0,i].set_xlabel("Nfreq")
+                        axes[1,i].set_xlabel("Nfreq")
+                        axes[2,i].set_xlabel("Nfreq")
+
+                    elif dim==2 and mode=='TE':
+
+                        self.Ey_w = np.fft.fft(np.load(self.Eyt_npyname))
+                        self.Ez_w = np.fft.fft(np.load(self.Ezt_npyname))
+                        self.Hx_w = np.fft.fft(np.load(self.Hxt_npyname))
+
+                        self.abs_Ey_w = abs(self.Ey_w)
+                        self.abs_Ez_w = abs(self.Ez_w)
+                        self.abs_Hx_w = abs(self.Hx_w)
+
+                        if name in whos_csv:
+                            df[name+'_Ey_w'] = self.Ey_w
+                            df[name+'_Ez_w'] = self.Ez_w
+                            df[name+'_Hx_w'] = self.Hx_w
+
+                        axes[0,i].plot(self.nfreq, self.abs_Ey_w, '-o', ms=0.5, label='Ey_w')
+                        axes[1,i].plot(self.nfreq, self.abs_Ez_w, '-o', ms=0.5, label='Hz_w')
+                        axes[2,i].plot(self.nfreq, self.abs_Hx_w, '-o', ms=0.5, label='Hx_w')
+
+                        axes[0,i].set_xlim(xlim[0], xlim[1])
+                        axes[1,i].set_xlim(xlim[0], xlim[1])
+                        axes[2,i].set_xlim(xlim[0], xlim[1])
+
+                        axes[0,i].set_ylim(ylim[0], ylim[1])
+                        axes[1,i].set_ylim(ylim[0], ylim[1])
+                        axes[2,i].set_ylim(ylim[0]*1e-3, ylim[1]*1e-3)
+
+                        axes[0,i].legend(loc='best')
+                        axes[1,i].legend(loc='best')
+                        axes[2,i].legend(loc='best')
+
+                        axes[0,i].set_xlabel("Nfreq")
+                        axes[1,i].set_xlabel("Nfreq")
+                        axes[2,i].set_xlabel("Nfreq")
+
+                    elif dim==3:
+
+                        self.Ex_w = np.fft.fft(np.load(self.Ext_npyname))
+                        self.Ey_w = np.fft.fft(np.load(self.Eyt_npyname))
+                        self.Ez_w = np.fft.fft(np.load(self.Ezt_npyname))
+
+                        self.Hx_w = np.fft.fft(np.load(self.Hxt_npyname))
+                        self.Hy_w = np.fft.fft(np.load(self.Hyt_npyname))
+                        self.Hz_w = np.fft.fft(np.load(self.Hzt_npyname))
+
+                        if name in whos_csv:
+                            df[name+'_Ex_w'] = self.Ex_w
+                            df[name+'_Ey_w'] = self.Ey_w
+                            df[name+'_Ez_w'] = self.Ez_w
+                            df[name+'_Hx_w'] = self.Hx_w
+                            df[name+'_Hy_w'] = self.Hy_w
+                            df[name+'_Hz_w'] = self.Hz_w
+
+                        axes[0,i].plot(self.nfreq, abs(self.Ex_w), '-o', ms=0.5, label='Ez_w')
+                        axes[1,i].plot(self.nfreq, abs(self.Ey_w), '-o', ms=0.5, label='Hx_w')
+                        axes[2,i].plot(self.nfreq, abs(self.Ez_w), '-o', ms=0.5, label='Ez_w')
+                        axes[3,i].plot(self.nfreq, abs(self.Hx_w), '-o', ms=0.5, label='Hx_w')
+                        axes[4,i].plot(self.nfreq, abs(self.Hy_w), '-o', ms=0.5, label='Hy_w')
+                        axes[5,i].plot(self.nfreq, abs(self.Hz_w), '-o', ms=0.5, label='Hy_w')
+
+                        axes[0,i].set_xlim(xlim[0], xlim[1])
+                        axes[1,i].set_xlim(xlim[0], xlim[1])
+                        axes[2,i].set_xlim(xlim[0], xlim[1])
+                        axes[3,i].set_xlim(xlim[0], xlim[1])
+                        axes[4,i].set_xlim(xlim[0], xlim[1])
+                        axes[5,i].set_xlim(xlim[0], xlim[1])
+
+                        axes[0,i].set_ylim(ylim[0], ylim[1])
+                        axes[1,i].set_ylim(ylim[0], ylim[1])
+                        axes[2,i].set_ylim(ylim[0], ylim[1])
+                        axes[3,i].set_ylim(ylim[0], ylim[1])
+                        axes[4,i].set_ylim(ylim[0], ylim[1])
+                        axes[5,i].set_ylim(ylim[0], ylim[1])
+
+                    else: raise ValueError("dim must be 1,2 or 3 and mode should be defined if dim==2.")
+
+                df.to_csv("{}/{}_fft_results.csv" .format(self.loaddir, folder[5:10]))
+                fig.savefig("{}/{}_fft_results.png" .format(self.loaddir, folder[5:10]), bbox_inches='tight')
+                print('{} fft results are plotted.' .format(folder[5:10]))
+                plt.close('all')
+
+            except Exception as err: 
+                print(err)
+
+    def get_fft_csv(self):
 
         for i, folder in enumerate(self.folders):
 
@@ -416,6 +575,7 @@ class CsvDataCollector(SpectrumAnalyzer):
                     self.Hyt_npyname = self.loaddir+"{}/{}_Hy_t.npy" .format(folder, name)
                     self.Hzt_npyname = self.loaddir+"{}/{}_Hz_t.npy" .format(folder, name)
 
+                    # Get average of the len(name) collector objects.
                     self.Ex_w += np.fft.fft(np.load(self.Ext_npyname))/len(name)
                     self.Ey_w += np.fft.fft(np.load(self.Eyt_npyname))/len(name)
                     self.Ez_w += np.fft.fft(np.load(self.Ezt_npyname))/len(name)
@@ -440,12 +600,130 @@ class CsvDataCollector(SpectrumAnalyzer):
                 df['Hz_w'] = abs(self.Hz_w)
 
                 df.to_csv("{}/{:05d}_avg_fft_results.csv" .format(self.loaddir, self.wvlens[i]))
-                self.plot_avg_fft([-1, 1], [-0.1, 2], "{:05d}_avg_fft.png" .format(self.wvlens[i]))
                 print("{:05d} csv and graph are created." .format(self.wvlens[i]))
 
             except Exception as err: 
                 print(err)
                 continue
+
+    def _record_pharminv(self, name, field, wvlen, harm):
+
+        cols = ['nfreq', 'freq', 'WL', 'Q', 'Amp', 'Decay', 'phase', 'Err']
+        df = pd.DataFrame(columns=cols)
+
+        if harm.freq[-1] > 1e3 : 
+            funit = 'KHz'
+            wunit = 'km'
+            hfreq = harm.freq / 1e3
+            wv = c / harm.freq / 1e3
+
+        elif harm.freq[-1] > 1e6 :
+            funit = 'MHz'
+            wunit = 'm'
+            hfreq = harm.freq / 1e6
+            wv = c / harm.freq / 1e0
+
+        elif harm.freq[-1] > 1e9 :
+            funit = 'GHz'
+            wunit = 'mm'
+            hfreq = harm.freq / 1e9
+            wv = c / harm.freq / 1e-3
+
+        elif harm.freq[-1] > 1e12:
+            funit = 'THz'
+            wunit = 'um'
+            hfreq = harm.freq / 1e12
+            wv = c / harm.freq / 1e-6
+
+        elif harm.freq[-1] > 1e15:
+            funit = 'PHz'
+            wunit = 'nm'
+            hfreq = harm.freq / 1e15
+            wv = c / harm.freq / 1e-9
+
+        for i in range(harm.freq.size):
+
+            nfreq = self.normalized_freq(harm.freq[i], self.lc)
+            wv = c/harm.freq[i]
+
+            row = [nfreq, harm.freq[i], wv, harm.Q[i], harm.amplitude[i], harm.decay[i], harm.phase[i], harm.error[i]]
+            df.loc[len(df)] = row 
+            
+        df.to_csv("{}/{:05d}_{}_{}_pharminv_results.csv" .format(self.loaddir, wvlen, field, name))
+
+    def get_pharminv_csv(self, dim, name, tsteps, dt, fmin, fmax, nf, **kwargs):
+
+        self.dt = dt
+        self.tsteps = tsteps
+        self.dim = dim
+        self.mode = 'TM'
+
+        if kwargs.get('mode') != None: self.mode = kwargs.get('mode')
+
+        assert self.mode == 'TM' or self.mode == 'TE'
+
+        for i, folder in enumerate(self.folders):
+
+            if self.dim == 2 and self.mode == 'TM':
+
+                self.Ext_npyname = self.loaddir+"{}/{}_Ex_t.npy" .format(folder, name)
+                self.Hyt_npyname = self.loaddir+"{}/{}_Hy_t.npy" .format(folder, name)
+                self.Hzt_npyname = self.loaddir+"{}/{}_Hz_t.npy" .format(folder, name)
+
+                self.Ex_t = np.load(self.Ext_npyname)
+                self.Hy_t = np.load(self.Hyt_npyname)
+                self.Hz_t = np.load(self.Hzt_npyname)
+
+                harm_Ext = hv.Harminv(signal=self.Ex_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
+                harm_Hyt = hv.Harminv(signal=self.Hy_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
+                harm_Hzt = hv.Harminv(signal=self.Hz_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
+
+                self._record_pharminv(name, 'Ex', self.wvlens[i], harm_Ext)
+                #self._record_pharminv(name, 'Hy', harm_Hyt)
+                #self._record_pharminv(name, 'Hz', harm_Hzt)
+
+            elif self.dim == 2 and self.mode == 'TE':
+
+                self.Hxt_npyname = self.loaddir+"{}/{}_Hx_t.npy" .format(folder, name)
+                self.Eyt_npyname = self.loaddir+"{}/{}_Ey_t.npy" .format(folder, name)
+                self.Ezt_npyname = self.loaddir+"{}/{}_Ez_t.npy" .format(folder, name)
+
+                self.Hx_t = np.load(self.Hxt_npyname)
+                self.Ey_t = np.load(self.Eyt_npyname)
+                self.Ez_t = np.load(self.Ezt_npyname)
+
+                harm_Eyt = hv.Harminv(signal=self.Ey_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
+                harm_Ezt = hv.Harminv(signal=self.Ez_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
+                harm_Hxt = hv.Harminv(signal=self.Hx_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
+
+                self._record_pharminv('Ey', harm_Eyt)
+                self._record_pharminv('Ez', harm_Ezt)
+                self._record_pharminv('Hx', harm_Hxt)
+
+            elif self.dim == 3:
+
+                self.Hxt_npyname = self.loaddir+"{}/{}_Hx_t.npy" .format(folder, name)
+                self.Hyt_npyname = self.loaddir+"{}/{}_Hy_t.npy" .format(folder, name)
+                self.Hzt_npyname = self.loaddir+"{}/{}_Hz_t.npy" .format(folder, name)
+                self.Ext_npyname = self.loaddir+"{}/{}_Ex_t.npy" .format(folder, name)
+                self.Eyt_npyname = self.loaddir+"{}/{}_Ey_t.npy" .format(folder, name)
+                self.Ezt_npyname = self.loaddir+"{}/{}_Ez_t.npy" .format(folder, name)
+
+                self.Ex_t = np.load(self.Ext_npyname)
+                self.Ey_t = np.load(self.Eyt_npyname)
+                self.Ez_t = np.load(self.Ezt_npyname)
+                self.Hx_t = np.load(self.Hxt_npyname)
+                self.Hy_t = np.load(self.Hyt_npyname)
+                self.Hz_t = np.load(self.Hzt_npyname)
+
+                harm_Ext = hv.Harminv(signal=self.Ex_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
+                harm_Eyt = hv.Harminv(signal=self.Ey_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
+                harm_Ezt = hv.Harminv(signal=self.Ez_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
+                harm_Hxt = hv.Harminv(signal=self.Hx_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
+                harm_Hyt = hv.Harminv(signal=self.Hy_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
+                harm_Hzt = hv.Harminv(signal=self.Hz_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
+
+            print("{:05d} pharminv calculation finished." .format(self.wvlens[i]))
 
     def plot_avg_fft(self, xlim, ylim, file_name):
 
@@ -540,38 +818,46 @@ if __name__ == '__main__':
     fmin = -5e14 
     fmax = +5e14
 
-    loaddir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/graph/wvlen1148_phi0_theta90/'
+    #loaddir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/graph/wvlen18000_theta0/'
+    loaddir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/graph/wvlen01200_theta0/'
     savedir = loaddir
 
     test = SpectrumAnalyzer(loaddir, savedir, 'fap1')
     #test.use_harminv(Q, E, dt, fmin, fmax, nf=nf)
-    test.use_pharminv('Ex', dt, fmin, fmax, Ly, nf=nf, phase=True, wvlen=True)
+    test.use_pharminv('Ex', dt, fmin, fmax, Ly, nf=nf, printing=True, phase=True, wvlen=True)
     test.use_fft(dt, Ly, binary=False, txt=False, csv=True)
-    test.plot_fft_result([None, None], [None, None],"fap1_fft_1.png")
-    test.plot_fft_result([fmin, fmax], [-0.1, 2], "fap1_fft_2.png", norm_freq=False)
+    #test.plot_fft_result([None, None], [None, None],"fap1_fft_1.png")
+    #test.plot_fft_result([fmin, fmax], [-0.1, 2], "fap1_fft_2.png", norm_freq=False)
     test.plot_fft_result([-1, 1], [-0.1, 2], "fap1_fft_3.png", norm_freq=True)
 
     test2 = SpectrumAnalyzer(loaddir, savedir, 'fap2')
     #test2.use_harminv(Q, E, dt, fmin, fmax, nf=nf)
     test2.use_pharminv('Ex', dt, fmin, fmax, Ly, nf=nf, phase=True, wvlen=True)
     test2.use_fft(dt, Ly)
-    test2.plot_fft_result([None, None], [None, None],"fap2_fft_1.png")
-    test2.plot_fft_result([fmin, fmax], [-.1, 2], "fap2_fft_2.png", norm_freq=False)
+    #test2.plot_fft_result([None, None], [None, None],"fap2_fft_1.png")
+    #test2.plot_fft_result([fmin, fmax], [-.1, 2], "fap2_fft_2.png", norm_freq=False)
     test2.plot_fft_result([-1, 1], [-.1, 2], "fap2_fft_3.png", norm_freq=True)
 
     test3 = SpectrumAnalyzer(loaddir, savedir, 'fap3')
     #test3.use_harminv(Q, E, dt, fmin, fmax, nf=nf)
     test3.use_pharminv('Ex', dt, fmin, fmax, Ly, nf=nf, phase=True, wvlen=True)
     test3.use_fft(dt, Ly)
-    test3.plot_fft_result([fmin, fmax], [-.1, 2],"fap3_fft_1.png", norm_freq=False)
-    test3.plot_fft_result([-1, 1], [-.1, 2], "fap3_fft_2.png", norm_freq=True)
+    #test3.plot_fft_result([fmin, fmax], [-.1, 2],"fap3_fft_1.png", norm_freq=False)
+    test3.plot_fft_result([-1, 1], [-.1, 2], "fap3_fft_3.png", norm_freq=True)
     
     test4 = SpectrumAnalyzer(loaddir, savedir, 'fap4')
     #test4.use_harminv(Q, E, dt, fmin, fmax, nf=nf)
     test4.use_pharminv('Ex', dt, fmin, fmax, Ly, nf=nf, phase=True, wvlen=True)
     test4.use_fft(dt, Ly)
-    test4.plot_fft_result([fmin, fmax], [-.1, 2],"fap4_fft_1.png", norm_freq=False)
-    test4.plot_fft_result([-1, 1], [-.1, 2], "fap4_fft_2.png", norm_freq=True)
+    #test4.plot_fft_result([fmin, fmax], [-.1, 2],"fap4_fft_1.png", norm_freq=False)
+    test4.plot_fft_result([-1, 1], [-.1, 2], "fap4_fft_3.png", norm_freq=True)
+
+    test5 = SpectrumAnalyzer(loaddir, savedir, 'fap5')
+    #test4.use_harminv(Q, E, dt, fmin, fmax, nf=nf)
+    test5.use_pharminv('Ex', dt, fmin, fmax, Ly, nf=nf, phase=True, wvlen=True)
+    test5.use_fft(dt, Ly)
+    #test4.plot_fft_result([fmin, fmax], [-.1, 2],"fap4_fft_1.png", norm_freq=False)
+    test5.plot_fft_result([-1, 1], [-.1, 2], "fap5_fft_3.png", norm_freq=True)
 
     """
     wvlens = np.arange(574, 601, 100)

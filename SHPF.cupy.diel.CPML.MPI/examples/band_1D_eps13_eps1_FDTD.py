@@ -7,7 +7,7 @@ from mpi4py import MPI
 import matplotlib.pyplot as plt
 from scipy.constants import c
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import source, space, plotfield, structure, collector
+import source, space, plotfield, structure, collector, recorder
 
 #------------------------------------------------------------------#
 #--------------------- Space object settings ----------------------#
@@ -31,10 +31,9 @@ TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.comp
 TF.malloc()
 
 ########## Set PML and PBC
-TF.set_PML({'x':'','y':'','z':'+-'}, 10)
-
-region = {'x':True, 'y':True, 'z':False}
-TF.apply_BPBC(region, BBC=True, PBC=False)
+TF.apply_PML({'x':'','y':'','z':'+-'}, 10)
+TF.apply_BBC({'x':True, 'y':True, 'z':False})
+TF.apply_PBC({'x':False, 'y':False, 'z':False})
 
 ########## Save PML data.
 #TF.save_pml_parameters('./')
@@ -290,30 +289,4 @@ fap4.save_time_signal(binary=True, txt=False)
 #------------------- Record simulation history --------------------#
 #------------------------------------------------------------------#
 
-if TF.MPIrank == 0:
-
-    # Simulation finished time
-    finished_time = datetime.datetime.now()
-
-    # Record simulation size and operation time
-    if not os.path.exists("../record") : os.mkdir("../record")
-    record_path = "../record/record_%s.txt" %(datetime.date.today())
-
-    if not os.path.exists(record_path):
-        f = open( record_path,'a')
-        f.write("{:4}\t{:4}\t{:4}\t{:4}\t{:4}\t\t{:4}\t\t{:4}\t\t{:8}\t{:4}\t\t\t\t{:12}\t{:12}\n\n" \
-            .format("Node","Nx","Ny","Nz","dx","dy","dz","tsteps","Time","VM/Node(GB)","RM/Node(GB)"))
-        f.close()
-
-    me = psutil.Process(os.getpid())
-    me_rssmem_GB = float(me.memory_info().rss)/1024/1024/1024
-    me_vmsmem_GB = float(me.memory_info().vms)/1024/1024/1024
-
-    cal_time = finished_time - start_time
-    f = open( record_path,'a')
-    f.write("{:2d}\t\t{:04d}\t{:04d}\t{:04d}\t{:5.2e}\t{:5.2e}\t{:5.2e}\t{:06d}\t\t{}\t\t{:06.3f}\t\t\t{:06.3f}\n" \
-                .format(TF.MPIsize, TF.Nx, TF.Ny, TF.Nz,\
-                    TF.dx, TF.dy, TF.dz, TF.tsteps, cal_time, me_vmsmem_GB, me_rssmem_GB))
-    f.close()
-    
-    print("Simulation finished: {}".format(datetime.datetime.now()))
+if TF.MPIrank == 0: recording = recorder.Recorder(TF, start_time, "../record/")
