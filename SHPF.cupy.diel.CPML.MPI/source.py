@@ -237,6 +237,13 @@ class Gaussian:
         self.ts = 1./self.ws
         self.tc = self.pick_pos * self.dt   
 
+    def pulse_c(self, step):
+
+        pulse = np.exp((-.5) * (((step*self.dt-self.tc)*self.ws)**2)) * \
+                    np.exp(-1j*self.w0*(step*self.dt-self.tc))
+
+        return pulse
+
     def pulse_re(self,step):
         
         pulse_re = np.exp((-.5) * (((step*self.dt-self.tc)*self.ws)**2)) * \
@@ -247,7 +254,7 @@ class Gaussian:
     def pulse_im(self,step):
         
         pulse_im = np.exp((-.5) * (((step*self.dt-self.tc)*self.ws)**2)) * \
-                    np.sin(self.w0*(step*self.dt-self.tc))
+                    -np.sin(self.w0*(step*self.dt-self.tc))
 
         return pulse_im
 
@@ -400,6 +407,27 @@ class Smoothing:
 
         if tstep < self.threshold: smoother = tstep / self.threshold
         else: smoother = 1.
+
+        return smoother
+
+
+class SmoothInOut:
+ 
+    def __init__(self, dt, inc, dec):
+        
+        self.dt = dt
+        self.inc = inc # increase until tstep reaches inc.
+        self.dec = dec # decrease after tstep exceeds dec.
+
+    def apply(self, tstep):
+
+        smoother = 0
+
+        if tstep < self.inc: smoother = tstep / self.inc
+        elif tstep >= self.inc and tstep <= self.dec: smoother = 1
+        elif tstep > self.dec and tstep < (self.inc+self.dec):
+            smoother = (self.inc - tstep) / (self.inc - self.dec)
+        else: smoother = 0
 
         return smoother
 

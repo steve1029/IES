@@ -342,7 +342,7 @@ class SpectrumAnalyzer:
 
 class CsvCreator(SpectrumAnalyzer):
 
-    def __init__(self, loaddir, unit, names, dt, lattice_constant):
+    def __init__(self, loaddir, names, dt, lattice_constant, where):
         """Load all .npy files and make averages .csv file.
 
         Parameters
@@ -364,9 +364,6 @@ class CsvCreator(SpectrumAnalyzer):
         nm = 1e-9
         um = 1e-6
 
-        if unit == 'nm': self.unit = nm
-        if unit == 'um': self.unit = um
-
         self.dt = dt
         self.lc = lattice_constant
         self.loaddir = loaddir
@@ -377,11 +374,11 @@ class CsvCreator(SpectrumAnalyzer):
         for folder in self.folders:
 
             try: 
-                self.tsteps = len(np.load(self.loaddir+"{}/{}_Ex_t.npy" .format(folder, names[0])))
+                self.tsteps = len(np.load(self.loaddir+"{}/{}_{}_t.npy" .format(folder, names[0], where)))
             except Exception as err:
                 useless.append(folder)
                 #print(err)
-                print("{} is not found. Get total time step from the next folder." .format(folder))
+                print("Time domain data is not found in {}. Get total time step from the next folder." .format(folder))
                 continue
 
         for ul in useless: self.folders.remove(ul)
@@ -402,7 +399,25 @@ class CsvCreator(SpectrumAnalyzer):
 
         self.wvlens = np.array(self.wvlens)
 
-    def get_plot_csv(self, dim, mode, xlim, ylim, whos_csv):
+    def _plot_fft_space2D_fields(self, name, fig, axes, j, nfreq, fs, labels, xlim, ylim, df, whos_csv):
+
+        for i, label in enumerate(labels): 
+
+            if i == 0: axes[i,j].set_title(name)
+        
+            to_plot = abs(fs[i])
+            axes[i,j].plot(nfreq, to_plot, '-o', ms=0.5, label=label)
+            axes[i,j].set_xlim(xlim[0], xlim[1])
+
+            if 'H' in label: axes[i,j].set_ylim(ylim[0], ylim[1]*1e-3)
+            else: axes[i,j].set_ylim(ylim[0], ylim[1])
+
+            axes[i,j].legend(loc='upper center')
+            axes[i,j].set_xlabel("Nfreq")
+           
+            if name in whos_csv: df[name+'_{}_w' .format(label)] = to_plot 
+
+    def get_fft_plot_csv(self, dim, mode, flag, xlim, ylim, whos_csv):
 
         self.fftfreq = np.fft.fftfreq(self.tsteps, self.dt)
         self.nfreq = self.normalized_freq(self.fftfreq, self.lc)
@@ -413,7 +428,7 @@ class CsvCreator(SpectrumAnalyzer):
 
                 if dim == 2: nrows, ncols = 3, len(self.names)
                 if dim == 3: nrows, ncols = 6, len(self.names)
-                
+
                 fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols*8,nrows*8))
 
                 df = pd.DataFrame()
@@ -421,7 +436,7 @@ class CsvCreator(SpectrumAnalyzer):
                 df['Nfreq'] = self.nfreq
                 df['fftfreq'] = self.fftfreq
 
-                for i, name in enumerate(self.names):
+                for j, name in enumerate(self.names):
 
                     self.Ext_npyname = self.loaddir+"{}/{}_Ex_t.npy" .format(folder, name)
                     self.Eyt_npyname = self.loaddir+"{}/{}_Ey_t.npy" .format(folder, name)
@@ -432,75 +447,45 @@ class CsvCreator(SpectrumAnalyzer):
                     self.Hzt_npyname = self.loaddir+"{}/{}_Hz_t.npy" .format(folder, name)
 
                     # Get average of the len(name) collector objects.
-                    if dim==2 and mode=='TM':
+                    if dim==2 and mode=='TM' and flag == 'Ex':
 
-                        self.Ex_w = np.fft.fft(np.load(self.Ext_npyname))
-                        self.Hy_w = np.fft.fft(np.load(self.Hyt_npyname))
-                        self.Hz_w = np.fft.fft(np.load(self.Hzt_npyname))
+                        f1 = np.fft.fft(np.load(self.Ext_npyname))
+                        f2 = np.fft.fft(np.load(self.Hyt_npyname))
+                        f3 = np.fft.fft(np.load(self.Hzt_npyname))
 
-                        self.abs_Ex_w = abs(self.Ex_w)
-                        self.abs_Hy_w = abs(self.Hy_w)
-                        self.abs_Hz_w = abs(self.Hz_w)
+                        fs = [f1, f2, f3]
+                        labels = ['Ex', 'Hy', 'Hz']
+                        self._plot_fft_space2D_fields(name, fig, axes, j, self.nfreq, fs, labels, xlim, ylim, df, whos_csv)
 
-                        if name in whos_csv:
-                            df[name+'_Ex_w'] = self.abs_Ex_w
-                            df[name+'_Hy_w'] = self.abs_Hy_w
-                            df[name+'_Hz_w'] = self.abs_Hz_w
+                    elif dim==2 and mode=='TM' and flag == 'Ez':
 
-                        axes[0,i].plot(self.nfreq, self.abs_Ex_w, '-o', ms=0.5, label='Ex_w')
-                        axes[1,i].plot(self.nfreq, self.abs_Hy_w, '-o', ms=0.5, label='Hy_w')
-                        axes[2,i].plot(self.nfreq, self.abs_Hz_w, '-o', ms=0.5, label='Hz_w')
+                        f1 = np.fft.fft(np.load(self.Ezt_npyname))
+                        f2 = np.fft.fft(np.load(self.Hxt_npyname))
+                        f3 = np.fft.fft(np.load(self.Hyt_npyname))
 
-                        axes[0,i].set_xlim(xlim[0], xlim[1])
-                        axes[1,i].set_xlim(xlim[0], xlim[1])
-                        axes[2,i].set_xlim(xlim[0], xlim[1])
+                        fs = [f1, f2, f3]
+                        labels = ['Ez', 'Hx', 'Hy']
+                        self._plot_fft_space2D_fields(name, fig, axes, j, self.nfreq, fs, labels, xlim, ylim, df, whos_csv)
 
-                        axes[0,i].set_ylim(ylim[0], ylim[1])
-                        axes[1,i].set_ylim(ylim[0]*1e-3, ylim[1]*1e-3)
-                        axes[2,i].set_ylim(ylim[0]*1e-3, ylim[1]*1e-3)
+                    elif dim==2 and mode=='TE' and flag == 'Hx':
 
-                        axes[0,i].legend(loc='best')
-                        axes[1,i].legend(loc='best')
-                        axes[2,i].legend(loc='best')
+                        f1 = np.fft.fft(np.load(self.Eyt_npyname))
+                        f2 = np.fft.fft(np.load(self.Ezt_npyname))
+                        f3 = np.fft.fft(np.load(self.Hxt_npyname))
 
-                        axes[0,i].set_xlabel("Nfreq")
-                        axes[1,i].set_xlabel("Nfreq")
-                        axes[2,i].set_xlabel("Nfreq")
+                        fs = [f1, f2, f3]
+                        labels = ['Ey', 'Ez', 'Hx']
+                        self._plot_fft_space2D_fields(name, fig, axes, j, self.nfreq, fs, labels, xlim, ylim, df, whos_csv)
 
-                    elif dim==2 and mode=='TE':
+                    elif dim==2 and mode=='TE' and flag == 'Hz':
 
-                        self.Ey_w = np.fft.fft(np.load(self.Eyt_npyname))
-                        self.Ez_w = np.fft.fft(np.load(self.Ezt_npyname))
-                        self.Hx_w = np.fft.fft(np.load(self.Hxt_npyname))
+                        f1 = np.fft.fft(np.load(self.Ext_npyname))
+                        f2 = np.fft.fft(np.load(self.Eyt_npyname))
+                        f3 = np.fft.fft(np.load(self.Hzt_npyname))
 
-                        self.abs_Ey_w = abs(self.Ey_w)
-                        self.abs_Ez_w = abs(self.Ez_w)
-                        self.abs_Hx_w = abs(self.Hx_w)
-
-                        if name in whos_csv:
-                            df[name+'_Ey_w'] = self.Ey_w
-                            df[name+'_Ez_w'] = self.Ez_w
-                            df[name+'_Hx_w'] = self.Hx_w
-
-                        axes[0,i].plot(self.nfreq, self.abs_Ey_w, '-o', ms=0.5, label='Ey_w')
-                        axes[1,i].plot(self.nfreq, self.abs_Ez_w, '-o', ms=0.5, label='Hz_w')
-                        axes[2,i].plot(self.nfreq, self.abs_Hx_w, '-o', ms=0.5, label='Hx_w')
-
-                        axes[0,i].set_xlim(xlim[0], xlim[1])
-                        axes[1,i].set_xlim(xlim[0], xlim[1])
-                        axes[2,i].set_xlim(xlim[0], xlim[1])
-
-                        axes[0,i].set_ylim(ylim[0], ylim[1])
-                        axes[1,i].set_ylim(ylim[0], ylim[1])
-                        axes[2,i].set_ylim(ylim[0]*1e-3, ylim[1]*1e-3)
-
-                        axes[0,i].legend(loc='best')
-                        axes[1,i].legend(loc='best')
-                        axes[2,i].legend(loc='best')
-
-                        axes[0,i].set_xlabel("Nfreq")
-                        axes[1,i].set_xlabel("Nfreq")
-                        axes[2,i].set_xlabel("Nfreq")
+                        fs = [f1, f2, f3]
+                        labels = ['Ex', 'Ey', 'Hz']
+                        self._plot_fft_space2D_fields(name, fig, axes, j, self.nfreq, fs, labels, xlim, ylim, df, whos_csv)
 
                     elif dim==3:
 
@@ -541,70 +526,17 @@ class CsvCreator(SpectrumAnalyzer):
                         axes[4,i].set_ylim(ylim[0], ylim[1])
                         axes[5,i].set_ylim(ylim[0], ylim[1])
 
-                    else: raise ValueError("dim must be 1,2 or 3 and mode should be defined if dim==2.")
+                    else: raise ValueError("dim must be 1,2 or 3,  mode should be defined if dim==2 and \
+                        flag should be defined since it indicates the plane.")
 
-                df.to_csv("{}/{}_fft_results.csv" .format(self.loaddir, folder[5:10]))
-                fig.savefig("{}/{}_fft_results.png" .format(self.loaddir, folder[5:10]), bbox_inches='tight')
-                print('{} fft results are plotted.' .format(folder[5:10]))
+                fig.savefig("{}/{}_fft_results.png" .format(self.loaddir, self.wvlens[wv], bbox_inches='tight'))
+                print('{} fft results are plotted.' .format(self.wvlens[wv]))
                 plt.close('all')
 
-            except Exception as err: 
-                print(err)
-
-    def get_fft_csv(self):
-
-        for i, folder in enumerate(self.folders):
-
-            try:
-
-                self.Ex_w = np.zeros(self.tsteps, dtype=np.complex128)
-                self.Ey_w = np.zeros(self.tsteps, dtype=np.complex128)
-                self.Ez_w = np.zeros(self.tsteps, dtype=np.complex128)
-
-                self.Hx_w = np.zeros(self.tsteps, dtype=np.complex128)
-                self.Hy_w = np.zeros(self.tsteps, dtype=np.complex128)
-                self.Hz_w = np.zeros(self.tsteps, dtype=np.complex128)
-
-                for name in self.names:
-
-                    self.Ext_npyname = self.loaddir+"{}/{}_Ex_t.npy" .format(folder, name)
-                    self.Eyt_npyname = self.loaddir+"{}/{}_Ey_t.npy" .format(folder, name)
-                    self.Ezt_npyname = self.loaddir+"{}/{}_Ez_t.npy" .format(folder, name)
-
-                    self.Hxt_npyname = self.loaddir+"{}/{}_Hx_t.npy" .format(folder, name)
-                    self.Hyt_npyname = self.loaddir+"{}/{}_Hy_t.npy" .format(folder, name)
-                    self.Hzt_npyname = self.loaddir+"{}/{}_Hz_t.npy" .format(folder, name)
-
-                    # Get average of the len(name) collector objects.
-                    self.Ex_w += np.fft.fft(np.load(self.Ext_npyname))/len(name)
-                    self.Ey_w += np.fft.fft(np.load(self.Eyt_npyname))/len(name)
-                    self.Ez_w += np.fft.fft(np.load(self.Ezt_npyname))/len(name)
-
-                    self.Hx_w += np.fft.fft(np.load(self.Hxt_npyname))/len(name)
-                    self.Hy_w += np.fft.fft(np.load(self.Hyt_npyname))/len(name)
-                    self.Hz_w += np.fft.fft(np.load(self.Hzt_npyname))/len(name)
-
-                self.fftfreq = np.fft.fftfreq(self.tsteps, self.dt)
-                self.nfreqs = self.normalized_freq(self.fftfreq, self.lc)
-
-                df = pd.DataFrame()
-
-                df['Nfreqs'] = self.nfreqs
-                df['freqs'] = self.fftfreq
-
-                df['Ex_w'] = abs(self.Ex_w)
-                df['Ey_w'] = abs(self.Ey_w)
-                df['Ez_w'] = abs(self.Ez_w)
-                df['Hx_w'] = abs(self.Hx_w)
-                df['Hy_w'] = abs(self.Hy_w)
-                df['Hz_w'] = abs(self.Hz_w)
-
-                df.to_csv("{}/{:05d}_avg_fft_results.csv" .format(self.loaddir, self.wvlens[i]))
-                print("{:05d} csv and graph are created." .format(self.wvlens[i]))
+                df.to_csv("{}/{}_fft_results.csv" .format(self.loaddir, folder[5:10]))
 
             except Exception as err: 
                 print(err)
-                continue
 
     def _record_pharminv(self, name, field, wvlen, harm):
 
@@ -651,37 +583,21 @@ class CsvCreator(SpectrumAnalyzer):
             
         df.to_csv("{}/{:05d}_{}_{}_pharminv_results.csv" .format(self.loaddir, wvlen, field, name))
 
-    def get_pharminv_csv(self, dim, name, tsteps, dt, fmin, fmax, nf, **kwargs):
+    def get_pharminv_csv(self, field, name, tsteps, dt, fmin, fmax, nf, **kwargs):
 
         self.dt = dt
         self.tsteps = tsteps
-        self.dim = dim
-        self.mode = 'TM'
-
-        if kwargs.get('mode') != None: self.mode = kwargs.get('mode')
-
-        assert self.mode == 'TM' or self.mode == 'TE'
 
         for i, folder in enumerate(self.folders):
 
-            if self.dim == 2 and self.mode == 'TM':
+            field_npyname = self.loaddir+"{}/{}_{}_t.npy" .format(folder, name, field)
+            field_t = np.load(field_npyname)
 
-                self.Ext_npyname = self.loaddir+"{}/{}_Ex_t.npy" .format(folder, name)
-                self.Hyt_npyname = self.loaddir+"{}/{}_Hy_t.npy" .format(folder, name)
-                self.Hzt_npyname = self.loaddir+"{}/{}_Hz_t.npy" .format(folder, name)
+            harm_field = hv.Harminv(signal=field_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
 
-                self.Ex_t = np.load(self.Ext_npyname)
-                self.Hy_t = np.load(self.Hyt_npyname)
-                self.Hz_t = np.load(self.Hzt_npyname)
+            self._record_pharminv(name, field, self.wvlens[i], harm_field)
 
-                harm_Ext = hv.Harminv(signal=self.Ex_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
-                harm_Hyt = hv.Harminv(signal=self.Hy_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
-                harm_Hzt = hv.Harminv(signal=self.Hz_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
-
-                self._record_pharminv(name, 'Ex', self.wvlens[i], harm_Ext)
-                #self._record_pharminv(name, 'Hy', harm_Hyt)
-                #self._record_pharminv(name, 'Hz', harm_Hzt)
-
+            """
             elif self.dim == 2 and self.mode == 'TE':
 
                 self.Hxt_npyname = self.loaddir+"{}/{}_Hx_t.npy" .format(folder, name)
@@ -722,82 +638,9 @@ class CsvCreator(SpectrumAnalyzer):
                 harm_Hxt = hv.Harminv(signal=self.Hx_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
                 harm_Hyt = hv.Harminv(signal=self.Hy_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
                 harm_Hzt = hv.Harminv(signal=self.Hz_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
+            """
 
-            print("{:05d} pharminv calculation finished." .format(self.wvlens[i]))
-
-    def plot_avg_fft(self, xlim, ylim, file_name):
-
-        fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(24,16))
-
-        axes[0,0].plot(self.nfreqs, abs(self.Ex_w), '-o', ms=0.5, label='Ex_w')
-        axes[0,1].plot(self.nfreqs, abs(self.Ey_w), '-o', ms=0.5, label='Ey_w')
-        axes[0,2].plot(self.nfreqs, abs(self.Ez_w), '-o', ms=0.5, label='Ez_w')
-
-        axes[1,0].plot(self.nfreqs, abs(self.Hx_w), '-o', ms=0.5, label='Hx_w')
-        axes[1,1].plot(self.nfreqs, abs(self.Hy_w), '-o', ms=0.5, label='Hy_w')
-        axes[1,2].plot(self.nfreqs, abs(self.Hz_w), '-o', ms=0.5, label='Hz_w')
-
-        hylim = [ylim[0], ylim[1]]
-
-        if ylim[0] != None: hylim[0] = ylim[0] * 3e-3
-        if ylim[1] != None: hylim[1] = ylim[1] * 3e-3
-
-        axes[0,0].legend(loc='best')
-        axes[0,1].legend(loc='best')
-        axes[0,2].legend(loc='best')
-
-        axes[1,0].legend(loc='best')
-        axes[1,1].legend(loc='best')
-        axes[1,2].legend(loc='best')
-
-        axes[0,0].set_xlim(xlim[0],xlim[1])
-        axes[0,1].set_xlim(xlim[0],xlim[1])
-        axes[0,2].set_xlim(xlim[0],xlim[1])
-
-        axes[1,0].set_xlim(xlim[0],xlim[1])
-        axes[1,1].set_xlim(xlim[0],xlim[1])
-        axes[1,2].set_xlim(xlim[0],xlim[1])
-
-        axes[0,0].set_ylim(ylim[0],ylim[1])
-        axes[0,1].set_ylim(ylim[0],ylim[1])
-        axes[0,2].set_ylim(ylim[0],ylim[1])
-
-        axes[1,0].set_ylim(hylim[0],hylim[1])
-        axes[1,1].set_ylim(hylim[0],hylim[1])
-        axes[1,2].set_ylim(hylim[0],hylim[1])
-
-        fig.savefig(self.loaddir+file_name, bbox_inches='tight')
-        plt.close('all')
-
-    def plot_peak(self, lower_limit):
-
-        cols = ['Nmmt', 'Nfreq', 'Ex_w']
-        df = pd.DataFrame(columns=cols)
-
-        for wvlen in self.wvlens:
-
-            try: 
-                data = pd.read_csv(self.loaddir+"{}_avg_fft_results.csv" .format(wvlen))
-
-            except FileNotFoundError:
-                print("{:04d} are not found. Continue to next one.")
-                continue
-
-            band = data.loc[(data['Nfreqs'] <= 1) & (data['Nfreqs'] >= -1) & (data['Ex_w'] >= lower_limit)]
-            #print(band)
-            #print(band.shape)
-            #print(type(band))
-
-            #Nmmt = np.array([self.lc/wvlen/self.unit] * len(band))[np.newaxis].T
-            #Nmmt = np.array([self.lc/wvlen/self.unit] * len(band))
-
-            #for i, nmmt in enumerate(Nmmt):
-            #    new = {'Nmmt': Nmmt[i], 'Nfreq':band['Nfreqs'][i], 'Ex_w':band['Ex_w'][i]}
-            df.append(band, ignore_index=True) 
-
-        #fig = df.plot.scatter(x='Nmmt', y='Nfreq')
-        #fig.savefig("{}/band_structure.png". format(self.loaddir))
-        df.to_csv("{}/peaks.csv" .format(self.loaddir))
+            print("{:05d} {} pharminv calculation finished." .format(self.wvlens[i], field))
 
 
 if __name__ == '__main__':
@@ -869,5 +712,4 @@ if __name__ == '__main__':
     #print(wvlens)
     test = CsvDataCollector(loaddir, wvlens, 'nm', names, dt, Ly)
     test.get_csv()
-    #test.plot_peak(0.5)
     """

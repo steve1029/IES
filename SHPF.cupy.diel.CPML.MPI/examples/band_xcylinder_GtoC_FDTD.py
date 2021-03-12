@@ -134,10 +134,10 @@ mmt = (kx, ky, kz)
 #setter4 = source.Setter(TF, (100*nm, 0), (410*nm+dx, Ly), mmt)
 
 ########## Point src.
-#setter1 = source.Setter(TF, (0, 100*nm, 140*nm), (Lx, 100*nm+dx, 140*nm+dy), mmt)
-#setter2 = source.Setter(TF, (0, 200*nm, 300*nm), (Lx, 200*nm+dx, 300*nm+dy), mmt)
-#setter3 = source.Setter(TF, (0, 300*nm, 400*nm), (Lx, 300*nm+dx, 400*nm+dy), mmt)
-#setter4 = source.Setter(TF, (0, 400*nm, 220*nm), (Lx, 400*nm+dx, 220*nm+dy), mmt)
+setter1 = source.Setter(TF, (0, 100*nm, 140*nm), (Lx, 100*nm+dx, 140*nm+dy), mmt)
+setter2 = source.Setter(TF, (0, 200*nm, 300*nm), (Lx, 200*nm+dx, 300*nm+dy), mmt)
+setter3 = source.Setter(TF, (0, 300*nm, 400*nm), (Lx, 300*nm+dx, 400*nm+dy), mmt)
+setter4 = source.Setter(TF, (0, 400*nm, 220*nm), (Lx, 400*nm+dx, 220*nm+dy), mmt)
 
 #------------------------------------------------------------------#
 #-------------------- Structure object settings -------------------#

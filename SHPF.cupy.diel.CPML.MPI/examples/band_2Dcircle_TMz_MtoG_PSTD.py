@@ -26,7 +26,7 @@ courant = 1./4
 dt = courant * min(dx,dy) / c
 Tsteps = int(sys.argv[2])
 
-TF = space2D.Basic2D('TM', (Nx, Ny), (dx, dy), dt, Tsteps, np.complex64, np.complex64, method='FDTD', engine='cupy')
+TF = space2D.Basic2D('TM', (Nx, Ny), (dx, dy), dt, Tsteps, np.complex64, np.complex64, method='PSTD', engine='cupy')
 
 TF.malloc()
 
@@ -63,7 +63,7 @@ TF.apply_PBC({'x':False,'y':False})
 ########## Harmonic source
 #smth = source.Smoothing(dt, 1000)
 #src1 = source.Harmonic(dt)
-#wvlen = 250*nm
+#wvlen = float(sys.argv[1])*nm
 #src1.set_wvlen(wvlen)
 
 ########## Delta source
@@ -74,19 +74,27 @@ src4 = source.Delta(30)
 #wvlen = Lz/2
 
 ########## Momentum of the source.
-wvlen = float(sys.argv[1])*nm
-k0 = 2*np.pi / wvlen
-theta = 0*np.pi/180
+#wvlen = float(sys.argv[1])*nm
+#k0 = 2*np.pi / wvlen
+#theta = 30*np.pi/180
 
 # mmt for plane wave normal to x axis
 # theta is the angle between k0cos(phi) and x-axis.
-kx = k0 * np.cos(theta)
-ky = k0 * np.sin(theta)
+#kx = k0 * np.cos(theta)
+#ky = k0 * np.sin(theta)
 
 # mmt for plane wave normal to y axis
 # theta is the angle between k0cos(phi) and y-axis.
 #kx = k0 * np.sin(theta)
 #ky = k0 * np.cos(theta)
+
+# mmt for M to G.
+wvlen = float(sys.argv[1])*nm
+lambx = wvlen
+lamby = lambx
+kx = 2*np.pi / lambx
+ky = 2*np.pi / lamby
+phi, theta = 0, np.arctan(lambx/lamby)
 
 mmt = (kx, ky)
 #mmt = (0, 0)
@@ -126,10 +134,10 @@ center2 = ( 0, Ly)
 center3 = ( Lx, 0)
 center4 = ( Lx, Ly)
 #cylinder1 = structure.Cylinder(TF, 'x', radius, height, center1, 8.9, 1.)
-#cylinder1 = structure.Circle(TF, radius, center1, 8.9, 1.)
-#cylinder2 = structure.Circle(TF, radius, center2, 8.9, 1.)
-#cylinder3 = structure.Circle(TF, radius, center3, 8.9, 1.)
-#cylinder4 = structure.Circle(TF, radius, center4, 8.9, 1.)
+cylinder1 = structure.Circle(TF, radius, center1, 8.9, 1.)
+cylinder2 = structure.Circle(TF, radius, center2, 8.9, 1.)
+cylinder3 = structure.Circle(TF, radius, center3, 8.9, 1.)
+cylinder4 = structure.Circle(TF, radius, center4, 8.9, 1.)
 
 ########## Save eps, mu data.
 #TF.save_eps_mu(savedir)
@@ -139,13 +147,19 @@ center4 = ( Lx, Ly)
 #-------------------- Collector object settings -------------------#
 #------------------------------------------------------------------#
 
-loc1 = (120*nm, 100*nm)
-loc2 = (450*nm, 300*nm)
-loc3 = ( 90*nm, 270*nm)
-loc4 = (300*nm, 480*nm)
-loc5 = (250*nm, 250*nm)
+#loc1 = (120*nm, 100*nm)
+#loc2 = (450*nm, 300*nm)
+#loc3 = ( 90*nm, 270*nm)
+#loc4 = (300*nm, 480*nm)
+#loc5 = (250*nm, 250*nm)
 
-filename = "wvlen{:05d}_theta{}" .format(int(round(wvlen/nm)), round(theta/np.pi*180))
+loc1 = (420*nm, 150*nm)
+loc2 = (170*nm, 170*nm)
+loc3 = (200*nm, 270*nm)
+loc4 = (380*nm, 220*nm)
+loc5 = (280*nm, 410*nm)
+
+filename = "MtoG/wvlen{:05d}" .format(int(round(wvlen/nm)))
 
 fap1 = collector.FieldAtPoint("fap1", savedir+"graph/{}" .format(filename), TF, loc1, 'cupy')
 fap2 = collector.FieldAtPoint("fap2", savedir+"graph/{}" .format(filename), TF, loc2, 'cupy')
@@ -158,7 +172,7 @@ fap5 = collector.FieldAtPoint("fap5", savedir+"graph/{}" .format(filename), TF, 
 #------------------------------------------------------------------#
 
 # Set plotfield options
-plot_per = 100
+plot_per = 1000
 TFgraphtool = plotfield.Graphtool(TF, 'TF', savedir)
 
 #------------------------------------------------------------------#
@@ -183,7 +197,7 @@ for tstep in range(Tsteps):
     #pulse_re = src.pulse_re(tstep)
 
     # pulse for Sine or Harmonic wave.
-    #pulse1 = src1.signal(tstep) * smth.apply(tstep)
+    #pulse1 = src1.apply(tstep) * smth.apply(tstep)
 
     # pulse for Delta function wave.
     pulse1 = src1.apply(tstep)
@@ -252,10 +266,10 @@ for tstep in range(Tsteps):
         #SFgraphtool.plot2D3D(Hy, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #SFgraphtool.plot2D3D(Hz, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
 
-        Ez = TFgraphtool.gather('Ez')
+        #Ez = TFgraphtool.gather('Ez')
         #TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=1e-2, stride=3, zlim=1e-2)
         #TFgraphtool.plot2D3D(Ey, tstep, yidx=TF.Nyc, colordeep=1., stride=2, zlim=1.)
-        TFgraphtool.plot2D3D(Ez, tstep, xidx=TF.Nxc, colordeep=1e-2, stride=3, zlim=1e-2)
+        #TFgraphtool.plot2D3D(Ez, tstep, xidx=TF.Nxc, colordeep=1, stride=2, zlim=1)
         #TFgraphtool.plot2D3D(Hx, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D(Hy, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D(Hz, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)

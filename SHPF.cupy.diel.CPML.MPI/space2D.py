@@ -583,6 +583,7 @@ class Basic2D:
 
             if self.mode == 'TM':
 
+                """
                 CHx1 = (2.*self.mu_Hx - self.mcon_Hx*self.dt) / \
                        (2.*self.mu_Hx + self.mcon_Hx*self.dt)
                 CHx2 = (-2*self.dt) / (2.*self.mu_Hx + self.mcon_Hx*self.dt)
@@ -605,7 +606,6 @@ class Basic2D:
 
                 self.Hx[:,:-1] = CHx1*self.Hx[:,:-1] + CHx2*(+self.diffyEz[:,:-1])
                 self.Hy[:-1,:] = CHy1*self.Hy[:-1,:] + CHy2*(-self.diffxEz[:-1,:])
-                """
 
             if self.mode == 'TE':
 
@@ -790,6 +790,7 @@ class Basic2D:
 
             if self.mode == 'TM':
 
+                """
                 CEz1 = (2.*self.eps_Ez-self.econ_Ez*self.dt) / \
                        (2.*self.eps_Ez+self.econ_Ez*self.dt)
                 CEz2 = (2.*self.dt) / (2.*self.eps_Ez+self.econ_Ez*self.dt)
@@ -810,7 +811,6 @@ class Basic2D:
                 CEz2[self.eps_Ez[1:,1:] > 1e3] = 0.
 
                 self.Ez[1:,1:] = CEz1 * self.Ez[1:,1:] + CEz2 * (self.diffxHy[1:,1:] - self.diffyHx[1:,1:])
-                """
 
             if self.mode == 'TE':
 

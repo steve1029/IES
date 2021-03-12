@@ -43,16 +43,21 @@ TF.apply_PBC({'x':True, 'y':False, 'z':False})
 #------------------------------------------------------------------#
 
 ########## Gaussian source
-#wvc = 200*nm
+#wvc = float(sys.argv[1])*nm
+#wvlen = wvc 
 #interval = 2
 #spread   = 0.3
 #pick_pos = 1000
 #wvlens = np.arange(100,500, interval)*nm
 #freqs = c / wvlens
 #np.save("../graph/freqs", freqs)
-#src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
-#src.plot_pulse(Tsteps, freqs, savedir)
-#wvlen = wvc 
+#src1 = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
+#src1.plot_pulse(Tsteps, freqs, savedir)
+
+########## Momentum of the source.
+wvlen = float(sys.argv[1])*nm
+k0 = 2*np.pi / wvlen
+phi, theta = 0*np.pi/180, 60*np.pi/180
 
 ########## Sine source
 #smth = source.Smoothing(dt, 1000)
@@ -67,16 +72,15 @@ TF.apply_PBC({'x':True, 'y':False, 'z':False})
 #src1.set_wvlen(wvlen)
 
 ########## Delta source
-src1 = source.Delta(10)
-src2 = source.Delta(20)
-src3 = source.Delta(50)
-src4 = source.Delta(30)
-#wvlen = Lz/2
+#src1 = source.Delta(100)
+#src2 = source.Delta(20)
+#src3 = source.Delta(50)
+#src4 = source.Delta(30)
 
-########## Momentum of the source.
-#wvlen = float(sys.argv[1])*nm
-#k0 = 2*np.pi / wvlen
-#phi, theta = 0*np.pi/180, 0*np.pi/180
+########## Harmonic source
+smth = source.SmoothInOut(dt, 500, 1000)
+src1 = source.Harmonic(dt)
+src1.set_wvlen(wvlen)
 
 # mmt for plane wave normal to x axis.
 # phi is the angle between k0 vector and xz-plane.
@@ -95,23 +99,23 @@ src4 = source.Delta(30)
 # mmt for plane wave normal to z axis.
 # phi is the angle between k0 vector and yz-plane.
 # theta is the angle between k0cos(phi) and z-axis.
-#kx = k0 * np.sin(phi)
-#ky = k0 * np.cos(phi) * np.sin(theta)
-#kz = k0 * np.cos(phi) * np.cos(theta)
+kx = k0 * np.sin(phi)
+ky = k0 * np.cos(phi) * np.sin(theta)
+kz = k0 * np.cos(phi) * np.cos(theta)
 
-# mmt for M to G.
-wvlen = float(sys.argv[1])*nm
-lamby = wvlen
-lambz = lamby
-kx = 0
-ky = 2*np.pi / lamby
-kz = 2*np.pi / lambz
-phi, theta = 0, np.arctan(lamby/lambz)
+# mmt for Gamma to Chi.
+#lamy = float(sys.argv[1])*nm
+#lamz = 0*nm
+#kx = 0
+#ky = 2*np.pi / lamy
+#kz = 0
+#phi, theta = 0, 0
+#wvlen = lamy*np.cos(theta)
 
 mmt = (kx, ky, kz)
 
 ########## Plane wave normal to y-axis.
-#setter1 = source.Setter(TF, (0,  50*nm, 0), (Lx,  50*nm+dy, Lz), mmt)
+setter1 = source.Setter(TF, (0, 200*nm, 0), (Lx, 200*nm+dy, Lz), mmt)
 #setter2 = source.Setter(TF, (0, 150*nm, 0), (Lx, 150*nm+dy, Lz), mmt)
 #setter3 = source.Setter(TF, (0, 250*nm, 0), (Lx, 250*nm+dy, Lz), mmt)
 #setter4 = source.Setter(TF, (0, 350*nm, 0), (Lx, 350*nm+dy, Lz), mmt)
@@ -135,10 +139,10 @@ mmt = (kx, ky, kz)
 #setter4 = source.Setter(TF, (100*nm, 0), (410*nm+dx, Ly), mmt)
 
 ########## Point src.
-setter1 = source.Setter(TF, (0, 160*nm, 430*nm), (Lx, 160*nm+dx, 430*nm+dy), mmt)
-setter2 = source.Setter(TF, (0, 200*nm, 500*nm), (Lx, 200*nm+dx, 500*nm+dy), mmt)
-setter3 = source.Setter(TF, (0, 300*nm, 100*nm), (Lx, 300*nm+dx, 100*nm+dy), mmt)
-setter4 = source.Setter(TF, (0, 450*nm, 200*nm), (Lx, 450*nm+dx, 200*nm+dy), mmt)
+#setter1 = source.Setter(TF, (0, 100*nm, 140*nm), (Lx, 100*nm+dx, 140*nm+dy), mmt)
+#setter2 = source.Setter(TF, (0, 200*nm, 300*nm), (Lx, 200*nm+dx, 300*nm+dy), mmt)
+#setter3 = source.Setter(TF, (0, 300*nm, 400*nm), (Lx, 300*nm+dx, 400*nm+dy), mmt)
+#setter4 = source.Setter(TF, (0, 400*nm, 220*nm), (Lx, 400*nm+dx, 220*nm+dy), mmt)
 
 #------------------------------------------------------------------#
 #-------------------- Structure object settings -------------------#
@@ -152,13 +156,13 @@ setter4 = source.Setter(TF, (0, 450*nm, 200*nm), (Lx, 450*nm+dx, 200*nm+dy), mmt
 ########## Circle
 radius = 114.8*nm
 height = (0, Lx)
-center1 = (Ly/2, Lz/2)
-#center1 = ( 0, 0)
-#center2 = ( 0, Lz)
-#center3 = ( Ly, 0)
-#center4 = ( Ly, Lz)
+#center1 = (Ly/2, Lz/2)
+center1 = ( 0, 0)
+center2 = ( 0, Lz)
+center3 = ( Ly, 0)
+center4 = ( Ly, Lz)
 
-cylinder1 = structure.Cylinder3D(TF, 'x', radius, height, center1, 8.9, 1.)
+#cylinder1 = structure.Cylinder3D(TF, 'x', radius, height, center1, 8.9, 1.)
 #cylinder2 = structure.Cylinder3D(TF, 'x', radius, height, center2, 8.9, 1.)
 #cylinder3 = structure.Cylinder3D(TF, 'x', radius, height, center3, 8.9, 1.)
 #cylinder4 = structure.Cylinder3D(TF, 'x', radius, height, center4, 8.9, 1.)
@@ -171,19 +175,13 @@ cylinder1 = structure.Cylinder3D(TF, 'x', radius, height, center1, 8.9, 1.)
 #-------------------- Collector object settings -------------------#
 #------------------------------------------------------------------#
 
-#loc1 = (0*dx, 420*nm, 150*nm)
-#loc2 = (1*dx, 170*nm, 170*nm)
-#loc3 = (2*dx, 200*nm, 270*nm)
-#loc4 = (3*dx, 380*nm, 220*nm)
-#loc5 = (2*dx, 280*nm, 410*nm)
+loc1 = (0*dx, 420*nm, 150*nm)
+loc2 = (1*dx, 170*nm, 170*nm)
+loc3 = (2*dx, 200*nm, 270*nm)
+loc4 = (3*dx, 380*nm, 220*nm)
+loc5 = (2*dx, 280*nm, 410*nm)
 
-loc1 = (0*dx, 287*nm,  60*nm)
-loc2 = (1*dx, 200*nm, 500*nm)
-loc3 = (2*dx, 250*nm, 100*nm)
-loc4 = (3*dx, 420*nm, 170*nm)
-loc5 = (2*dx, 500*nm, 350*nm)
-
-filename = "MtoG/wvlen{:05d}" .format(int(round(wvlen/nm)))
+filename = "GtoC/lamby{:05d}" .format(int(round(wvlen/nm)))
 
 fap1 = collector.FieldAtPoint("fap1", savedir+"graph/{}" .format(filename), TF, loc1, 'cupy')
 fap2 = collector.FieldAtPoint("fap2", savedir+"graph/{}" .format(filename), TF, loc2, 'cupy')
@@ -196,7 +194,7 @@ fap5 = collector.FieldAtPoint("fap5", savedir+"graph/{}" .format(filename), TF, 
 #------------------------------------------------------------------#
 
 # Set plotfield options
-plot_per = 1000 
+plot_per = 100
 TFgraphtool = plotfield.Graphtool(TF, 'TF', savedir)
 
 #------------------------------------------------------------------#
@@ -218,21 +216,21 @@ for tstep in range(Tsteps):
             print("Simulation start: {}".format(datetime.datetime.now()))
         
     # pulse for gaussian wave.
-    #pulse_re = src.pulse_re(tstep)
+    #pulse1 = src1.pulse_c(tstep)
 
     # pulse for Sine or Harmonic wave.
-    #pulse1 = src1.signal(tstep) * smth.apply(tstep)
+    pulse1 = src1.apply(tstep) * smth.apply(tstep)
 
     # pulse for Delta function wave.
-    pulse1 = src1.apply(tstep)
-    pulse2 = src2.apply(tstep)
-    pulse3 = src3.apply(tstep)
-    pulse4 = src4.apply(tstep)
+    #pulse1 = src1.apply(tstep)
+    #pulse2 = src2.apply(tstep)
+    #pulse3 = src3.apply(tstep)
+    #pulse4 = src4.apply(tstep)
 
     setter1.put_src('Ex', pulse1, 'soft')
-    setter2.put_src('Ex', pulse2, 'soft')
-    setter3.put_src('Ex', pulse3, 'soft')
-    setter4.put_src('Ex', pulse4, 'soft')
+    #setter2.put_src('Ex', pulse2, 'soft')
+    #setter3.put_src('Ex', pulse3, 'soft')
+    #setter4.put_src('Ex', pulse4, 'soft')
 
     """
     setter1.put_src('Ey', pulse_re, 'soft')
@@ -257,8 +255,8 @@ for tstep in range(Tsteps):
     # Plot the field profile
     if tstep % plot_per == 0:
 
-        #Ex = TFgraphtool.gather('Ex')
-        #TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=1e-2, stride=3, zlim=1e-2)
+        Ex = TFgraphtool.gather('Ex')
+        TFgraphtool.plot2D3D(Ex, tstep, xidx=TF.Nxc, colordeep=1, stride=2, zlim=1)
         #TFgraphtool.plot2D3D(Ey, tstep, yidx=TF.Nyc, colordeep=1., stride=2, zlim=1.)
         #TFgraphtool.plot2D3D(Ez, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #TFgraphtool.plot2D3D(Hx, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)

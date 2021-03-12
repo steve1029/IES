@@ -24,7 +24,7 @@ nf = 100
 fmin = -5e14 
 fmax = +5e14
 
-loaddir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/graph/CtoM/'
+loaddir = '/home/ldg/2nd_paper/SHPF.cupy.diel.CPML.MPI/graph/{}/' .format(sys.argv[1])
 savedir = loaddir
 
 names = ['fap1', 'fap2', 'fap3', 'fap4', 'fap5']
@@ -34,6 +34,9 @@ names = ['fap1', 'fap2', 'fap3', 'fap4', 'fap5']
 xlim = [-1,1]
 ylim = [0,1]
 
-test = az.CsvCreator(loaddir, 'nm', names, dt, Ly)
-test.get_plot_csv(2, 'TM', xlim, ylim, [])
-test.get_pharminv_csv(2, 'fap1', 200001, dt, fmin, fmax, nf, mode='TM')
+where = 'Ez'
+test = az.CsvCreator(loaddir, names, dt, Ly, where)
+test.get_fft_plot_csv(2, 'TM', where, xlim, ylim, [])
+test.get_pharminv_csv('Ez', 'fap1', 200001, dt, fmin, fmax, nf)
+#test.get_pharminv_csv('Hx', 'fap1', 200001, dt, fmin, fmax, nf)
+#test.get_pharminv_csv('Hy', 'fap1', 200001, dt, fmin, fmax, nf)
