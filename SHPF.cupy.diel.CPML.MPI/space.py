@@ -70,9 +70,9 @@ class Basic3D:
         self.dy = self.gridgap[1]
         self.dz = self.gridgap[2]
 
-        self.Lx = self.Nx * self.dx
-        self.Ly = self.Ny * self.dy
-        self.Lz = self.Nz * self.dz
+        self.Lx = (self.Nx-1) * self.dx
+        self.Ly = (self.Ny-1) * self.dy
+        self.Lz = (self.Nz-1) * self.dz
 
         self.VOLUME = self.Lx * self.Ly * self.Lz
 
@@ -983,7 +983,7 @@ class Basic3D:
 
     def _PML_updateH_px(self):
 
-        if self.method == 'PSTD':
+        if self.method == 'PSTD' or self.method == 'SPSTD':
 
             odd = [slice(0,None,2), None, None]
 
@@ -1027,7 +1027,7 @@ class Basic3D:
 
     def _PML_updateE_px(self):
 
-        if self.method == 'SHPF' or self.method == 'PSTD':
+        if self.method == 'SHPF' or self.method == 'PSTD' or self.method == 'SPSTD':
 
             even = [slice(0,None,2), None, None]
 

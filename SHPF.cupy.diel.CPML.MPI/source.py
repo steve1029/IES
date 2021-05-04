@@ -39,17 +39,21 @@ class Setter:
         self.who_put_src = None
 
         # For 2D simulation.
-        self.src_xsrt = round(src_srt[0] / self.space.dx)
-        self.src_ysrt = round(src_srt[1] / self.space.dy)
+        self.src_xsrt = int(round(src_srt[0] / self.space.dx))
+        self.src_ysrt = int(round(src_srt[1] / self.space.dy))
 
-        self.src_xend = round(src_end[0] / self.space.dx)
-        self.src_yend = round(src_end[1] / self.space.dy)
+        self.src_xend = int(round(src_end[0] / self.space.dx))
+        self.src_yend = int(round(src_end[1] / self.space.dy))
+
+        if self.src_ysrt == self.src_yend: self.src_ysrt = self.src_yend - 1
 
         # For 3D simluation.
         if space.dimension == 3:
 
-            self.src_zsrt = round(src_srt[2] / self.space.dz)
-            self.src_zend = round(src_end[2] / self.space.dz)
+            self.src_zsrt = int(round(src_srt[2] / self.space.dz))
+            self.src_zend = int(round(src_end[2] / self.space.dz))
+
+            if self.src_zsrt == self.src_zend: self.src_zsrt = self.src_zend - 1
 
         #----------------------------------------------------------------------#
         #--------- All ranks should know who put src to plot src graph --------#
@@ -61,6 +65,9 @@ class Setter:
 
             my_xsrt = self.space.myNx_indice[rank][0]
             my_xend = self.space.myNx_indice[rank][1]
+
+            # case 4. x position of the source has zero length.
+            if self.src_xsrt == self.src_xend: self.src_xsrt = self.src_xend-1
 
             # case 1. x position of source is fixed.
             if self.src_xsrt == (self.src_xend-1):
@@ -76,7 +83,7 @@ class Setter:
                         self.src = self.xp.zeros(self.space.tsteps, dtype=self.space.field_dtype)
 
                         #print("rank{:>2}: src_xsrt : {}, my_src_xsrt: {}, my_src_xend: {}"\
-                        #       .format(self.MPIrank, self.src_xsrt, self.my_src_xsrt, self.my_src_xend))
+                        #       .format(self.space.MPIrank, self.src_xsrt, self.my_src_xsrt, self.my_src_xend))
                     else:
                         pass
                         #print("rank {:>2}: I don't put source".format(self.MPIrank))
@@ -99,9 +106,8 @@ class Setter:
                 raise ValueError("src_end[0] should be bigger than src_srt[0]")
 
             else:
-                raise IndexError("x location of the source is not defined!")
+                raise ValueError('x location of the source is not defined!')
 
-        #--------------------------------------------------------------------------#
         #--------- Apply phase difference according to the incident angle ---------#
         #--------------------------------------------------------------------------#
 

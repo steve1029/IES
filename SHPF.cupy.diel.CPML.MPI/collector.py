@@ -20,7 +20,7 @@ class collector:
         if self.space.MPIrank == 0:
 
             if os.path.exists(self.path) == True: pass
-            else: os.mkdir(self.path)
+            else: os.makedirs(self.path)
 
         # Initial global/local location.
         self.gloc = None

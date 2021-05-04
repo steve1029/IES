@@ -19,8 +19,8 @@ nm = 1e-9
 um = 1e-6
 
 Lx, Ly, Lz = 574/64*nm, 574*nm, 574*nm
-Nx, Ny, Nz = 4, 256, 256
-dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz 
+Nx, Ny, Nz = 4, 128, 128
+dx, dy, dz = Lx/(Nx-1), Ly/(Ny-1), Lz/(Nz-)
 
 courant = 1./4
 dt = courant * min(dx,dy,dz) / c

@@ -164,7 +164,7 @@ class Graphtool(object):
                     self.plane_to_plot = integrated[xidx, yidx].real
                 else: self.plane_to_plot = integrated[xidx, yidx]
 
-            X, Y = np.meshgrid(col, row, indexing='xy', sparse=True)
+            X, Y = np.meshgrid(col, row, indexing='xy', sparse=False)
             today = datetime.date.today()
 
             fig  = plt.figure(figsize=figsize)
@@ -192,7 +192,12 @@ class Graphtool(object):
             elif plane == 'xy':
 
                 image11 = ax11.imshow(self.plane_to_plot.T, vmax=colordeep, vmin=-colordeep, cmap=cmap, aspect=aspect)
-                ax12.plot_wireframe(Y, X, self.plane_to_plot[Y, X], color=lc, rstride=stride, cstride=stride)
+                #print(self.plane_to_plot.shape)
+                #print(Y.shape)
+                #print(X.shape)
+                #print(col.shape)
+                #print(row.shape)
+                ax12.plot_wireframe(X, Y, self.plane_to_plot[X, Y], color=lc, rstride=stride, cstride=stride)
 
                 divider11 = make_axes_locatable(ax11)
 

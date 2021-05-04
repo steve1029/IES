@@ -342,7 +342,7 @@ class SpectrumAnalyzer:
 
 class CsvCreator(SpectrumAnalyzer):
 
-    def __init__(self, loaddir, names, dt, lattice_constant, where):
+    def __init__(self, loaddir, fapns, dt, lattice_constant, get_tsteps_from):
         """Load all .npy files and make averages .csv file.
 
         Parameters
@@ -350,7 +350,7 @@ class CsvCreator(SpectrumAnalyzer):
         loaddir: str
             The location of the .npy data files.
 
-        names: list
+        fapn: list
             Name of the FieldAtPoint object.
 
         lattice_constant: float
@@ -374,16 +374,16 @@ class CsvCreator(SpectrumAnalyzer):
         for folder in self.folders:
 
             try: 
-                self.tsteps = len(np.load(self.loaddir+"{}/{}_{}_t.npy" .format(folder, names[0], where)))
+                self.tsteps = len(np.load(self.loaddir+"{}/{}_{}_t.npy" .format(folder, fapns[0], get_tsteps_from)))
             except Exception as err:
                 useless.append(folder)
-                #print(err)
+                print(err)
                 print("Time domain data is not found in {}. Get total time step from the next folder." .format(folder))
                 continue
 
         for ul in useless: self.folders.remove(ul)
 
-        self.names = names
+        self.fapns = fapns
         self.wvlens = []
 
         for fname in self.folders:
@@ -399,146 +399,124 @@ class CsvCreator(SpectrumAnalyzer):
 
         self.wvlens = np.array(self.wvlens)
 
-    def _plot_fft_space2D_fields(self, name, fig, axes, j, nfreq, fs, labels, xlim, ylim, df, whos_csv):
+    def _plot_fft_fields(self, fapn, fig, ax, idx, nfreq, f, label, xlim, df, whos_csv):
 
-        for i, label in enumerate(labels): 
+        i = idx[0]
+        j = idx[1]
 
-            if i == 0: axes[i,j].set_title(name)
-        
-            to_plot = abs(fs[i])
-            axes[i,j].plot(nfreq, to_plot, '-o', ms=0.5, label=label)
-            axes[i,j].set_xlim(xlim[0], xlim[1])
+        ax[i,j].set_title(fapn)
+    
+        to_plot = abs(f)
 
-            if 'H' in label: axes[i,j].set_ylim(ylim[0], ylim[1]*1e-3)
-            else: axes[i,j].set_ylim(ylim[0], ylim[1])
+        xx = np.fft.fftshift(nfreq)
+        yy = np.fft.fftshift(to_plot)
 
-            axes[i,j].legend(loc='upper center')
-            axes[i,j].set_xlabel("Nfreq")
-           
-            if name in whos_csv: df[name+'_{}_w' .format(label)] = to_plot 
+        # Closest index.
+        cidxl = (abs(xx + 1)).argmin()
+        cidxr = (abs(xx - 1)).argmin()
 
-    def get_fft_plot_csv(self, dim, mode, flag, xlim, ylim, whos_csv):
+        ylim = [0, np.max(yy[cidxl:cidxr])*1.1]
+
+        ax[i,j].plot(xx, yy, '-o', ms=0.5, label=label)
+        ax[i,j].set_xlim(xlim[0], xlim[1])
+        ax[i,j].set_ylim(ylim[0], ylim[1])
+        ax[i,j].legend(loc='upper center')
+        ax[i,j].set_xlabel("Nfreq")
+       
+        if fapn in whos_csv: df[fapn+'_{}_w' .format(label)] = to_plot 
+
+    def get_fft_plot_csv(self, dim, mode, flag, xlim, whos_csv):
 
         self.fftfreq = np.fft.fftfreq(self.tsteps, self.dt)
         self.nfreq = self.normalized_freq(self.fftfreq, self.lc)
 
         for wv, folder in enumerate(self.folders):
 
-            try:
+            if dim == 2: nrows, ncols = 3, len(self.fapns)
+            if dim == 3: nrows, ncols = 3, len(self.fapns)
 
-                if dim == 2: nrows, ncols = 3, len(self.names)
-                if dim == 3: nrows, ncols = 6, len(self.names)
+            fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols*8,nrows*8))
 
-                fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols*8,nrows*8))
+            df = pd.DataFrame()
 
-                df = pd.DataFrame()
+            df['Nfreq'] = self.nfreq
+            df['fftfreq'] = self.fftfreq
 
-                df['Nfreq'] = self.nfreq
-                df['fftfreq'] = self.fftfreq
+            for j, fapn in enumerate(self.fapns):
 
-                for j, name in enumerate(self.names):
+                self.Ext_npyname = self.loaddir+"{}/{}_Ex_t.npy" .format(folder, fapn)
+                self.Eyt_npyname = self.loaddir+"{}/{}_Ey_t.npy" .format(folder, fapn)
+                self.Ezt_npyname = self.loaddir+"{}/{}_Ez_t.npy" .format(folder, fapn)
 
-                    self.Ext_npyname = self.loaddir+"{}/{}_Ex_t.npy" .format(folder, name)
-                    self.Eyt_npyname = self.loaddir+"{}/{}_Ey_t.npy" .format(folder, name)
-                    self.Ezt_npyname = self.loaddir+"{}/{}_Ez_t.npy" .format(folder, name)
+                self.Hxt_npyname = self.loaddir+"{}/{}_Hx_t.npy" .format(folder, fapn)
+                self.Hyt_npyname = self.loaddir+"{}/{}_Hy_t.npy" .format(folder, fapn)
+                self.Hzt_npyname = self.loaddir+"{}/{}_Hz_t.npy" .format(folder, fapn)
 
-                    self.Hxt_npyname = self.loaddir+"{}/{}_Hx_t.npy" .format(folder, name)
-                    self.Hyt_npyname = self.loaddir+"{}/{}_Hy_t.npy" .format(folder, name)
-                    self.Hzt_npyname = self.loaddir+"{}/{}_Hz_t.npy" .format(folder, name)
+                # Get average of the len(fapn) collector objects.
+                if dim==2 and mode=='TM' and flag == 'Ex':
 
-                    # Get average of the len(name) collector objects.
-                    if dim==2 and mode=='TM' and flag == 'Ex':
+                    f1 = np.fft.fft(np.load(self.Ext_npyname))
+                    f2 = np.fft.fft(np.load(self.Hyt_npyname))
+                    f3 = np.fft.fft(np.load(self.Hzt_npyname))
 
-                        f1 = np.fft.fft(np.load(self.Ext_npyname))
-                        f2 = np.fft.fft(np.load(self.Hyt_npyname))
-                        f3 = np.fft.fft(np.load(self.Hzt_npyname))
+                    fs = [f1, f2, f3]
+                    labels = ['Ex', 'Hy', 'Hz']
+                    self._plot_fft_fields(fapn, fig, axes, j, self.nfreq, fs, labels, xlim, df, whos_csv)
 
-                        fs = [f1, f2, f3]
-                        labels = ['Ex', 'Hy', 'Hz']
-                        self._plot_fft_space2D_fields(name, fig, axes, j, self.nfreq, fs, labels, xlim, ylim, df, whos_csv)
+                elif dim==2 and mode=='TM' and flag == 'Ez':
 
-                    elif dim==2 and mode=='TM' and flag == 'Ez':
+                    f1 = np.fft.fft(np.load(self.Ezt_npyname))
+                    f2 = np.fft.fft(np.load(self.Hxt_npyname))
+                    f3 = np.fft.fft(np.load(self.Hyt_npyname))
 
-                        f1 = np.fft.fft(np.load(self.Ezt_npyname))
-                        f2 = np.fft.fft(np.load(self.Hxt_npyname))
-                        f3 = np.fft.fft(np.load(self.Hyt_npyname))
+                    fs = [f1, f2, f3]
+                    labels = ['Ez', 'Hx', 'Hy']
+                    self._plot_fft_fields(fapn, fig, axes, j, self.nfreq, fs, labels, xlim, df, whos_csv)
 
-                        fs = [f1, f2, f3]
-                        labels = ['Ez', 'Hx', 'Hy']
-                        self._plot_fft_space2D_fields(name, fig, axes, j, self.nfreq, fs, labels, xlim, ylim, df, whos_csv)
+                elif dim==2 and mode=='TE' and flag == 'Hx':
 
-                    elif dim==2 and mode=='TE' and flag == 'Hx':
+                    f1 = np.fft.fft(np.load(self.Eyt_npyname))
+                    f2 = np.fft.fft(np.load(self.Ezt_npyname))
+                    f3 = np.fft.fft(np.load(self.Hxt_npyname))
 
-                        f1 = np.fft.fft(np.load(self.Eyt_npyname))
-                        f2 = np.fft.fft(np.load(self.Ezt_npyname))
-                        f3 = np.fft.fft(np.load(self.Hxt_npyname))
+                    fs = [f1, f2, f3]
+                    labels = ['Ey', 'Ez', 'Hx']
+                    self._plot_fft_fields(fapn, fig, axes, j, self.nfreq, fs, labels, xlim, df, whos_csv)
 
-                        fs = [f1, f2, f3]
-                        labels = ['Ey', 'Ez', 'Hx']
-                        self._plot_fft_space2D_fields(name, fig, axes, j, self.nfreq, fs, labels, xlim, ylim, df, whos_csv)
+                elif dim==2 and mode=='TE' and flag == 'Hz':
 
-                    elif dim==2 and mode=='TE' and flag == 'Hz':
+                    f1 = np.fft.fft(np.load(self.Ext_npyname))
+                    f2 = np.fft.fft(np.load(self.Eyt_npyname))
+                    f3 = np.fft.fft(np.load(self.Hzt_npyname))
 
-                        f1 = np.fft.fft(np.load(self.Ext_npyname))
-                        f2 = np.fft.fft(np.load(self.Eyt_npyname))
-                        f3 = np.fft.fft(np.load(self.Hzt_npyname))
+                    fs = [f1, f2, f3]
+                    labels = ['Ex', 'Ey', 'Hz']
+                    self._plot_fft_fields(fapn, fig, axes, j, self.nfreq, fs, labels, xlim, df, whos_csv)
 
-                        fs = [f1, f2, f3]
-                        labels = ['Ex', 'Ey', 'Hz']
-                        self._plot_fft_space2D_fields(name, fig, axes, j, self.nfreq, fs, labels, xlim, ylim, df, whos_csv)
+                elif dim==3:
 
-                    elif dim==3:
+                    f1 = np.fft.fft(np.load(self.Ext_npyname))
+                    f2 = np.fft.fft(np.load(self.Eyt_npyname))
+                    f3 = np.fft.fft(np.load(self.Ezt_npyname))
 
-                        self.Ex_w = np.fft.fft(np.load(self.Ext_npyname))
-                        self.Ey_w = np.fft.fft(np.load(self.Eyt_npyname))
-                        self.Ez_w = np.fft.fft(np.load(self.Ezt_npyname))
+                    #f4 = np.fft.fft(np.load(self.Hxt_npyname))
+                    #f5 = np.fft.fft(np.load(self.Hyt_npyname))
+                    #f6 = np.fft.fft(np.load(self.Hzt_npyname))
 
-                        self.Hx_w = np.fft.fft(np.load(self.Hxt_npyname))
-                        self.Hy_w = np.fft.fft(np.load(self.Hyt_npyname))
-                        self.Hz_w = np.fft.fft(np.load(self.Hzt_npyname))
+                    self._plot_fft_fields(fapn, fig, axes, (0,j), self.nfreq, f1, 'Ex', xlim, df, whos_csv)
+                    self._plot_fft_fields(fapn, fig, axes, (1,j), self.nfreq, f2, 'Ey', xlim, df, whos_csv)
+                    self._plot_fft_fields(fapn, fig, axes, (2,j), self.nfreq, f3, 'Ez', xlim, df, whos_csv)
 
-                        if name in whos_csv:
-                            df[name+'_Ex_w'] = self.Ex_w
-                            df[name+'_Ey_w'] = self.Ey_w
-                            df[name+'_Ez_w'] = self.Ez_w
-                            df[name+'_Hx_w'] = self.Hx_w
-                            df[name+'_Hy_w'] = self.Hy_w
-                            df[name+'_Hz_w'] = self.Hz_w
+                else: raise ValueError("dim must be 1,2 or 3,  mode should be defined if dim==2 and \
+                    flag should be defined since it indicates the plane.")
 
-                        axes[0,i].plot(self.nfreq, abs(self.Ex_w), '-o', ms=0.5, label='Ez_w')
-                        axes[1,i].plot(self.nfreq, abs(self.Ey_w), '-o', ms=0.5, label='Hx_w')
-                        axes[2,i].plot(self.nfreq, abs(self.Ez_w), '-o', ms=0.5, label='Ez_w')
-                        axes[3,i].plot(self.nfreq, abs(self.Hx_w), '-o', ms=0.5, label='Hx_w')
-                        axes[4,i].plot(self.nfreq, abs(self.Hy_w), '-o', ms=0.5, label='Hy_w')
-                        axes[5,i].plot(self.nfreq, abs(self.Hz_w), '-o', ms=0.5, label='Hy_w')
+            fig.savefig("{}/{}_fft_results.png" .format(self.loaddir, self.wvlens[wv], bbox_inches='tight'))
+            print('{} fft results are plotted.' .format(self.wvlens[wv]))
+            plt.close('all')
 
-                        axes[0,i].set_xlim(xlim[0], xlim[1])
-                        axes[1,i].set_xlim(xlim[0], xlim[1])
-                        axes[2,i].set_xlim(xlim[0], xlim[1])
-                        axes[3,i].set_xlim(xlim[0], xlim[1])
-                        axes[4,i].set_xlim(xlim[0], xlim[1])
-                        axes[5,i].set_xlim(xlim[0], xlim[1])
+            df.to_csv("{}/{}_fft_results.csv" .format(self.loaddir, folder[5:10]))
 
-                        axes[0,i].set_ylim(ylim[0], ylim[1])
-                        axes[1,i].set_ylim(ylim[0], ylim[1])
-                        axes[2,i].set_ylim(ylim[0], ylim[1])
-                        axes[3,i].set_ylim(ylim[0], ylim[1])
-                        axes[4,i].set_ylim(ylim[0], ylim[1])
-                        axes[5,i].set_ylim(ylim[0], ylim[1])
-
-                    else: raise ValueError("dim must be 1,2 or 3,  mode should be defined if dim==2 and \
-                        flag should be defined since it indicates the plane.")
-
-                fig.savefig("{}/{}_fft_results.png" .format(self.loaddir, self.wvlens[wv], bbox_inches='tight'))
-                print('{} fft results are plotted.' .format(self.wvlens[wv]))
-                plt.close('all')
-
-                df.to_csv("{}/{}_fft_results.csv" .format(self.loaddir, folder[5:10]))
-
-            except Exception as err: 
-                print(err)
-
-    def _record_pharminv(self, name, field, wvlen, harm):
+    def _record_pharminv(self, fapn, field, wvlen, harm):
 
         cols = ['nfreq', 'freq', 'WL', 'Q', 'Amp', 'Decay', 'phase', 'Err']
         df = pd.DataFrame(columns=cols)
@@ -581,28 +559,28 @@ class CsvCreator(SpectrumAnalyzer):
             row = [nfreq, harm.freq[i], wv, harm.Q[i], harm.amplitude[i], harm.decay[i], harm.phase[i], harm.error[i]]
             df.loc[len(df)] = row 
             
-        df.to_csv("{}/{:05d}_{}_{}_pharminv_results.csv" .format(self.loaddir, wvlen, field, name))
+        df.to_csv("{}/{:05d}_{}_{}_pharminv_results.csv" .format(self.loaddir, wvlen, field, fapn))
 
-    def get_pharminv_csv(self, field, name, tsteps, dt, fmin, fmax, nf, **kwargs):
+    def get_pharminv_csv(self, field, fapn, tsteps, dt, fmin, fmax, nf, **kwargs):
 
         self.dt = dt
         self.tsteps = tsteps
 
         for i, folder in enumerate(self.folders):
 
-            field_npyname = self.loaddir+"{}/{}_{}_t.npy" .format(folder, name, field)
+            field_npyname = self.loaddir+"{}/{}_{}_t.npy" .format(folder, fapn, field)
             field_t = np.load(field_npyname)
 
             harm_field = hv.Harminv(signal=field_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
 
-            self._record_pharminv(name, field, self.wvlens[i], harm_field)
+            self._record_pharminv(fapn, field, self.wvlens[i], harm_field)
 
             """
             elif self.dim == 2 and self.mode == 'TE':
 
-                self.Hxt_npyname = self.loaddir+"{}/{}_Hx_t.npy" .format(folder, name)
-                self.Eyt_npyname = self.loaddir+"{}/{}_Ey_t.npy" .format(folder, name)
-                self.Ezt_npyname = self.loaddir+"{}/{}_Ez_t.npy" .format(folder, name)
+                self.Hxt_npyname = self.loaddir+"{}/{}_Hx_t.npy" .format(folder, fapn)
+                self.Eyt_npyname = self.loaddir+"{}/{}_Ey_t.npy" .format(folder, fapn)
+                self.Ezt_npyname = self.loaddir+"{}/{}_Ez_t.npy" .format(folder, fapn)
 
                 self.Hx_t = np.load(self.Hxt_npyname)
                 self.Ey_t = np.load(self.Eyt_npyname)
@@ -618,12 +596,12 @@ class CsvCreator(SpectrumAnalyzer):
 
             elif self.dim == 3:
 
-                self.Hxt_npyname = self.loaddir+"{}/{}_Hx_t.npy" .format(folder, name)
-                self.Hyt_npyname = self.loaddir+"{}/{}_Hy_t.npy" .format(folder, name)
-                self.Hzt_npyname = self.loaddir+"{}/{}_Hz_t.npy" .format(folder, name)
-                self.Ext_npyname = self.loaddir+"{}/{}_Ex_t.npy" .format(folder, name)
-                self.Eyt_npyname = self.loaddir+"{}/{}_Ey_t.npy" .format(folder, name)
-                self.Ezt_npyname = self.loaddir+"{}/{}_Ez_t.npy" .format(folder, name)
+                self.Hxt_npyname = self.loaddir+"{}/{}_Hx_t.npy" .format(folder, fapn)
+                self.Hyt_npyname = self.loaddir+"{}/{}_Hy_t.npy" .format(folder, fapn)
+                self.Hzt_npyname = self.loaddir+"{}/{}_Hz_t.npy" .format(folder, fapn)
+                self.Ext_npyname = self.loaddir+"{}/{}_Ex_t.npy" .format(folder, fapn)
+                self.Eyt_npyname = self.loaddir+"{}/{}_Ey_t.npy" .format(folder, fapn)
+                self.Ezt_npyname = self.loaddir+"{}/{}_Ez_t.npy" .format(folder, fapn)
 
                 self.Ex_t = np.load(self.Ext_npyname)
                 self.Ey_t = np.load(self.Eyt_npyname)
@@ -640,7 +618,7 @@ class CsvCreator(SpectrumAnalyzer):
                 harm_Hzt = hv.Harminv(signal=self.Hz_t, fmin=fmin, fmax=fmax, dt=dt, nf=nf)
             """
 
-            print("{:05d} {} pharminv calculation finished." .format(self.wvlens[i], field))
+            print("{:05d} {} {} pharminv calculation finished." .format(self.wvlens[i], field, fapn))
 
 
 if __name__ == '__main__':
@@ -704,12 +682,12 @@ if __name__ == '__main__':
 
     """
     wvlens = np.arange(574, 601, 100)
-    names = ['fap1', 'fap2', 'fap3', 'fap4']
+    fapn = ['fap1', 'fap2', 'fap3', 'fap4']
 
     xlim = [-1,1]
     ylim = [0,1]
 
     #print(wvlens)
-    test = CsvDataCollector(loaddir, wvlens, 'nm', names, dt, Ly)
+    test = CsvDataCollector(loaddir, wvlens, 'nm', fapn, dt, Ly)
     test.get_csv()
     """

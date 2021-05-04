@@ -686,7 +686,94 @@ class Cylinder3D(Structure):
         return
 
 
-class Cylinder_slab(Structure):
+class Cylinder3D_slab(Structure):
+
+    def __init__(self, space, axis, radius, height, lcy, lcz, rot, rot_cen, eps_r, mu_r):
+        """An array of the Cylinder3D object.
+
+        Parameters
+        ----------
+        space: Space object.
+            Space object to put cylinder slab.
+
+        axis: string.
+            An axis parallel to the cylinder.
+
+        radius: float.
+            a radius of the cylinders.
+
+        height: float.
+            a tuple with shape (xsrt,xend) showing the height of the cylinder such that (xsrt, xend).
+
+        rot: float.
+            a rotation angle in degree.
+
+        rot_cen: ndarry.
+            a coordinate of rotation axis.
+
+        lcy: float.
+            lattice constant along y axis.
+
+        lcz: float.
+            lattice constant along z axis.
+
+        eps_r: float.
+
+        mu_r: float.
+
+        Returns
+        -------
+        None.
+   
+        """
+
+        Structure.__init__(self, space)
+
+        self.eps_r = eps_r
+        self. mu_r =  mu_r
+
+        dx = self.space.dx
+
+        gxsrts = round(height[0]/dx) # Global srt index of the structure.
+        gxends = round(height[1]/dx) # Global end index of the structure.
+
+        self.gxloc, self.lxloc = Structure._get_local_x_loc(self, gxsrts, gxends)
+
+        rot_cen = np.array(rot_cen)
+        rot = np.radians(rot)
+        cos, sin = np.cos(rot), np.sin(rot)
+        R = np.array([[cos, -sin], [sin, cos]])
+
+        center = np.array([self.space.Ly/2, self.space.Lz/2])
+
+        if self.gxloc != None:      
+
+            #Box(self.space, srt, end, eps_r, mu_r)
+
+            j = 0
+            k = 0
+
+            #centers = []
+            #cylinders = []
+
+            numy = int(center[0]/lcy)
+            numz = int(center[1]/lcz)
+
+            for j in range(-numy, numy+1):
+                for k in range(-numz, numz+1):
+
+                    new_cen = np.array([center[0] + j*lcy, center[1] + k*lcz])
+                    new_cen = R @ (new_cen - rot_cen) + rot_cen
+
+                    Cylinder3D(self.space, axis, radius, height, new_cen, eps_r, mu_r)
+
+                    #centers.append(center)
+                    #cylinders.append(Cylinder3D(self.space, axis, radius, height, center, eps_r, mu_r))
+
+        return
+
+
+class Cylinder_slab_deprecated(Structure):
 
     def __init__(self, space, radius, height, llm, dc, eps_r, mu_r):
         """Cylinder object in Basic3D structure.
