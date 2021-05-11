@@ -7,8 +7,8 @@ from scipy.constants import c
 
 class SpectrumAnalyzer:
     """Spectrum analysis with Filter Diagonalization Method (FDM) or Fast Fourier Transform (FFT).
-    We use Harminv package for FDM implemented by Steven G. Johnson, who is
-    also widely known as a developer of the FFTW package.
+    We use Harminv package which uses FDM developed by Steven G. Johnson, who is
+    also widely known as a developer of the FFTW, Meep and MPB package.
     """
 
     def __init__(self, loaddir, savedir, name, **kwargs):

@@ -270,7 +270,7 @@ class Gaussian:
         t = time_domain * self.dt
 
         self.freqs = freqs
-        self.wvlens = c / self.freqs[::-1]
+        self.wvlens = c / self.freqs
 
         pulse_re = np.exp((-.5) * (((t-self.tc)*self.ws)**2)) * np.cos(self.w0*(t-self.tc))
         pulse_im = np.exp((-.5) * (((t-self.tc)*self.ws)**2)) * np.sin(self.w0*(t-self.tc))

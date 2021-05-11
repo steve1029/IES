@@ -2,6 +2,7 @@ import ctypes, os
 from functools import reduce
 import numpy as np
 import cupy as cp
+import h5py
 import matplotlib.pyplot as plt
 
 class collector:
@@ -308,14 +309,16 @@ class Sx(collector):
 
         if self.gxloc != None:
 
-            #print("rank {:>2}: loc of Sx collector >>> global \"{},{}\" and local \"{},{}\"" \
-            #      .format(self.space.MPIrank, self.gloc[0], self.gloc[1], self.lloc[0], self.lloc[1]))
+            print("rank {:>2}: xloc of Sx collector >>> global \"{},{}\" and local \"{},{}\"" \
+                  .format(self.space.MPIrank, self.gxloc[0], self.gxloc[1], self.lxloc[0], self.lxloc[1]))
+            #print(self.ysrt, self.yend)
+            #print(self.zsrt, self.zend)
 
-            self.DFT_Ey = self.xp.zeros((self.Nf, self.yend-self.ysrt, self.zend-self.zsrt), dtype=self.space.field_dtype)
-            self.DFT_Ez = self.xp.zeros((self.Nf, self.yend-self.ysrt, self.zend-self.zsrt), dtype=self.space.field_dtype)
+            self.DFT_Ey = self.xp.zeros((self.Nf, self.yend-self.ysrt, self.zend-self.zsrt), dtype=np.complex128)
+            self.DFT_Ez = self.xp.zeros((self.Nf, self.yend-self.ysrt, self.zend-self.zsrt), dtype=np.complex128)
 
-            self.DFT_Hy = self.xp.zeros((self.Nf, self.yend-self.ysrt, self.zend-self.zsrt), dtype=self.space.field_dtype)
-            self.DFT_Hz = self.xp.zeros((self.Nf, self.yend-self.ysrt, self.zend-self.zsrt), dtype=self.space.field_dtype)
+            self.DFT_Hy = self.xp.zeros((self.Nf, self.yend-self.ysrt, self.zend-self.zsrt), dtype=np.complex128)
+            self.DFT_Hz = self.xp.zeros((self.Nf, self.yend-self.ysrt, self.zend-self.zsrt), dtype=np.complex128)
 
     def do_RFT(self, tstep):
 
@@ -334,7 +337,7 @@ class Sx(collector):
             self.DFT_Ez += self.space.Ez[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
             self.DFT_Hy += self.space.Hy[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
-    def get_Sx(self):
+    def get_Sx(self, h5=False):
 
         self.space.MPIcomm.barrier()
 
@@ -345,11 +348,38 @@ class Sx(collector):
 
             self.Sx_area = self.Sx.sum(axis=(1,2)) * self.space.dy * self.space.dz
 
-            self.xp.save("{}/{}_DFT_Ey_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.DFT_Ey)
-            self.xp.save("{}/{}_DFT_Ez_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.DFT_Ez)
-            self.xp.save("{}/{}_DFT_Hy_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.DFT_Hy)
-            self.xp.save("{}/{}_DFT_Hz_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.DFT_Hz)
-            self.xp.save("./graph/%s_area" %self.name, self.Sx_area)
+            Eyname = "{}/{}_DFT_Ey_rank{:02d}" .format(self.path, self.name, self.space.MPIrank)
+            Ezname = "{}/{}_DFT_Ez_rank{:02d}" .format(self.path, self.name, self.space.MPIrank)
+            Hyname = "{}/{}_DFT_Hy_rank{:02d}" .format(self.path, self.name, self.space.MPIrank)
+            Hzname = "{}/{}_DFT_Hz_rank{:02d}" .format(self.path, self.name, self.space.MPIrank)
+
+            self.xp.save(Eyname, self.DFT_Ey)
+            self.xp.save(Ezname, self.DFT_Ez)
+            self.xp.save(Hyname, self.DFT_Hy)
+            self.xp.save(Hzname, self.DFT_Hz)
+            self.xp.save("{}/{}_area" .format(self.path, self.name), self.Sx_area)
+
+            if h5 == True:
+
+                if self.space.engine == 'cupy':
+
+                    with h5py.File('{}/{}_DFTs_rank{:02d}.h5' .format(self.path, self.name, self.space.MPIrank), 'w') as hf:
+
+                        hf.create_dataset('Sx_Ey', data=cp.asnumpy(self.DFT_Ey))
+                        hf.create_dataset('Sx_Ez', data=cp.asnumpy(self.DFT_Ez))
+                        hf.create_dataset('Sx_Hy', data=cp.asnumpy(self.DFT_Hy))
+                        hf.create_dataset('Sx_Hz', data=cp.asnumpy(self.DFT_Hz))
+                        hf.create_dataset('Sx_area', data=cp.asnumpy(self.Sx_area))
+
+                else:
+
+                    with h5py.File('{}/{}_DFTs_rank{:02d}.h5' .format(self.path, self.name, self.space.MPIrank), 'w') as hf:
+
+                        hf.create_dataset('Sx_Ey', data=self.DFT_Ey)
+                        hf.create_dataset('Sx_Ez', data=self.DFT_Ez)
+                        hf.create_dataset('Sx_Hy', data=self.DFT_Hy)
+                        hf.create_dataset('Sx_Hz', data=self.DFT_Hz)
+                        hf.create_dataset('Sx_area', data=self.Sx_area)
 
 
 class Sy(collector):
@@ -466,11 +496,11 @@ class Sy(collector):
             xsrt = self.lloc[0][0]
             xend = self.lloc[1][0]
 
-            self.DFT_Ex = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.space.field_dtype)
-            self.DFT_Ez = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.space.field_dtype)
+            self.DFT_Ex = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=np.complex128)
+            self.DFT_Ez = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=np.complex128)
 
-            self.DFT_Hx = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.space.field_dtype)
-            self.DFT_Hz = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=self.space.field_dtype)
+            self.DFT_Hx = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=np.complex128)
+            self.DFT_Hz = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=np.complex128)
         
         #print(self.who_get_Sy_gloc)
         #print(self.who_get_Sy_lloc)
@@ -533,7 +563,25 @@ class Sy(collector):
                               +(DFT_Ez.real*DFT_Hx.real) + (DFT_Ez.imag*DFT_Hx.imag)  )
 
             self.Sy_area = self.Sy.sum(axis=(1,2)) * self.space.dx * self.space.dz
-            np.save("./graph/%s_area" %self.name, self.Sy_area)
+            self.xp.save("{}/{}_area" .format(self.path, self.name), self.Sy_area)
+
+            if h5 == True:
+
+                with h5py.File('{}/{}_DFTs_rank{:02d}.h5' .format(self.path, self.name, self.space.MPIrank), 'w') as hf:
+
+                    if self.space.engine == 'cupy':
+                        hf.create_dataset('Sy_Ex', data=cp.asnumpy(self.DFT_Ex))
+                        hf.create_dataset('Sy_Ez', data=cp.asnumpy(self.DFT_Ez))
+                        hf.create_dataset('Sy_Hx', data=cp.asnumpy(self.DFT_Hx))
+                        hf.create_dataset('Sy_Hz', data=cp.asnumpy(self.DFT_Hz))
+                        hf.create_dataset('Sy_area', data=cp.asnumpy(self.Sx_area))
+
+                    else:
+                        hf.create_dataset('Sy_Ex', data=self.DFT_Ex)
+                        hf.create_dataset('Sy_Ez', data=self.DFT_Ez)
+                        hf.create_dataset('Sy_Hx', data=self.DFT_Hx)
+                        hf.create_dataset('Sy_Hz', data=self.DFT_Hz)
+                        hf.create_dataset('Sy_area', data=self.Sx_area)
 
 
 class Sz(collector):
@@ -650,10 +698,10 @@ class Sz(collector):
             xsrt = self.lloc[0][0]
             xend = self.lloc[1][0]
 
-            self.DFT_Ex = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.space.field_dtype)
-            self.DFT_Ey = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.space.field_dtype)
-            self.DFT_Hx = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.space.field_dtype)
-            self.DFT_Hy = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=self.space.field_dtype)
+            self.DFT_Ex = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=np.complex128)
+            self.DFT_Ey = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=np.complex128)
+            self.DFT_Hx = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=np.complex128)
+            self.DFT_Hy = self.xp.zeros((self.Nf, xend-xsrt, yend-ysrt), dtype=np.complex128)
         
     def do_RFT(self, tstep):
 
@@ -712,4 +760,22 @@ class Sz(collector):
                               +(DFT_Ex.real*DFT_Hy.real) + (DFT_Ex.imag*DFT_Hy.imag)  )
 
             self.Sz_area = self.Sz.sum(axis=(1,2)) * self.space.dx * self.space.dy
-            self.xp.save("./graph/%s_area" %self.name, self.Sz_area)
+            self.xp.save("{}/{}_area" .format(self.path, self.name), self.Sz_area)
+
+            if h5 == True:
+
+                with h5py.File('{}/{}_DFTs_rank{:02d}.h5' .format(self.path, self.name, self.space.MPIrank), 'w') as hf:
+
+                    if self.space.engine == 'cupy':
+                        hf.create_dataset('Sz_Ex', data=cp.asnumpy(self.DFT_Ex))
+                        hf.create_dataset('Sz_Ey', data=cp.asnumpy(self.DFT_Ey))
+                        hf.create_dataset('Sz_Hx', data=cp.asnumpy(self.DFT_Hx))
+                        hf.create_dataset('Sz_Hy', data=cp.asnumpy(self.DFT_Hy))
+                        hf.create_dataset('Sz_area', data=cp.asnumpy(self.Sx_area))
+
+                    else:
+                        hf.create_dataset('Sz_Ex', data=self.DFT_Ex)
+                        hf.create_dataset('Sz_Ey', data=self.DFT_Ey)
+                        hf.create_dataset('Sz_Hx', data=self.DFT_Hx)
+                        hf.create_dataset('Sz_Hy', data=self.DFT_Hy)
+                        hf.create_dataset('Sz_area', data=self.Sx_area)

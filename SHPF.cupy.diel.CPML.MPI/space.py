@@ -227,7 +227,7 @@ class Basic3D:
         self.PMLgrading = 2 * self.npml
 
         self.rc0   = 1.e-16                             # reflection coefficient
-        self.imp   = self.xp.sqrt(mu_0/epsilon_0)            # impedence
+        self.imp   = self.xp.sqrt(mu_0/epsilon_0)       # impedence
         self.gO    = 3.                                 # gradingOrder
         self.sO    = 3.                                 # scalingOrder
         self.bdw_x = (self.PMLgrading-1) * self.dx      # PML thickness along x (Boundarywidth)

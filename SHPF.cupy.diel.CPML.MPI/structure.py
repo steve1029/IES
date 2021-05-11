@@ -136,18 +136,15 @@ class Box(Structure):
         assert len(srt) == 3, "Only 3D material is possible."
         assert len(end) == 3, "Only 3D material is possible."
 
-        assert type(eps_r) == float, "Only isotropic media is possible. eps_r must be a single float."  
-        assert type( mu_r) == float, "Only isotropic media is possible.  mu_r must be a single float."  
-
         # Start index of the structure.
         xsrt = round(srt[0]/self.space.dx)
         ysrt = round(srt[1]/self.space.dy)
         zsrt = round(srt[2]/self.space.dz)
 
         # End index of the structure.
-        xend = round(end[0]/self.space.dx)-1
-        yend = round(end[1]/self.space.dy)-1
-        zend = round(end[2]/self.space.dz)-1
+        xend = round(end[0]/self.space.dx)+1
+        yend = round(end[1]/self.space.dy)+1
+        zend = round(end[2]/self.space.dz)+1
 
         assert xsrt < xend
         assert ysrt < yend
@@ -166,6 +163,8 @@ class Box(Structure):
             #self.local_size = (self.lxloc[1] - self.lxloc[0], yend-ysrt, zend-zsrt)
             print("rank {:>2}: x idx of a Box >>> global \"{:4d},{:4d}\" and local \"{:4d},{:4d}\"" \
                     .format(self.space.MPIrank, self.gxloc[0], self.gxloc[1], self.lxloc[0], self.lxloc[1]))
+            #print(ysrt, yend)
+            #print(zsrt, zend)
 
             loc_xsrt = self.lxloc[0]
             loc_xend = self.lxloc[1]
