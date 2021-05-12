@@ -7,9 +7,9 @@ from mpi4py import MPI
 import matplotlib.pyplot as plt
 from scipy.constants import c
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import space_v2 as space
+import space as space
 import source, plotter, structure, collector, recorder
-
+np.seterr(invalid='raise')
 #------------------------------------------------------------------#
 #--------------------- Space object settings ----------------------#
 #------------------------------------------------------------------#
@@ -20,7 +20,7 @@ um = 1e-6
 #a = 779.42*nm
 a = 200*nm
 
-Lx, Ly, Lz = 600*nm, a, a 
+Lx, Ly, Lz = 1200*nm, a, a 
 Nx, Ny, Nz = 200, 32, 32
 dx, dy, dz = Lx/(Nx-1), Ly/(Ny-1), Lz/(Nz-1)
 
@@ -98,11 +98,11 @@ mmt = (kx, ky, kz)
 
 ########## Gaussian source
 #wvc = float(sys.argv[2])*nm
-wvc = 150*nm
+wvc = 660*nm
 w0 = (2*np.pi*c)/wvc
 interval = 2
-spread   = 0.3
-pick_pos = 1000
+spread   = 0.2
+pick_pos = 1500
 ws = w0 * spread
 src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
 
@@ -115,7 +115,7 @@ l2 = 2*np.pi*c / w2 / nm
 wvlens = np.arange(l2,l1, interval)*nm
 freqs = c / wvlens
 #np.save("../graph/freqs", freqs)
-#src.plot_pulse(Tsteps, freqs, savedir)
+src.plot_pulse(Tsteps, freqs, savedir)
 #sys.exit()
 
 ########## Sine source
@@ -200,8 +200,8 @@ rot_cen = center1
 #structure.Cylinder3D_slab(TF, 'x', radius, height, lcy, lcz, 45, rot_cen,  5, 1)
 
 ########## Save eps, mu data.
-#TF.save_eps_mu(savedir)
-#sys.exit()
+TF.save_eps_mu(savedir)
+sys.exit()
 
 #------------------------------------------------------------------#
 #------------------- Initialize update constants-------------------#

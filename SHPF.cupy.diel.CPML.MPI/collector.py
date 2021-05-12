@@ -328,8 +328,8 @@ class Sx(collector):
             xsrt = self.lxloc[0]
             xend = self.lxloc[1]
 
-            f = [slice(0,None), None, None]
-            Fidx = [slice(xsrt,xend), slice(self.ysrt, self.yend), slice(self.zsrt, self.zend)]
+            f = (slice(0,None), None, None)
+            Fidx = (slice(xsrt,xend), slice(self.ysrt, self.yend), slice(self.zsrt, self.zend))
 
             self.DFT_Ey += self.space.Ey[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
             self.DFT_Hz += self.space.Hz[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
@@ -517,8 +517,8 @@ class Sy(collector):
             zsrt = self.lloc[0][2]
             zend = self.lloc[1][2]
 
-            f = [slice(0,None), None, None]
-            Fidx = [slice(xsrt,xend), ysrt, slice(zsrt, zend)]
+            f = (slice(0,None), None, None)
+            Fidx = (slice(xsrt,xend), ysrt, slice(zsrt, zend))
 
             self.DFT_Ex += self.space.Ex[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
             self.DFT_Hz += self.space.Hz[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
@@ -715,8 +715,8 @@ class Sz(collector):
             zsrt = self.lloc[0][2]
             zend = self.lloc[1][2]
 
-            f = [slice(0,None), None, None]
-            Fidx = [slice(xsrt,xend), slice(ysrt, yend), zsrt]
+            f = (slice(0,None), None, None)
+            Fidx = (slice(xsrt,xend), slice(ysrt, yend), zsrt)
 
             self.DFT_Ex += self.space.Ex[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
             self.DFT_Hy += self.space.Hy[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt

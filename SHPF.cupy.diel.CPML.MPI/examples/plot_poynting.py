@@ -7,10 +7,10 @@ import plotter
 um = 1e-6
 nm = 1e-9
 
-wvc = 150*nm
+wvc = 660*nm
 w0 = (2*np.pi*c)/wvc
 interval = 2 
-spread   = 0.3 
+spread   = 0.2
 ws = w0 * spread
 
 w1 = w0 * (1-spread*2)
@@ -26,9 +26,14 @@ freq_unit = 'THz'
 
 painter = plotter.SpectrumPlotter(wvlen, freq_unit, wvlen_unit)
 
-TF_Sx_R = ['../graph/Sx/TF_R_area.npy']
-SF_Sx_L = ['../graph/Sx/SF_L_area.npy']
-IF_Sx_L = ['../graph/Sx/IF_L_area.npy']
+method = sys.argv[1] 
+tsteps = sys.argv[2]
+
+dirs = '../graph/{}/{}tsteps/'. format(method, tsteps)
+
+TF_Sx_R = [dirs+'Sx/TF_R_area.npy']
+SF_Sx_L = [dirs+'Sx/SF_L_area.npy']
+IF_Sx_L = [dirs+'Sx/IF_L_area.npy']
 
 Sy_L = ['../graph/Sy_SF_L_area.npy']
 Sy_R = ['../graph/Sy_SF_R_area.npy']
@@ -39,10 +44,10 @@ Sz_R = ['../graph/Sz_SF_R_area.npy']
 S = ['../graph/Sx_SF_L_area.npy', '../graph/Sx_SF_R_area.npy', '../graph/Sy_SF_L_area.npy',\
      '../graph/Sy_SF_R_area.npy', '../graph/Sz_SF_L_area.npy', '../graph/Sz_SF_R_area.npy',]
 
-painter.simple_plot(TF_Sx_R, '../graph/TF_Sx_R_spectrum.png')
-painter.simple_plot(SF_Sx_L, '../graph/SF_Sx_L_spectrum.png')
-painter.simple_plot(IF_Sx_L, '../graph/IF_Sx_L_spectrum.png')
-painter.plot_IRT(IF_Sx_L, SF_Sx_L, TF_Sx_R, '../graph/IRT.png')
+painter.simple_plot(TF_Sx_R, dirs+'TF_Sx_R_spectrum.png')
+painter.simple_plot(SF_Sx_L, dirs+'SF_Sx_L_spectrum.png')
+painter.simple_plot(IF_Sx_L, dirs+'IF_Sx_L_spectrum.png')
+painter.plot_IRT(IF_Sx_L, SF_Sx_L, TF_Sx_R, dirs+'IRT.png')
 
 """
 painter2.simple_plot(Sy_L, './graph/Sy_L_SF_spectrum.png')

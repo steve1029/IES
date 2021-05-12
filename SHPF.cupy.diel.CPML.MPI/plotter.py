@@ -25,7 +25,7 @@ class Graphtool(object):
                 if os.path.exists(path) == True: break
                 else: continue
 
-            if os.path.exists(savedir) == False: os.mkdir(savedir)
+            if os.path.exists(self.savedir) == False: os.mkdirs(self.savedir)
             else: pass
 
     def gather(self, what):
@@ -314,7 +314,7 @@ class SpectrumPlotter(object):
 
         fig.savefig(name)
 
-    def plot_IRT(self, incs, refs, trss, savedir, plot_trs=True, plot_ref=True):
+    def plot_IRT(self, incs, refs, trss, savedir, plot_trs=True, plot_ref=True, plot_sum=True):
         """Plot transmittance and reflectance.
 
         Parameters
@@ -349,6 +349,10 @@ class SpectrumPlotter(object):
             ref /= inc
             axes[0].plot(self.freqs, ref, label='reflectance')
             axes[1].plot(self.wvlens, ref, label='reflectance')
+
+        if plot_sum == True:
+            axes[0].plot(self.freqs, ref+trs, label='sum')
+            axes[1].plot(self.wvlens, ref+trs, label='sum')
 
         axes[0].grid(True)
         axes[0].set_xlabel("freqs({})" .format(self.freq_unit))

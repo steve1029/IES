@@ -19,8 +19,8 @@ um = 1e-6
 #a = 779.42*nm
 a = 512*nm
 
-Lx, Ly, Lz = 1000*nm, 2*a, 2*a 
-Nx, Ny, Nz = 200, 32, 32
+Lx, Ly, Lz = 2000*nm, a, a 
+Nx, Ny, Nz = 200, 64, 64
 dx, dy, dz = Lx/(Nx-1), Ly/(Ny-1), Lz/(Nz-1)
 
 courant = 1./4
@@ -54,7 +54,7 @@ IF.apply_PBC(pbc)
 ########## Save PML data.
 #TF.save_pml_parameters('./')
 
-filename = "{}/{}tsteps/" .format(method, Tsteps)
+filename = "{}/{}tsteps/{}_{}_{}/" .format(method,Tsteps,Nx,Ny,Nz)
 savedir = '../graph/' + filename
 
 #------------------------------------------------------------------#
@@ -101,8 +101,8 @@ mmt = (kx, ky, kz)
 wvc = 660*nm
 w0 = (2*np.pi*c)/wvc
 interval = 2
-spread   = 0.3
-pick_pos = 1000
+spread   = 0.2
+pick_pos = 2500
 ws = w0 * spread
 src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
 
@@ -134,8 +134,8 @@ src.plot_pulse(Tsteps, freqs, savedir)
 #src1 = source.Delta(10)
 
 ########## Plane wave normal to x-axis.
-setterT1 = source.Setter(TF, (70*nm, 0, 0), (70*nm+dx, Ly, Lz), mmt)
-setterI1 = source.Setter(IF, (70*nm, 0, 0), (70*nm+dx, Ly, Lz), mmt)
+setterT1 = source.Setter(TF, (200*nm, 0, 0), (200*nm+dx, Ly, Lz), mmt)
+setterI1 = source.Setter(IF, (200*nm, 0, 0), (200*nm+dx, Ly, Lz), mmt)
 
 ########## Plane wave normal to y-axis.
 #setter1 = source.Setter(TF, (0, 200*nm, 0), (Lx, 200*nm+dy, Lz), mmt)
@@ -178,7 +178,7 @@ setterI1 = source.Setter(IF, (70*nm, 0, 0), (70*nm+dx, Ly, Lz), mmt)
 
 ########## Box
 
-t1 = 200*nm
+t1 = 1000*nm
 t2 = t1 + a*0.2
 
 srt = (t1,  0,  0)
@@ -192,11 +192,11 @@ center1 = np.array([Ly/2, Lz/2])
 lcy = Ly/2
 lcz = Lz/2
 
-#structure.Cylinder3D(TF, 'x', radius, height, center1, 1, 1.)
+structure.Cylinder3D(TF, 'x', radius, height, center1, 1, 1.)
 
 rot = 0
 rot_cen = center1
-structure.Cylinder3D_slab(TF, 'x', radius, height, lcy, lcz,  0, rot_cen, 1, 1)
+#structure.Cylinder3D_slab(TF, 'x', radius, height, lcy, lcz,  0, rot_cen, 1, 1)
 #structure.Cylinder3D_slab(TF, 'x', radius, height, lcy, lcz, 45, rot_cen,  5, 1)
 
 ########## Save eps, mu data.
@@ -217,9 +217,9 @@ leftx, rightx = 100*nm, 500*nm
 lefty, righty = 0*nm, Ly
 leftz, rightz = 0*nm, Lz
 
-TF_Sx_R_calculator = collector.Sx("TF_R", savedir+"Sx/", TF, 400*nm, (lefty, leftz), (righty, rightz), freqs, engine)
-IF_Sx_L_calculator = collector.Sx("IF_L", savedir+"Sx/", IF, 100*nm, (lefty, leftz), (righty, rightz), freqs, engine)
-SF_Sx_L_calculator = collector.Sx("SF_L", savedir+"Sx/", SF, 100*nm, (lefty, leftz), (righty, rightz), freqs, engine)
+TF_Sx_R_calculator = collector.Sx("TF_R", savedir+"Sx/", TF, 1500*nm, (lefty, leftz), (righty, rightz), freqs, engine)
+IF_Sx_L_calculator = collector.Sx("IF_L", savedir+"Sx/", IF,  300*nm, (lefty, leftz), (righty, rightz), freqs, engine)
+SF_Sx_L_calculator = collector.Sx("SF_L", savedir+"Sx/", SF,  300*nm, (lefty, leftz), (righty, rightz), freqs, engine)
 
 #------------------------------------------------------------------#
 #-------------------- Graphtool object settings -------------------#
@@ -292,7 +292,7 @@ for tstep in range(Tsteps):
         #TFgraphtool.plot2D3D(Hz, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1) 
 
         Ey = IFgraphtool.gather('Ey')
-        #IFgraphtool.plot2D3D(Ex, tstep, yidx=TF.Nyc, colordeep=2., stride=1, zlim=2.)
+        #IFgraphtool.plot2D3D(Ex, tstep, yidx=TF.Nyc, colordeep=2, stride=1, zlim=2)
         IFgraphtool.plot2D3D(Ey, tstep, yidx=IF.Nyc, colordeep=2, stride=2, zlim=2)
         #IFgraphtool.plot2D3D(Ez, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)
         #IFgraphtool.plot2D3D(Hx, tstep, xidx=TF.Nxc, colordeep=.1, stride=1, zlim=.1)

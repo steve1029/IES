@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.constants import c, mu_0, epsilon_0
@@ -313,7 +314,8 @@ class Gaussian:
         ax3.grid(True)
         ax3.set_ylim(0,None)
 
-        fig.savefig(savedir+"graph/src_input.png")
+        if os.path.exists(savedir) != True: os.makedirs(savedir)
+        fig.savefig(savedir+"src_input.png")
 
 
 class Sine:

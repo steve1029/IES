@@ -615,11 +615,15 @@ class Cylinder3D(Structure):
             rz = center[1]/dz
 
             gxsrts = round(height[0]/dx)   # Global srt index of the structure.
-            gxends = round(height[1]/dx)-1 # Global end index of the structure.
+            gxends = round(height[1]/dx)+1 # Global end index of the structure.
 
             self.gxloc, self.lxloc = Structure._get_local_x_loc(self, gxsrts, gxends)
 
             if self.gxloc != None:      
+
+                print("Cylinder center index: (y0,z0)=({},{})" .format(ry, rz))
+                print("rank {:>2}: x idx of a Cylinder >>> global \"{:4d},{:4d}\" and local \"{:4d},{:4d}\"" \
+                        .format(self.space.MPIrank, self.gxloc[0], self.gxloc[1], self.lxloc[0], self.lxloc[1]))
 
                 for j in range(self.space.Ny):
                     for k in range(self.space.Nz):
