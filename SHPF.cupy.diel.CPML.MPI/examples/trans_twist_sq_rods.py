@@ -19,15 +19,15 @@ um = 1e-6
 #a = 779.42*nm
 a = 512*nm
 
-Lx, Ly, Lz = 2000*nm, a, a 
-Nx, Ny, Nz = 200, 64, 64
+Lx, Ly, Lz = 2*a, 2*a, 2*a 
+Nx, Ny, Nz = int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5])
 dx, dy, dz = Lx/(Nx-1), Ly/(Ny-1), Lz/(Nz-1)
 
 courant = 1./4
 dt = courant * min(dx,dy,dz) / c
 Tsteps = int(sys.argv[1])
 
-method = 'FDTD'
+method = sys.argv[2]
 engine = 'cupy'
 
 TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.complex64, method=method, engine=engine)
@@ -100,8 +100,8 @@ mmt = (kx, ky, kz)
 #wvc = float(sys.argv[2])*nm
 wvc = 660*nm
 w0 = (2*np.pi*c)/wvc
-interval = 2
-spread   = 0.2
+interval = 1
+spread   = 0.1
 pick_pos = 2500
 ws = w0 * spread
 src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
@@ -111,6 +111,8 @@ w2 = w0 * (1+spread*2)
 
 l1 = 2*np.pi*c / w1 / nm
 l2 = 2*np.pi*c / w2 / nm
+
+print(l1, l2)
 
 wvlens = np.arange(l2,l1, interval)*nm
 freqs = c / wvlens
@@ -178,30 +180,39 @@ setterI1 = source.Setter(IF, (200*nm, 0, 0), (200*nm+dx, Ly, Lz), mmt)
 
 ########## Box
 
-t1 = 1000*nm
-t2 = t1 + a*0.2
+t1 = 500*nm
+t2 = t1 + a*.2
+t3 = t2 + a*.3
+t4 = t3 + a*.2
 
-srt = (t1,  0,  0)
-end = (t2, Ly, Lz)
-box = structure.Box(TF, srt, end, 4, 1.)
+srt1 = (t1,  0,  0)
+end1 = (t2, Ly, Lz)
+
+srt2 = (t3,  0,  0)
+end2 = (t4, Ly, Lz)
+
+structure.Box(TF, srt1, end1, 4, 1.)
+structure.Box(TF, srt2, end2, 4, 1.)
 
 ########## Circle
 radius = a / 4
-height = (t1, t2)
-center1 = np.array([Ly/2, Lz/2])
+height1 = (t1, t2)
+height2 = (t3, t4)
+center = np.array([Ly/2, Lz/2])
 lcy = Ly/2
 lcz = Lz/2
 
-structure.Cylinder3D(TF, 'x', radius, height, center1, 1, 1.)
+#structure.Cylinder3D(TF, 'x', radius, height1, center, 1, 1.)
+#structure.Cylinder3D(TF, 'x', radius, height2, center, 1, 1.)
 
 rot = 0
-rot_cen = center1
-#structure.Cylinder3D_slab(TF, 'x', radius, height, lcy, lcz,  0, rot_cen, 1, 1)
-#structure.Cylinder3D_slab(TF, 'x', radius, height, lcy, lcz, 45, rot_cen,  5, 1)
+rot_cen = center
+structure.Cylinder3D_slab(TF, 'x', radius, height1, lcy, lcz, 0, rot_cen, 1, 1)
+structure.Cylinder3D_slab(TF, 'x', radius, height2, lcy, lcz, 0, rot_cen, 1, 1)
 
 ########## Save eps, mu data.
-#TF.save_eps_mu(savedir)
-#sys.exit()
+TF.save_eps_mu(savedir)
+sys.exit()
 
 #------------------------------------------------------------------#
 #------------------- Initialize update constants-------------------#
@@ -225,7 +236,7 @@ SF_Sx_L_calculator = collector.Sx("SF_L", savedir+"Sx/", SF,  300*nm, (lefty, le
 #-------------------- Graphtool object settings -------------------#
 #------------------------------------------------------------------#
 
-plot_per = 1000
+plot_per = 10000
 TFgraphtool = plotter.Graphtool(TF, 'TF', savedir)
 IFgraphtool = plotter.Graphtool(IF, 'IF', savedir)
 SFgraphtool = plotter.Graphtool(SF, 'SF', savedir)

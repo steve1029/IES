@@ -314,7 +314,9 @@ class SpectrumPlotter(object):
 
         fig.savefig(name)
 
-    def plot_IRT(self, incs, refs, trss, savedir, plot_trs=True, plot_ref=True, plot_sum=True):
+    def plot_IRT(self, incs, refs, trss, savedir, \
+                wvxlim, wvylim, freqxlim, freqylim,\
+                plot_trs=True, plot_ref=True, plot_sum=True):
         """Plot transmittance and reflectance.
 
         Parameters
@@ -358,10 +360,14 @@ class SpectrumPlotter(object):
         axes[0].set_xlabel("freqs({})" .format(self.freq_unit))
         axes[0].set_ylabel('Ratio')
         axes[0].legend(loc='best')
+        axes[0].set_xlim(wvxlim[0], wvxlim[1])
+        axes[0].set_ylim(wvylim[0], wvylim[1])
 
         axes[1].grid(True)
         axes[1].set_xlabel("wavelength({})" .format(self.wvlen_unit))
         axes[1].set_ylabel('Ratio')
         axes[1].legend(loc='best')
+        axes[1].set_xlim(freqxlim[0], freqxlim[1])
+        axes[1].set_ylim(freqylim[0], freqylim[1])
 
         fig.savefig(savedir)

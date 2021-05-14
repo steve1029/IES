@@ -711,7 +711,7 @@ class Cylinder3D_slab(Structure):
         rot: float.
             a rotation angle in degree.
 
-        rot_cen: ndarry.
+        rot_cen: ndarray.
             a coordinate of rotation axis.
 
         lcy: float.

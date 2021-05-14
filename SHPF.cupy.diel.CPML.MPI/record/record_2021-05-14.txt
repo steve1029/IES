@@ -1,0 +1,3 @@
+Node	Nx  	Ny  	Nz  	dx  		dy  		dz  		tsteps  	Time				Method	VM/Node(GB) 	RM/Node(GB) 
+
+ 2		0512	0128	0128	4.01e-09	4.03e-09	4.03e-09	500001		10:38:07.337534		  FDTD		10.988			00.544
