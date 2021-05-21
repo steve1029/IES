@@ -154,15 +154,15 @@ class Box(Structure):
         nm = 1e-9
 
         if space.MPIrank == 0:
-            print("Box size: x={:5.1f} um, y={:5.1f} um, z={:5.1f} um" \
+            print("Box size: x={:.4f} um, y={:.4f} um, z={:.4f} um" \
                 .format((end[0]-srt[0])/um, (end[1]-srt[1])/um, (end[2]-srt[2])/um))
 
         self.gxloc, self.lxloc = Structure._get_local_x_loc(self, xsrt, xend)
 
         if self.gxloc != None:
             #self.local_size = (self.lxloc[1] - self.lxloc[0], yend-ysrt, zend-zsrt)
-            print("rank {:>2}: x idx of a Box >>> global \"{:4d},{:4d}\" and local \"{:4d},{:4d}\"" \
-                    .format(self.space.MPIrank, self.gxloc[0], self.gxloc[1], self.lxloc[0], self.lxloc[1]))
+            #print("rank {:>2}: x idx of a Box >>> global \"{:4d},{:4d}\" and local \"{:4d},{:4d}\"" \
+            #        .format(self.space.MPIrank, self.gxloc[0], self.gxloc[1], self.lxloc[0], self.lxloc[1]))
             #print(ysrt, yend)
             #print(zsrt, zend)
 
@@ -621,9 +621,9 @@ class Cylinder3D(Structure):
 
             if self.gxloc != None:      
 
-                print("Cylinder center index: (y0,z0)=({},{})" .format(ry, rz))
-                print("rank {:>2}: x idx of a Cylinder >>> global \"{:4d},{:4d}\" and local \"{:4d},{:4d}\"" \
-                        .format(self.space.MPIrank, self.gxloc[0], self.gxloc[1], self.lxloc[0], self.lxloc[1]))
+                #print(f"Cylinder center index: (y0,z0)=({ry},{rz})")
+                #print("rank {:>2}: x idx of a Cylinder >>> global \"{:4d},{:4d}\" and local \"{:4d},{:4d}\"" \
+                #        .format(self.space.MPIrank, self.gxloc[0], self.gxloc[1], self.lxloc[0], self.lxloc[1]))
 
                 for j in range(self.space.Ny):
                     for k in range(self.space.Nz):

@@ -1,0 +1,144 @@
+VOLUME of the space: 6.04e-19
+Size of the space: 2304 x 0512 x 0512
+Number of grid points:   256 x    64 x    64
+Grid spacing: 9.035 nm, 8.127 nm, 8.127 nm
+
+VOLUME of the space: 6.04e-19
+Size of the space: 2304 x 0512 x 0512
+Number of grid points:   256 x    64 x    64
+Grid spacing: 9.035 nm, 8.127 nm, 8.127 nm
+
+VOLUME of the space: 6.04e-19
+Size of the space: 2304 x 0512 x 0512
+Number of grid points:   256 x    64 x    64
+Grid spacing: 9.035 nm, 8.127 nm, 8.127 nm
+
+Gaussian center wavelength: 0.6600 um.
+Gaussian angular frequency spread: 0.100*w0
+Gaussian center wavelength: 0.6600 um.
+Gaussian wavelength discretized per: 1 nm.
+Gaussian wave pick position at: 3000 Tstep.
+Gaussian angular frequency spread: 0.100 * w0
+
+Box size: x=0.1024 um, y=0.5120 um, z=0.5120 um
+Box size: x=0.1024 um, y=0.5120 um, z=0.5120 um
+rank  0: xloc of Sx collector >>> global "191,192" and local "191,192"
+rank  0: xloc of Sx collector >>> global "51,52" and local "51,52"
+rank  0: xloc of Sx collector >>> global "51,52" and local "51,52"
+
+Total time step: 1000001
+Size of a total field array : 08.00 Mbytes
+
+Simulation start: 2021-05-18 18:26:13.115247
+time: 0:00:01.641262, step: 00000,  0.00%
+time: 0:02:55.532923, step: 10000,  1.00%
+time: 0:05:49.532358, step: 20000,  2.00%
+time: 0:08:43.519057, step: 30000,  3.00%
+time: 0:11:37.479963, step: 40000,  4.00%
+time: 0:14:31.481469, step: 50000,  5.00%
+time: 0:17:25.448256, step: 60000,  6.00%
+time: 0:20:19.466742, step: 70000,  7.00%
+time: 0:23:13.408807, step: 80000,  8.00%
+time: 0:26:07.395516, step: 90000,  9.00%
+time: 0:29:01.344070, step: 100000, 10.00%
+IRT.png are plotted at 100000 time step.
+time: 0:32:00.161626, step: 110000, 11.00%
+time: 0:34:54.137617, step: 120000, 12.00%
+time: 0:37:48.122458, step: 130000, 13.00%
+time: 0:40:42.110859, step: 140000, 14.00%
+time: 0:43:36.111145, step: 150000, 15.00%
+time: 0:46:30.040118, step: 160000, 16.00%
+time: 0:49:24.046427, step: 170000, 17.00%
+time: 0:52:17.989671, step: 180000, 18.00%
+time: 0:55:11.961831, step: 190000, 19.00%
+time: 0:58:05.881357, step: 200000, 20.00%
+IRT.png are plotted at 200000 time step.
+time: 1:01:04.829356, step: 210000, 21.00%
+time: 1:03:58.786737, step: 220000, 22.00%
+time: 1:06:52.775308, step: 230000, 23.00%
+time: 1:09:46.711414, step: 240000, 24.00%
+time: 1:12:40.755503, step: 250000, 25.00%
+time: 1:15:34.753881, step: 260000, 26.00%
+time: 1:18:28.764642, step: 270000, 27.00%
+time: 1:21:22.729934, step: 280000, 28.00%
+time: 1:24:16.704472, step: 290000, 29.00%
+time: 1:27:10.648224, step: 300000, 30.00%
+IRT.png are plotted at 300000 time step.
+time: 1:30:09.512904, step: 310000, 31.00%
+time: 1:33:03.498368, step: 320000, 32.00%
+time: 1:35:57.435892, step: 330000, 33.00%
+time: 1:38:51.398969, step: 340000, 34.00%
+time: 1:41:45.425291, step: 350000, 35.00%
+time: 1:44:39.410172, step: 360000, 36.00%
+time: 1:47:33.368992, step: 370000, 37.00%
+time: 1:50:27.324595, step: 380000, 38.00%
+time: 1:53:21.429377, step: 390000, 39.00%
+time: 1:56:15.389933, step: 400000, 40.00%
+IRT.png are plotted at 400000 time step.
+time: 1:59:14.356847, step: 410000, 41.00%
+time: 2:02:08.290185, step: 420000, 42.00%
+time: 2:05:02.280142, step: 430000, 43.00%
+time: 2:07:56.189059, step: 440000, 44.00%
+time: 2:10:50.173381, step: 450000, 45.00%
+time: 2:13:44.098234, step: 460000, 46.00%
+time: 2:16:38.070544, step: 470000, 47.00%
+time: 2:19:32.022278, step: 480000, 48.00%
+time: 2:22:25.944999, step: 490000, 49.00%
+time: 2:25:19.887624, step: 500000, 50.00%
+IRT.png are plotted at 500000 time step.
+time: 2:28:18.623138, step: 510000, 51.00%
+time: 2:31:12.513596, step: 520000, 52.00%
+time: 2:34:06.490091, step: 530000, 53.00%
+time: 2:37:00.457035, step: 540000, 54.00%
+time: 2:39:54.462018, step: 550000, 55.00%
+time: 2:42:48.421827, step: 560000, 56.00%
+time: 2:45:42.423035, step: 570000, 57.00%
+time: 2:48:36.369755, step: 580000, 58.00%
+time: 2:51:30.323237, step: 590000, 59.00%
+time: 2:54:24.283622, step: 600000, 60.00%
+IRT.png are plotted at 600000 time step.
+time: 2:57:22.984213, step: 610000, 61.00%
+time: 3:00:16.945689, step: 620000, 62.00%
+time: 3:03:10.928146, step: 630000, 63.00%
+time: 3:06:04.891454, step: 640000, 64.00%
+time: 3:08:58.887874, step: 650000, 65.00%
+time: 3:11:52.851776, step: 660000, 66.00%
+time: 3:14:46.862717, step: 670000, 67.00%
+time: 3:17:40.845410, step: 680000, 68.00%
+time: 3:20:34.804373, step: 690000, 69.00%
+time: 3:23:28.737704, step: 700000, 70.00%
+IRT.png are plotted at 700000 time step.
+time: 3:26:27.545641, step: 710000, 71.00%
+time: 3:29:21.520028, step: 720000, 72.00%
+time: 3:32:15.513164, step: 730000, 73.00%
+time: 3:35:09.466629, step: 740000, 74.00%
+time: 3:38:03.405486, step: 750000, 75.00%
+time: 3:40:57.324079, step: 760000, 76.00%
+time: 3:43:51.293189, step: 770000, 77.00%
+time: 3:46:45.261569, step: 780000, 78.00%
+time: 3:49:39.226796, step: 790000, 79.00%
+time: 3:52:33.168496, step: 800000, 80.00%
+IRT.png are plotted at 800000 time step.
+time: 3:55:32.067603, step: 810000, 81.00%
+time: 3:58:25.999478, step: 820000, 82.00%
+time: 4:01:19.958926, step: 830000, 83.00%
+time: 4:04:13.894472, step: 840000, 84.00%
+time: 4:07:07.848925, step: 850000, 85.00%
+time: 4:10:01.792606, step: 860000, 86.00%
+time: 4:12:55.789575, step: 870000, 87.00%
+time: 4:15:49.749659, step: 880000, 88.00%
+time: 4:18:43.664139, step: 890000, 89.00%
+time: 4:21:37.600487, step: 900000, 90.00%
+IRT.png are plotted at 900000 time step.
+time: 4:24:36.466631, step: 910000, 91.00%
+time: 4:27:30.399639, step: 920000, 92.00%
+time: 4:30:24.393697, step: 930000, 93.00%
+time: 4:33:18.346812, step: 940000, 94.00%
+time: 4:36:12.324147, step: 950000, 95.00%
+time: 4:39:06.295668, step: 960000, 96.00%
+time: 4:42:00.307737, step: 970000, 97.00%
+time: 4:44:54.288004, step: 980000, 98.00%
+time: 4:47:48.273917, step: 990000, 99.00%
+time: 4:50:42.210723, step: 1000000, 100.00%
+IRT.png are plotted at 1000000 time step.
+Simulation specifications are recorded. 2021-05-18 23:17:00.126280

@@ -337,7 +337,7 @@ class Sx(collector):
             self.DFT_Ez += self.space.Ez[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
             self.DFT_Hy += self.space.Hy[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
-    def get_Sx(self, h5=False):
+    def get_Sx(self, tstep, h5=False):
 
         self.space.MPIcomm.barrier()
 
@@ -348,22 +348,22 @@ class Sx(collector):
 
             self.Sx_area = self.Sx.sum(axis=(1,2)) * self.space.dy * self.space.dz
 
-            Eyname = "{}/{}_DFT_Ey_rank{:02d}" .format(self.path, self.name, self.space.MPIrank)
-            Ezname = "{}/{}_DFT_Ez_rank{:02d}" .format(self.path, self.name, self.space.MPIrank)
-            Hyname = "{}/{}_DFT_Hy_rank{:02d}" .format(self.path, self.name, self.space.MPIrank)
-            Hzname = "{}/{}_DFT_Hz_rank{:02d}" .format(self.path, self.name, self.space.MPIrank)
+            Eyname = f"{self.path}/{self.name}_DFT_Ey_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+            Ezname = f"{self.path}/{self.name}_DFT_Ez_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+            Hyname = f"{self.path}/{self.name}_DFT_Hy_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+            Hzname = f"{self.path}/{self.name}_DFT_Hz_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
 
             self.xp.save(Eyname, self.DFT_Ey)
             self.xp.save(Ezname, self.DFT_Ez)
             self.xp.save(Hyname, self.DFT_Hy)
             self.xp.save(Hzname, self.DFT_Hz)
-            self.xp.save("{}/{}_area" .format(self.path, self.name), self.Sx_area)
+            self.xp.save(f"{self.path}/{self.name}_{tstep:07d}tstep_area" , self.Sx_area)
 
             if h5 == True:
 
                 if self.space.engine == 'cupy':
 
-                    with h5py.File('{}/{}_DFTs_rank{:02d}.h5' .format(self.path, self.name, self.space.MPIrank), 'w') as hf:
+                    with h5py.File(f'{self.path}/{self.name}_DFTs_{tstep:07d}tstep_rank{self.space.MPIrank:02d}.h5', 'w') as hf:
 
                         hf.create_dataset('Sx_Ey', data=cp.asnumpy(self.DFT_Ey))
                         hf.create_dataset('Sx_Ez', data=cp.asnumpy(self.DFT_Ez))
@@ -373,7 +373,7 @@ class Sx(collector):
 
                 else:
 
-                    with h5py.File('{}/{}_DFTs_rank{:02d}.h5' .format(self.path, self.name, self.space.MPIrank), 'w') as hf:
+                    with h5py.File(f'{self.path}/{self.name}_DFTs_{tstep:07d}tstep_rank{self.space.MPIrank:02d}.h5', 'w') as hf:
 
                         hf.create_dataset('Sx_Ey', data=self.DFT_Ey)
                         hf.create_dataset('Sx_Ez', data=self.DFT_Ez)

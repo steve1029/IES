@@ -1,0 +1,84 @@
+VOLUME of the space: 8.05e-19
+Size of the space: 3072 x 0512 x 0512
+Number of grid points:   256 x    64 x    64
+Grid spacing: 12.047 nm, 8.127 nm, 8.127 nm
+
+VOLUME of the space: 8.05e-19
+Size of the space: 3072 x 0512 x 0512
+Number of grid points:   256 x    64 x    64
+Grid spacing: 12.047 nm, 8.127 nm, 8.127 nm
+
+VOLUME of the space: 8.05e-19
+Size of the space: 3072 x 0512 x 0512
+Number of grid points:   256 x    64 x    64
+Grid spacing: 12.047 nm, 8.127 nm, 8.127 nm
+
+Gaussian center wavelength: 0.6400 um.
+Gaussian angular frequency spread: 0.080*w0
+Gaussian center wavelength: 0.6400 um.
+Gaussian wavelength discretized per: 1 nm.
+Gaussian wave pick position at: 3000 Tstep.
+Gaussian angular frequency spread: 0.080 * w0
+
+Box size: x=0.1024 um, y=0.5120 um, z=0.5120 um
+Box size: x=0.1024 um, y=0.5120 um, z=0.5120 um
+rank  0: xloc of Sx collector >>> global "191,192" and local "191,192"
+rank  0: xloc of Sx collector >>> global "51,52" and local "51,52"
+rank  0: xloc of Sx collector >>> global "51,52" and local "51,52"
+
+Total time step: 500001
+Size of a total field array : 08.00 Mbytes
+
+Simulation start: 2021-05-17 19:07:16.729812
+time: 0:00:01.780188, step: 00000,  0.00%
+time: 0:02:50.763420, step: 10000,  2.00%
+time: 0:05:39.767947, step: 20000,  4.00%
+time: 0:08:28.798344, step: 30000,  6.00%
+time: 0:11:17.796752, step: 40000,  8.00%
+time: 0:14:06.773777, step: 50000, 10.00%
+time: 0:16:55.814204, step: 60000, 12.00%
+time: 0:19:44.841484, step: 70000, 14.00%
+time: 0:22:33.823174, step: 80000, 16.00%
+time: 0:25:22.828396, step: 90000, 18.00%
+time: 0:28:11.801875, step: 100000, 20.00%
+time: 0:31:00.818879, step: 110000, 22.00%
+time: 0:33:49.830705, step: 120000, 24.00%
+time: 0:36:38.854848, step: 130000, 26.00%
+time: 0:39:27.811092, step: 140000, 28.00%
+time: 0:42:16.847499, step: 150000, 30.00%
+time: 0:45:05.810243, step: 160000, 32.00%
+time: 0:47:54.784610, step: 170000, 34.00%
+time: 0:50:43.743503, step: 180000, 36.00%
+time: 0:53:32.753638, step: 190000, 38.00%
+time: 0:56:21.686198, step: 200000, 40.00%
+time: 0:59:10.638504, step: 210000, 42.00%
+time: 1:01:59.547069, step: 220000, 44.00%
+time: 1:04:48.551246, step: 230000, 46.00%
+time: 1:07:37.545578, step: 240000, 48.00%
+time: 1:10:26.595300, step: 250000, 50.00%
+time: 1:13:15.601887, step: 260000, 52.00%
+time: 1:16:04.690153, step: 270000, 54.00%
+time: 1:18:53.710300, step: 280000, 56.00%
+time: 1:21:42.705427, step: 290000, 58.00%
+time: 1:24:31.696318, step: 300000, 60.00%
+time: 1:27:21.829579, step: 310000, 62.00%
+time: 1:30:10.826982, step: 320000, 64.00%
+time: 1:32:59.847326, step: 330000, 66.00%
+time: 1:35:48.836792, step: 340000, 68.00%
+time: 1:38:37.821648, step: 350000, 70.00%
+time: 1:41:26.788891, step: 360000, 72.00%
+time: 1:44:15.814542, step: 370000, 74.00%
+time: 1:47:04.788271, step: 380000, 76.00%
+time: 1:49:53.804307, step: 390000, 78.00%
+time: 1:52:42.747175, step: 400000, 80.00%
+time: 1:55:31.776954, step: 410000, 82.00%
+time: 1:58:20.712966, step: 420000, 84.00%
+time: 2:01:09.701920, step: 430000, 86.00%
+time: 2:03:58.694586, step: 440000, 88.00%
+time: 2:06:47.695341, step: 450000, 90.00%
+time: 2:09:36.697517, step: 460000, 92.00%
+time: 2:12:25.718663, step: 470000, 94.00%
+time: 2:15:14.660341, step: 480000, 96.00%
+time: 2:18:03.647500, step: 490000, 98.00%
+time: 2:20:52.608703, step: 500000, 100.00%
+Simulation specifications are recorded. 2021-05-17 21:28:12.700285

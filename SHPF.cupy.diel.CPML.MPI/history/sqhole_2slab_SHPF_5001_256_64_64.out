@@ -1,0 +1,39 @@
+VOLUME of the space: 8.05e-19
+Size of the space: 3072 x 0512 x 0512
+Number of grid points:   256 x    64 x    64
+Grid spacing: 12.047 nm, 8.127 nm, 8.127 nm
+
+VOLUME of the space: 8.05e-19
+Size of the space: 3072 x 0512 x 0512
+Number of grid points:   256 x    64 x    64
+Grid spacing: 12.047 nm, 8.127 nm, 8.127 nm
+
+VOLUME of the space: 8.05e-19
+Size of the space: 3072 x 0512 x 0512
+Number of grid points:   256 x    64 x    64
+Grid spacing: 12.047 nm, 8.127 nm, 8.127 nm
+
+Gaussian center wavelength: 0.6400 um.
+Gaussian angular frequency spread: 0.080*w0
+Gaussian center wavelength: 0.6400 um.
+Gaussian wavelength discretized per: 1 nm.
+Gaussian wave pick position at: 3000 Tstep.
+Gaussian angular frequency spread: 0.080 * w0
+
+Box size: x=0.1024 um, y=0.5120 um, z=0.5120 um
+Box size: x=0.1024 um, y=0.5120 um, z=0.5120 um
+rank  0: xloc of Sx collector >>> global "191,192" and local "191,192"
+rank  0: xloc of Sx collector >>> global "51,52" and local "51,52"
+rank  0: xloc of Sx collector >>> global "51,52" and local "51,52"
+
+Total time step: 5001
+Size of a total field array : 08.00 Mbytes
+
+Simulation start: 2021-05-18 11:06:08.884272
+time: 0:00:01.604274, step: 00000,  0.00%
+time: 0:00:19.605363, step: 01000, 20.00%
+time: 0:00:37.784742, step: 02000, 39.99%
+time: 0:00:56.058123, step: 03000, 59.99%
+time: 0:01:14.259575, step: 04000, 79.98%
+time: 0:01:32.552884, step: 05000, 99.98%
+Simulation specifications are recorded. 2021-05-18 11:07:41.461336

@@ -250,8 +250,13 @@ class Graphtool(object):
 
 class SpectrumPlotter(object):
 
-    def __init__(self, wavelength, freq_unit, wvlen_unit):
+    def __init__(self, method, cells, wavelength, freq_unit, wvlen_unit):
 
+        self.method = method
+        self.cells = cells
+        self.Nx = self.cells[0]
+        self.Ny = self.cells[1]
+        self.Nz = self.cells[2]
         self.wvlen_unit = wvlen_unit
         self.freq_unit = freq_unit
 
@@ -314,7 +319,7 @@ class SpectrumPlotter(object):
 
         fig.savefig(name)
 
-    def plot_IRT(self, incs, refs, trss, savedir, \
+    def plot_IRT(self, incs, refs, trss, tsteps, savedir, \
                 wvxlim, wvylim, freqxlim, freqylim,\
                 plot_trs=True, plot_ref=True, plot_sum=True):
         """Plot transmittance and reflectance.
@@ -329,6 +334,7 @@ class SpectrumPlotter(object):
         -------
         None
         """
+        self.tsteps = tsteps
 
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(16,8))
 
@@ -343,18 +349,18 @@ class SpectrumPlotter(object):
         if plot_trs == True:
             for data in trss: trs+=abs(np.load(data))
             trs /= inc
-            axes[0].plot(self.freqs, trs, label='transmittance')
-            axes[1].plot(self.wvlens, trs, label='transmittance')
+            axes[0].plot(self.freqs, trs, label='Trs')
+            axes[1].plot(self.wvlens, trs, label='Trs')
 
         if plot_ref == True:
             for data in refs: ref+=abs(np.load(data))
             ref /= inc
-            axes[0].plot(self.freqs, ref, label='reflectance')
-            axes[1].plot(self.wvlens, ref, label='reflectance')
+            axes[0].plot(self.freqs, ref, label='Ref')
+            axes[1].plot(self.wvlens, ref, label='Ref')
 
         if plot_sum == True:
-            axes[0].plot(self.freqs, ref+trs, label='sum')
-            axes[1].plot(self.wvlens, ref+trs, label='sum')
+            axes[0].plot(self.freqs, ref+trs, label='Sum')
+            axes[1].plot(self.wvlens, ref+trs, label='Sum')
 
         axes[0].grid(True)
         axes[0].set_xlabel("freqs({})" .format(self.freq_unit))
@@ -362,6 +368,7 @@ class SpectrumPlotter(object):
         axes[0].legend(loc='best')
         axes[0].set_xlim(wvxlim[0], wvxlim[1])
         axes[0].set_ylim(wvylim[0], wvylim[1])
+        axes[0].set_title('freq vs TRS')
 
         axes[1].grid(True)
         axes[1].set_xlabel("wavelength({})" .format(self.wvlen_unit))
@@ -369,5 +376,9 @@ class SpectrumPlotter(object):
         axes[1].legend(loc='best')
         axes[1].set_xlim(freqxlim[0], freqxlim[1])
         axes[1].set_ylim(freqylim[0], freqylim[1])
+        axes[1].set_title('wvlen vs TRS')
 
-        fig.savefig(savedir)
+        fig.suptitle('{} {} {}'.format(self.method, self.tsteps, self.cells))
+        #fig.tight_layout()
+        fig.savefig(savedir, bbox_inches='tight')
+        plt.close('all')

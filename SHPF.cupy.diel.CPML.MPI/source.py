@@ -40,21 +40,21 @@ class Setter:
         self.who_put_src = None
 
         # For 2D simulation.
-        self.src_xsrt = int(round(src_srt[0] / self.space.dx))
-        self.src_ysrt = int(round(src_srt[1] / self.space.dy))
+        self.src_xsrt = round(src_srt[0] / self.space.dx)
+        self.src_xend = round(src_end[0] / self.space.dx)+1
 
-        self.src_xend = int(round(src_end[0] / self.space.dx))
-        self.src_yend = int(round(src_end[1] / self.space.dy))
+        self.src_ysrt = round(src_srt[1] / self.space.dy)
+        self.src_yend = round(src_end[1] / self.space.dy)+1
 
-        if self.src_ysrt == self.src_yend: self.src_ysrt = self.src_yend - 1
+        #if self.src_ysrt == self.src_yend: self.src_ysrt = self.src_yend - 1
 
         # For 3D simluation.
         if space.dimension == 3:
 
-            self.src_zsrt = int(round(src_srt[2] / self.space.dz))
-            self.src_zend = int(round(src_end[2] / self.space.dz))
+            self.src_zsrt = round(src_srt[2] / self.space.dz)
+            self.src_zend = round(src_end[2] / self.space.dz)+1
 
-            if self.src_zsrt == self.src_zend: self.src_zsrt = self.src_zend - 1
+            #if self.src_zsrt == self.src_zend: self.src_zsrt = self.src_zend - 1
 
         #----------------------------------------------------------------------#
         #--------- All ranks should know who put src to plot src graph --------#
@@ -83,11 +83,12 @@ class Setter:
 
                         self.src = self.xp.zeros(self.space.tsteps, dtype=self.space.field_dtype)
 
-                        #print("rank{:>2}: src_xsrt : {}, my_src_xsrt: {}, my_src_xend: {}"\
-                        #       .format(self.space.MPIrank, self.src_xsrt, self.my_src_xsrt, self.my_src_xend))
+                        print("rank{:>2}: src_xsrt : {}, my_src_xsrt: {}, my_src_xend: {}"\
+                               .format(self.space.MPIrank, self.src_xsrt, self.my_src_xsrt, self.my_src_xend))
+
                     else:
                         pass
-                        #print("rank {:>2}: I don't put source".format(self.MPIrank))
+                        print("rank {:>2}: I don't put source".format(self.space.MPIrank))
 
                 else: continue
 
@@ -109,6 +110,11 @@ class Setter:
             else:
                 raise ValueError('x location of the source is not defined!')
 
+        #if self.space.MPIrank == self.who_put_src:
+        #    print(self.src_ysrt, self.src_yend)
+        #    print(self.src_zsrt, self.src_zend)
+
+        #--------------------------------------------------------------------------#
         #--------- Apply phase difference according to the incident angle ---------#
         #--------------------------------------------------------------------------#
 
@@ -244,6 +250,12 @@ class Gaussian:
         self.ts = 1./self.ws
         self.tc = self.pick_pos * self.dt   
 
+        um = 1e-6
+        nm = 1e-9
+
+        #print(f'Gaussian center wavelength: {self.wvlenc/um:.4f} um.')
+        #print(f'Gaussian angular frequency spread: {self.spread:.3f}*w0')
+
     def pulse_c(self, step):
 
         pulse = np.exp((-.5) * (((step*self.dt-self.tc)*self.ws)**2)) * \
@@ -296,6 +308,11 @@ class Gaussian:
         ax3.plot(self.wvlens/1e-6, pulse_re_ft_amp, color='b', label='real')
         ax3.plot(self.wvlens/1e-6, pulse_im_ft_amp, color='r', label='imag', linewidth='1.5', alpha=0.5)
 
+        um = 1e-6
+        nm = 1e-9
+        text = f'wvlenc: {self.wvlenc/um:.4f}um\nspread: {self.spread:.2f}'
+        ax1.text(0.8, 0.2, text, ha='center', va='center', transform=ax1.transAxes, bbox=dict(facecolor='w', alpha=0.7))
+
         ax1.set_xlabel('time step')
         ax1.set_ylabel('Amp')
         ax1.legend(loc='best')
@@ -315,7 +332,7 @@ class Gaussian:
         ax3.set_ylim(0,None)
 
         if os.path.exists(savedir) != True: os.makedirs(savedir)
-        fig.savefig(savedir+"src_input.png")
+        fig.savefig(savedir+"src_theoretical.png")
 
 
 class Sine:
