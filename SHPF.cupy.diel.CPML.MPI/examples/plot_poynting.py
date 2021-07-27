@@ -7,21 +7,24 @@ import plotter
 um = 1e-6
 nm = 1e-9
 
-wvc = 640*nm
+lunit = um
+lustr = 'um'
+
+wvc = 640*lunit
 w0 = (2*np.pi*c)/wvc
 interval = 1
-spread   = 0.08
+spread   = 0.05
 ws = w0 * spread
 
 w1 = w0 * (1-spread*2)
 w2 = w0 * (1+spread*2)
 
-l1 = 2*np.pi*c / w1 / nm
-l2 = 2*np.pi*c / w2 / nm
+l1 = 2*np.pi*c / w1 / lunit
+l2 = 2*np.pi*c / w2 / lunit
 
-wvlens = np.arange(l2,l1,interval) * nm
+wvlens = np.arange(l2,l1,interval) * lunit
 
-wvlen_unit = 'nm'
+wvlen_unit = lustr
 freq_unit = 'THz'
 
 method = sys.argv[1] 
@@ -33,16 +36,17 @@ Nz = int(sys.argv[5])
 
 cells = (Nx,Ny,Nz)
 
-a = 512*nm
-Lx, Ly, Lz = 6*a, a, a 
+a = 512*um
+Lx, Ly, Lz = 1920*um, a, a 
 
 painter = plotter.SpectrumPlotter(method, cells, wvlens, freq_unit, wvlen_unit)
 
-dirs = f'../graph/sqhole_2slab_{method}/{int(Lx/nm):04d}nm{int(Ly/nm):04d}nm\
-{int(Lz/nm):04d}nm_{Nx:04d}_{Ny:04d}_{Nz:04d}_{Tsteps:07d}/'
+#dirs = f'../graph/sqhole_2slab_{method}/{int(Lx/lunit):04d}{lustr}{int(Ly/lunit):04d}{lustr}\
+#{int(Lz/lunit):04d}{lustr}_{Nx:04d}_{Ny:04d}_{Nz:04d}_{Tsteps:07d}/'
 
-dirs = f'../graph/simple_2slab_{method}/{int(Lx/nm):04d}nm{int(Ly/nm):04d}nm\
-{int(Lz/nm):04d}nm_{Nx:04d}_{Ny:04d}_{Nz:04d}_{Tsteps:07d}/'
+dirs = f'../graph/sqhole_2slab_long_{method}/{int(Lx/lunit):04d}\
+{lustr}{int(Ly/lunit):04d}{lustr}{int(Lz/lunit):04d}{lustr}_{Nx:04d}_{Ny:04d}_{Nz:04d}_{Tsteps:07d}\
+_100{lustr}_200{lustr}_100{lustr}/'
 
 Sy_L = ['../graph/Sy_SF_L_area.npy']
 Sy_R = ['../graph/Sy_SF_R_area.npy']
@@ -62,7 +66,8 @@ freqxlim = [None, None]
 #freqylim = [None, 1.1]
 freqylim = [0, None]
 
-for tt in range(10000, 110000, 10000):
+for tt in range(100000, 2100000, 100000):
+#for tt in [10000, 21000]:
 
     TF_Sx_R = [dirs+f'Sx/TF_R_{tt:07d}tstep_area.npy']
     SF_Sx_L = [dirs+f'Sx/SF_L_{tt:07d}tstep_area.npy']
@@ -72,7 +77,6 @@ for tt in range(10000, 110000, 10000):
     painter.simple_plot(SF_Sx_L, dirs+f'SF_Sx_L_{tt:07d}tstep_spectrum.png')
     painter.simple_plot(IF_Sx_L, dirs+f'IF_Sx_R_{tt:07d}tstep_spectrum.png')
     painter.plot_IRT(IF_Sx_L, SF_Sx_L, TF_Sx_R, tt, dirs+f'IRT_{tt:07d}tstep.png', wvxlim, wvylim, freqxlim, freqylim)
-
 
 """
 painter2.simple_plot(Sy_L, './graph/Sy_L_SF_spectrum.png')

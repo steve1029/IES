@@ -46,8 +46,8 @@ IF.malloc()
 ########## Set PML and PBC
 thick = 10
 pml = {'x':'+-','y':'','z':''}
-bbc = {'x':False, 'y':True, 'z':True}
-pbc = {'x':False, 'y':False, 'z':False}
+bbc = {'x':False, 'y':False, 'z':False}
+pbc = {'x':False, 'y':True, 'z':True}
 
 TF.apply_PML(pml, thick)
 TF.apply_BBC(bbc)
@@ -109,7 +109,7 @@ pick_pos = 2000
 ws = w0 * spread
 src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
 
-savedir = f'../graph/sqhole_2slab_{method}/{int(Lx/lunit):04d}\
+savedir = f'../graph/simple_2slab_{method}/{int(Lx/lunit):04d}\
 {lustr}{int(Ly/lunit):04d}{lustr}{int(Lz/lunit):04d}{lustr}_{Nx:04d}_{Ny:04d}_{Nz:04d}_{Tsteps:07d}\
 _100{lustr}_200{lustr}_100{lustr}/'
 
@@ -213,8 +213,8 @@ center = np.array([Ly/2, Lz/2])
 lcy = Ly/4
 lcz = Lz/4
 
-ac1 = structure.Cylinder3D('air_cylinder1', TF, 'x', radius, height1, center, 1, 1.)
-ac2 = structure.Cylinder3D('air_cylinder2', TF, 'x', radius, height2, center, 1, 1.)
+#ac1 = structure.Cylinder3D('air_cylinder1', TF, 'x', radius, height1, center, 1, 1.)
+#ac2 = structure.Cylinder3D('air_cylinder2', TF, 'x', radius, height2, center, 1, 1.)
 
 rot = 0
 rot_cen = center
@@ -243,13 +243,13 @@ TF_Sx_R_calculator = collector.Sx("TF_R", savedir+"Sx/", TF, Lx*0.85, (lefty, le
 IF_Sx_R_calculator = collector.Sx("IF_R", savedir+"Sx/", IF, Lx*0.85, (lefty, leftz), (righty, rightz), freqs, engine)
 SF_Sx_L_calculator = collector.Sx("SF_L", savedir+"Sx/", SF, Lx*0.15, (lefty, leftz), (righty, rightz), freqs, engine)
 
-cal_per = 100000
+cal_per = 10000
 
 #------------------------------------------------------------------#
 #--------------------- Plotter object settings --------------------#
 #------------------------------------------------------------------#
 
-plot_per = 10000
+plot_per = 1000
 TFgraphtool = plotter.Graphtool(TF, 'TF', savedir)
 IFgraphtool = plotter.Graphtool(IF, 'IF', savedir)
 SFgraphtool = plotter.Graphtool(SF, 'SF', savedir)
@@ -331,6 +331,8 @@ f"""
             global y location: {Box2.ysrt}, {Box2.yend}
             global z location: {Box2.zsrt}, {Box2.zend}
 
+"""
+"""
         {ac1.name}
             global x location: {ac1.gxloc}
              local x location: {ac1.lxloc}
@@ -422,7 +424,8 @@ for tstep in range(Tsteps+1):
         if TF.MPIrank == 0:
 
             now = datetime.datetime.now()
-            uptime = (now - start_time).strftime('%H:%M:%S')
+            #uptime = (now - start_time).strftime('%H:%M:%S')
+            uptime = now = start_time
             print(f"runtime: {uptime}, step: {tstep:7d}, {100.*tstep/TF.tsteps:05.2f}%, at {now}." )
 
         #Ex = TFgraphtool.gather('Ex')

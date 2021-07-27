@@ -309,8 +309,8 @@ class Sx(collector):
 
         if self.gxloc != None:
 
-            print("rank {:>2}: xloc of Sx collector >>> global \"{},{}\" and local \"{},{}\"" \
-                  .format(self.space.MPIrank, self.gxloc[0], self.gxloc[1], self.lxloc[0], self.lxloc[1]))
+           # print("rank {:>2}: xloc of Sx collector >>> global \"{},{}\" and local \"{},{}\"" \
+           #       .format(self.space.MPIrank, self.gxloc[0], self.gxloc[1], self.lxloc[0], self.lxloc[1]))
             #print(self.ysrt, self.yend)
             #print(self.zsrt, self.zend)
 

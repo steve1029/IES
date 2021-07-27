@@ -1,0 +1,62 @@
+VOLUME of the space: 5.37e-19
+Size of the space: 2048 x 0512 x 0512
+Number of grid points:  2048 x   128 x   128
+Grid spacing: 1.000 nm, 4.031 nm, 4.031 nm
+
+VOLUME of the space: 5.37e-19
+Size of the space: 2048 x 0512 x 0512
+Number of grid points:  2048 x   128 x   128
+Grid spacing: 1.000 nm, 4.031 nm, 4.031 nm
+
+VOLUME of the space: 5.37e-19
+Size of the space: 2048 x 0512 x 0512
+Number of grid points:  2048 x   128 x   128
+Grid spacing: 1.000 nm, 4.031 nm, 4.031 nm
+
+Gaussian center wavelength: 0.6400 um.
+Gaussian wavelength discretized per: 1 nm.
+Gaussian wave pick position at: 3000 Tstep.
+Gaussian angular frequency spread: 0.080 * w0
+
+rank  1: I don't put source
+rank  2: I don't put source
+rank  3: I don't put source
+rank 0: src_xsrt : 307, my_src_xsrt: 307, my_src_xend: 308
+rank 0: src_xsrt : 307, my_src_xsrt: 307, my_src_xend: 308
+Box size: x=0.1024 um, y=0.5120 um, z=0.5120 um
+Box size: x=0.1024 um, y=0.5120 um, z=0.5120 um
+rank  1: I don't put source
+rank  2: I don't put source
+rank  3: I don't put source
+rank  3: xloc of Sx collector >>> global "1638,1639" and local "102,103"
+rank  3: xloc of Sx collector >>> global "1638,1639" and local "102,103"
+rank  1: xloc of Sx collector >>> global "614,615" and local "102,103"
+
+Save directory: ../graph/sqhole_2slab_FDTD/2048nm0512nm0512nm_2048_0128_0128_2000000/
+
+Total time step: 2000000
+Size of a total field array: 256.00 Mbytes
+
+Simulation start: 2021-05-24 17:09:12.034616
+runtime: 0:00:10.690287, step:       0, 00.00%, at 2021-05-24 17:09:22.400807.
+runtime: 2:04:27.034789, step:  100000, 05.00%, at 2021-05-24 19:13:38.745309.
+runtime: 4:09:27.409990, step:  200000, 10.00%, at 2021-05-24 21:18:39.120510.
+runtime: 6:14:05.845395, step:  300000, 15.00%, at 2021-05-24 23:23:17.555915.
+runtime: 8:19:07.310887, step:  400000, 20.00%, at 2021-05-25 01:28:19.021407.
+runtime: 10:23:47.654906, step:  500000, 25.00%, at 2021-05-25 03:32:59.365426.
+runtime: 12:28:48.575894, step:  600000, 30.00%, at 2021-05-25 05:38:00.286414.
+runtime: 14:33:21.280748, step:  700000, 35.00%, at 2021-05-25 07:42:32.991268.
+runtime: 16:38:01.234617, step:  800000, 40.00%, at 2021-05-25 09:47:12.945137.
+runtime: 18:42:42.683211, step:  900000, 45.00%, at 2021-05-25 11:51:54.393731.
+runtime: 20:47:44.579927, step: 1000000, 50.00%, at 2021-05-25 13:56:56.290447.
+runtime: 22:52:28.566853, step: 1100000, 55.00%, at 2021-05-25 16:01:40.277373.
+runtime: 1 day, 0:57:29.224951, step: 1200000, 60.00%, at 2021-05-25 18:06:40.935471.
+runtime: 1 day, 3:02:11.681083, step: 1300000, 65.00%, at 2021-05-25 20:11:23.391603.
+runtime: 1 day, 5:07:12.992136, step: 1400000, 70.00%, at 2021-05-25 22:16:24.702656.
+runtime: 1 day, 7:11:54.731560, step: 1500000, 75.00%, at 2021-05-26 00:21:06.442080.
+runtime: 1 day, 9:16:53.724150, step: 1600000, 80.00%, at 2021-05-26 02:26:05.434670.
+runtime: 1 day, 11:21:31.751631, step: 1700000, 85.00%, at 2021-05-26 04:30:43.462151.
+runtime: 1 day, 13:26:23.420891, step: 1800000, 90.00%, at 2021-05-26 06:35:35.131411.
+runtime: 1 day, 15:30:39.747018, step: 1900000, 95.00%, at 2021-05-26 08:39:51.457538.
+runtime: 1 day, 17:35:39.311581, step: 2000000, 100.00%, at 2021-05-26 10:44:51.022101.
+Simulation specifications are recorded. 2021-05-26 10:44:58.837173

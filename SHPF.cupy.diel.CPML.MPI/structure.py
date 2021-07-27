@@ -3,7 +3,7 @@ from scipy.constants import c, mu_0, epsilon_0
 
 class Structure:
 
-    def __init__(self,space):
+    def __init__(self, name, space):
         
         """Define structure object.
 
@@ -11,6 +11,7 @@ class Structure:
         Only simple isotropic dielectric materials are possible.
         """
     
+        self.name = name
         self.space = space
 
     def _get_local_x_loc(self, gxsrts, gxends):
@@ -106,11 +107,13 @@ class Structure:
 
 class Box(Structure):
 
-    def __init__(self, space, srt, end, eps_r, mu_r):
+    def __init__(self, name, space, srt, end, eps_r, mu_r):
         """Set a rectangular box on a simulation space.
         
         PARAMETERS
         ----------
+        name: str.
+            A name of the object. Choose easy name which clearly represents this structure.
         space: space object.
 
         srt: tuple.
@@ -131,7 +134,7 @@ class Box(Structure):
         self.eps_r = eps_r
         self.mu_r = mu_r    
 
-        Structure.__init__(self, space)
+        Structure.__init__(self, name, space)
 
         assert len(srt) == 3, "Only 3D material is possible."
         assert len(end) == 3, "Only 3D material is possible."
@@ -142,9 +145,9 @@ class Box(Structure):
         zsrt = round(srt[2]/self.space.dz)
 
         # End index of the structure.
-        xend = round(end[0]/self.space.dx)+1
-        yend = round(end[1]/self.space.dy)+1
-        zend = round(end[2]/self.space.dz)+1
+        xend = round(end[0]/self.space.dx)
+        yend = round(end[1]/self.space.dy)
+        zend = round(end[2]/self.space.dz)
 
         assert xsrt < xend
         assert ysrt < yend
@@ -153,29 +156,36 @@ class Box(Structure):
         um = 1e-6
         nm = 1e-9
 
-        if space.MPIrank == 0:
-            print("Box size: x={:.4f} um, y={:.4f} um, z={:.4f} um" \
-                .format((end[0]-srt[0])/um, (end[1]-srt[1])/um, (end[2]-srt[2])/um))
+        #if space.MPIrank == 0:
+        #    print("Box size: x={:.4f} um, y={:.4f} um, z={:.4f} um" \
+        #        .format((end[0]-srt[0])/um, (end[1]-srt[1])/um, (end[2]-srt[2])/um))
 
         self.gxloc, self.lxloc = Structure._get_local_x_loc(self, xsrt, xend)
 
+        self.ysrt, self.yend = ysrt, yend
+        self.zsrt, self.zend = zsrt, zend
+
         if self.gxloc != None:
-            #self.local_size = (self.lxloc[1] - self.lxloc[0], yend-ysrt, zend-zsrt)
-            #print("rank {:>2}: x idx of a Box >>> global \"{:4d},{:4d}\" and local \"{:4d},{:4d}\"" \
-            #        .format(self.space.MPIrank, self.gxloc[0], self.gxloc[1], self.lxloc[0], self.lxloc[1]))
-            #print(ysrt, yend)
-            #print(zsrt, zend)
 
-            loc_xsrt = self.lxloc[0]
-            loc_xend = self.lxloc[1]
+            rank = self.space.MPIrank
+            gxsrt = self.lxloc[0]
+            gxend = self.lxloc[1]
 
-            self.space.eps_Ex[loc_xsrt:loc_xend, ysrt:yend, zsrt:zend] = self.eps_r * epsilon_0
-            self.space.eps_Ey[loc_xsrt:loc_xend, ysrt:yend, zsrt:zend] = self.eps_r * epsilon_0
-            self.space.eps_Ez[loc_xsrt:loc_xend, ysrt:yend, zsrt:zend] = self.eps_r * epsilon_0
+            lxsrt = self.lxloc[0]
+            lxend = self.lxloc[1]
 
-            self.space. mu_Hx[loc_xsrt:loc_xend, ysrt:yend, zsrt:zend] = self. mu_r * mu_0
-            self.space. mu_Hy[loc_xsrt:loc_xend, ysrt:yend, zsrt:zend] = self. mu_r * mu_0
-            self.space. mu_Hz[loc_xsrt:loc_xend, ysrt:yend, zsrt:zend] = self. mu_r * mu_0
+            #print(f"rank {rank:>2}: \n\
+#\tx idx >>> global {gxsrt:4d},{gxend:4d} and local {lxsrt:4d},{lxend:4d}\n\
+#\ty idx >>> global {ysrt:4d},{yend:4d}\n\
+#\tz idx >>> global {zsrt:4d},{zend:4d}")
+
+            self.space.eps_Ex[lxsrt:lxend, ysrt:yend, zsrt:zend] = self.eps_r * epsilon_0
+            self.space.eps_Ey[lxsrt:lxend, ysrt:yend, zsrt:zend] = self.eps_r * epsilon_0
+            self.space.eps_Ez[lxsrt:lxend, ysrt:yend, zsrt:zend] = self.eps_r * epsilon_0
+
+            self.space. mu_Hx[lxsrt:lxend, ysrt:yend, zsrt:zend] = self. mu_r * mu_0
+            self.space. mu_Hy[lxsrt:lxend, ysrt:yend, zsrt:zend] = self. mu_r * mu_0
+            self.space. mu_Hz[lxsrt:lxend, ysrt:yend, zsrt:zend] = self. mu_r * mu_0
 
         return
 
@@ -574,11 +584,15 @@ class Circle(Cylinder2D):
 
 class Cylinder3D(Structure):
 
-    def __init__(self, space, axis, radius, height, center, eps_r, mu_r):
+    def __init__(self, name, space, axis, radius, height, center, eps_r, mu_r):
         """Cylinder object in Basic3D structure.
 
         Parameters
         ----------
+        name: str.
+
+        space: space object.
+
         axis: string.
             An axis parallel to the cylinder.
 
@@ -600,7 +614,12 @@ class Cylinder3D(Structure):
    
         """
 
-        Structure.__init__(self, space)
+        Structure.__init__(self, name, space)
+
+        self.axis = axis
+        self.radius = radius
+        self.height = height
+        self.center = center
 
         self.eps_r = eps_r
         self. mu_r =  mu_r
@@ -609,13 +628,17 @@ class Cylinder3D(Structure):
         dy = self.space.dy
         dz = self.space.dz
 
+        self.rx = None
+        self.ry = None
+        self.rz = None
+
         if axis == 'x':
 
-            ry = center[0]/dy
-            rz = center[1]/dz
+            self.ry = center[0]/dy
+            self.rz = center[1]/dz
 
             gxsrts = round(height[0]/dx)   # Global srt index of the structure.
-            gxends = round(height[1]/dx)+1 # Global end index of the structure.
+            gxends = round(height[1]/dx) # Global end index of the structure.
 
             self.gxloc, self.lxloc = Structure._get_local_x_loc(self, gxsrts, gxends)
 
@@ -628,7 +651,7 @@ class Cylinder3D(Structure):
                 for j in range(self.space.Ny):
                     for k in range(self.space.Nz):
 
-                        if (((j-ry)*dy)**2 + ((k-rz)*dz)**2) <= (radius**2):
+                        if (((j-self.ry)*dy)**2 + ((k-self.rz)*dz)**2) <= (radius**2):
 
                             self.space.eps_Ex[self.lxloc[0]:self.lxloc[1], j, k] = self.eps_r * epsilon_0
                             self.space.eps_Ey[self.lxloc[0]:self.lxloc[1], j, k] = self.eps_r * epsilon_0

@@ -41,19 +41,22 @@ class Setter:
 
         # For 2D simulation.
         self.src_xsrt = round(src_srt[0] / self.space.dx)
-        self.src_xend = round(src_end[0] / self.space.dx)+1
+        self.src_xend = round(src_end[0] / self.space.dx)
 
         self.src_ysrt = round(src_srt[1] / self.space.dy)
-        self.src_yend = round(src_end[1] / self.space.dy)+1
+        self.src_yend = round(src_end[1] / self.space.dy)
 
+        #print(self.src_xsrt, self.src_xend)
+        #print(self.src_ysrt, self.src_yend)
         #if self.src_ysrt == self.src_yend: self.src_ysrt = self.src_yend - 1
 
         # For 3D simluation.
         if space.dimension == 3:
 
             self.src_zsrt = round(src_srt[2] / self.space.dz)
-            self.src_zend = round(src_end[2] / self.space.dz)+1
+            self.src_zend = round(src_end[2] / self.space.dz)
 
+            #print(self.src_zsrt, self.src_zend)
             #if self.src_zsrt == self.src_zend: self.src_zsrt = self.src_zend - 1
 
         #----------------------------------------------------------------------#
@@ -83,12 +86,12 @@ class Setter:
 
                         self.src = self.xp.zeros(self.space.tsteps, dtype=self.space.field_dtype)
 
-                        print("rank{:>2}: src_xsrt : {}, my_src_xsrt: {}, my_src_xend: {}"\
-                               .format(self.space.MPIrank, self.src_xsrt, self.my_src_xsrt, self.my_src_xend))
+                        #print("rank{:>2}: src_xsrt : {}, my_src_xsrt: {}, my_src_xend: {}"\
+                        #       .format(self.space.MPIrank, self.src_xsrt, self.my_src_xsrt, self.my_src_xend))
 
                     else:
                         pass
-                        print("rank {:>2}: I don't put source".format(self.space.MPIrank))
+                        #print("rank {:>2}: I don't put source".format(self.space.MPIrank))
 
                 else: continue
 
@@ -111,8 +114,9 @@ class Setter:
                 raise ValueError('x location of the source is not defined!')
 
         #if self.space.MPIrank == self.who_put_src:
-        #    print(self.src_ysrt, self.src_yend)
-        #    print(self.src_zsrt, self.src_zend)
+            #print(self.my_src_xsrt, self.my_src_xend)
+            #print(self.src_ysrt, self.src_yend)
+            #print(self.src_zsrt, self.src_zend)
 
         #--------------------------------------------------------------------------#
         #--------- Apply phase difference according to the incident angle ---------#

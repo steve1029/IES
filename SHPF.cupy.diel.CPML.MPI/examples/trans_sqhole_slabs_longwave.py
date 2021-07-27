@@ -25,7 +25,7 @@ fustr = 'THz'
 #a = 779.42*lunit
 a = 512*lunit
 
-Lx, Ly, Lz = 720*lunit, a, a 
+Lx, Ly, Lz = 1920*lunit, a, a 
 Nx, Ny, Nz = int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5])
 dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz
 
@@ -101,15 +101,15 @@ mmt = (kx, ky, kz)
 
 ########## Gaussian source
 #wvc = float(sys.argv[2])*lunit
-wvc = 100*lunit
+wvc = 640*lunit
 w0 = (2*np.pi*c)/wvc
-interval = .2
-spread   = 0.08
-pick_pos = 2000
+interval = 1
+spread   = 0.05
+pick_pos = 20000
 ws = w0 * spread
 src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
 
-savedir = f'../graph/sqhole_2slab_{method}/{int(Lx/lunit):04d}\
+savedir = f'../graph/sqhole_2slab_long_{method}/{int(Lx/lunit):04d}\
 {lustr}{int(Ly/lunit):04d}{lustr}{int(Lz/lunit):04d}{lustr}_{Nx:04d}_{Ny:04d}_{Nz:04d}_{Tsteps:07d}\
 _100{lustr}_200{lustr}_100{lustr}/'
 
@@ -186,7 +186,7 @@ setterI1 = source.Setter(IF, (xsrt, 0, 0), (xsrt, Ly, Lz), mmt)
 
 ########## Box
 
-t1 = 160*lunit
+t1 = 800*lunit
 #t2 = t1 + a*0.2
 #t3 = t2 + a*0.3
 #t4 = t3 + a*0.2
@@ -249,7 +249,7 @@ cal_per = 100000
 #--------------------- Plotter object settings --------------------#
 #------------------------------------------------------------------#
 
-plot_per = 10000
+plot_per = 100000
 TFgraphtool = plotter.Graphtool(TF, 'TF', savedir)
 IFgraphtool = plotter.Graphtool(IF, 'IF', savedir)
 SFgraphtool = plotter.Graphtool(SF, 'SF', savedir)
@@ -422,7 +422,8 @@ for tstep in range(Tsteps+1):
         if TF.MPIrank == 0:
 
             now = datetime.datetime.now()
-            uptime = (now - start_time).strftime('%H:%M:%S')
+            #uptime = (now - start_time).strftime('%H:%M:%S')
+            uptime = (now - start_time)
             print(f"runtime: {uptime}, step: {tstep:7d}, {100.*tstep/TF.tsteps:05.2f}%, at {now}." )
 
         #Ex = TFgraphtool.gather('Ex')
