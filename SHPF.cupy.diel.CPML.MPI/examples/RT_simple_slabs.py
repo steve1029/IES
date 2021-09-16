@@ -425,7 +425,7 @@ for tstep in range(Tsteps+1):
 
             now = datetime.datetime.now()
             #uptime = (now - start_time).strftime('%H:%M:%S')
-            uptime = now = start_time
+            uptime = now - start_time
             print(f"runtime: {uptime}, step: {tstep:7d}, {100.*tstep/TF.tsteps:05.2f}%, at {now}." )
 
         #Ex = TFgraphtool.gather('Ex')
