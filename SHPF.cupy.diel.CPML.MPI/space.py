@@ -1,4 +1,4 @@
-import os
+import os,sys
 from mpi4py import MPI
 from scipy.constants import c, mu_0, epsilon_0
 import numpy as np
@@ -41,11 +41,11 @@ class Basic3D:
         self.nm = 1e-9
         self.um = 1e-6  
 
-        self.field_dtype   = field_dtype
-        self.mmtdtype   = mmtdtype
-        self.MPIcomm  = MPI.COMM_WORLD
-        self.MPIrank  = self.MPIcomm.Get_rank()
-        self.MPIsize  = self.MPIcomm.Get_size()
+        self.field_dtype = field_dtype
+        self.mmtdtype = mmtdtype
+        self.MPIcomm = MPI.COMM_WORLD
+        self.MPIrank = self.MPIcomm.Get_rank()
+        self.MPIsize = self.MPIcomm.Get_size()
         self.hostname = MPI.Get_processor_name()
 
         assert len(grid)    == 3, "Simulation grid should be a tuple with length 3."
@@ -79,6 +79,8 @@ class Basic3D:
         self.method = 'SHPF'
         self.engine = 'cupy'
         self.courant = 1./4
+        self.BBC_called = False
+        self.PBC_called = False
 
         if kwargs.get('engine') != None: self.engine = kwargs.get('engine')
         if kwargs.get('method') != None: self.method = kwargs.get('method')
@@ -145,12 +147,14 @@ class Basic3D:
             self.fft = self.xp.fft.fftn
             self.ifft = self.xp.fft.ifftn
             self.fftfreq = self.xp.fft.fftfreq
+            if self.method == 'PSTD' or method == 'SHPF': print("Complex FFT kernel assigned.")
 
         elif self.field_dtype == np.float32 or self.field_dtype == np.float64:
 
             self.fft = self.xp.fft.rfftn
             self.ifft = self.xp.fft.irfftn
             self.fftfreq = self.xp.fft.rfftfreq
+            if self.method == 'PSTD' or method == 'SHPF': print("Real FFT kernel assigned.")
 
         else:
             raise ValueError("Please use field_dtype for numpy dtype!")
@@ -464,6 +468,7 @@ class Basic3D:
                    (2.*self.eps_Ez+self.econ_Ez*self.dt)
             self.CEz2 = (2.*self.dt) / (2.*self.eps_Ez+self.econ_Ez*self.dt)
 
+            """
             # PEC condition.
             self.CEx1[self.eps_Ex > 1e3] = 0.
             self.CEx2[self.eps_Ex > 1e3] = 0.
@@ -471,6 +476,7 @@ class Basic3D:
             self.CEy2[self.eps_Ey > 1e3] = 0.
             self.CEz1[self.eps_Ez > 1e3] = 0.
             self.CEz2[self.eps_Ez > 1e3] = 0.
+            """
 
         if self.method == 'SHPF':
 
@@ -498,6 +504,7 @@ class Basic3D:
                    (2.*self.eps_Ez[1:,:,:]+self.econ_Ez[1:,:,:]*self.dt)
             self.CEz2 = (2.*self.dt) / (2.*self.eps_Ez[1:,:,:]+self.econ_Ez[1:,:,:]*self.dt)
 
+            """
             # PEC condition.
             self.CEx1[self.eps_Ex[ :,:,:] > 1e3] = 0.
             self.CEx2[self.eps_Ex[ :,:,:] > 1e3] = 0.
@@ -505,6 +512,7 @@ class Basic3D:
             self.CEy2[self.eps_Ey[1:,:,:] > 1e3] = 0.
             self.CEz1[self.eps_Ez[1:,:,:] > 1e3] = 0.
             self.CEz2[self.eps_Ez[1:,:,:] > 1e3] = 0.
+            """
 
         if self.method == 'FDTD':
 
@@ -532,6 +540,7 @@ class Basic3D:
                    (2.*self.eps_Ez[1:,1:,:]+self.econ_Ez[1:,1:,:]*self.dt)
             self.CEz2 = (2.*self.dt) / (2.*self.eps_Ez[1:,1:,:]+self.econ_Ez[1:,1:,:]*self.dt)
 
+            """
             # PEC condition.
             self.CEx1[self.eps_Ex[:,1:,1:] > 1e3] = 0.
             self.CEx2[self.eps_Ex[:,1:,1:] > 1e3] = 0.
@@ -539,6 +548,7 @@ class Basic3D:
             self.CEy2[self.eps_Ey[1:,:,1:] > 1e3] = 0.
             self.CEz1[self.eps_Ez[1:,1:,:] > 1e3] = 0.
             self.CEz2[self.eps_Ez[1:,1:,:] > 1e3] = 0.
+            """
 
     def apply_BBC(self, region):
         """Apply Bloch Boundary Condition.
@@ -552,11 +562,14 @@ class Basic3D:
         -------
         None
         """
+        assert self.field_dtype != np.float32
+        assert self.field_dtype != np.float64
 
-        self.BBC_called = True
         self.apply_BBCx = region.get('x')
         self.apply_BBCy = region.get('y')
         self.apply_BBCz = region.get('z')
+
+        if True in region.values(): self.BBC_called = True
 
         if self.method == 'FDTD':
             

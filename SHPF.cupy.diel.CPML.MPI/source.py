@@ -214,7 +214,8 @@ class Setter:
                 y = slice(self.   src_ysrt, self.   src_yend)
                 z = slice(self.   src_zsrt, self.   src_zend)
 
-                self.pulse *= self.px[:,None,None] * self.py[None,:,None] * self.pz[None,None,:]
+                if self.space.BBC_called == True:
+                    self.pulse *= self.px[:,None,None] * self.py[None,:,None] * self.pz[None,None,:]
 
                 if   self.put_type == 'soft':
 

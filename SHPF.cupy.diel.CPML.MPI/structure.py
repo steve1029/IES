@@ -40,6 +40,8 @@ class Structure:
         bxsrt = self.space.myNx_indice[self.space.MPIrank][0]
         bxend = self.space.myNx_indice[self.space.MPIrank][1]
 
+        #print(self.space.MPIrank, bxsrt, bxend)
+
         # Initialize global and local x locations of the structure.
         gxloc = None # global x location.
         lxloc = None # local x location.
@@ -390,72 +392,34 @@ class Cone(Structure):
 
 class Sphere(Structure):
 
-    def __init__(self, space, center, radius, eps_r, mu_r):
+    def __init__(self, name, space, center, radius, eps_r, mu_r):
 
-        Structure.__init__(self, space)
+        Structure.__init__(self, name, space)
 
-        assert len(center)  == 3, "Please insert x,y,z coordinate of the center."
+        assert len(center) == 3, "Please insert x,y,z coordinate of the center."
 
         assert type(eps_r) == float, "Only isotropic media is possible. eps_r must be a single float."  
         assert type( mu_r) == float, "Only isotropic media is possible.  mu_r must be a single float."  
 
         self.eps_r = eps_r
-        self. mu_r =  mu_r
+        self.mu_r =  mu_r
+        self.radius = radius
+        self.center_idx = center
 
         dx = self.space.dx
         dy = self.space.dy
         dz = self.space.dz
 
-        xsrt = center[0] - round(radius/dx) # Global srt index of the structure.
-        xend = center[0] + round(radius/dx) # Global end index of the structure.
+        gxsrt = center[0] - round(radius/dx) # Global srt index of the structure.
+        gxend = center[0] + round(radius/dx) # Global end index of the structure.
 
-        assert xsrt >= 0
-        assert xend < self.space.Nx
+        assert gxsrt >= 0
+        assert gxend < self.space.Nx
 
         MPIrank = self.space.MPIrank
         MPIsize = self.space.MPIsize
 
-        # Global x index of each node.
-        node_xsrt = self.space.myNx_indice[MPIrank][0]
-        node_xend = self.space.myNx_indice[MPIrank][1]
-
-        """
-        self.gxloc = None
-        self.lxloc = None
-
-        # Front nodes that contains no structures.
-        if xsrt >  node_xend:
-            self.gxloc = None
-            self.lxloc = None
-
-        # Rear nodes that contains no structures.
-        if xend <  node_xsrt:
-            self.gxloc = None
-            self.lxloc = None
-
-        # First part when the structure is  small.
-        if xsrt >= node_xsrt and xsrt < node_xend and xend <= node_xend:
-            self.gxloc = (xsrt          , xend          )
-            self.lxloc = (xsrt-node_xsrt, xend-node_xsrt)
-
-        # First part when the structure is big.
-        if xsrt >= node_xsrt and xsrt < node_xend and xend >  node_xend:
-            self.gxloc = (xsrt          , node_xend          )
-            self.lxloc = (xsrt-node_xsrt, node_xend-node_xsrt)
-
-        # Middle node but big.
-        if xsrt <  node_xsrt and xend > node_xend:
-            self.gxloc = (node_xsrt          , node_xend          )
-            self.lxloc = (node_xsrt-node_xsrt, node_xend-node_xsrt)
-
-        # Last part.
-        if xsrt <  node_xsrt and xend > node_xsrt and xend <= node_xend:
-            self.gxloc = (node_xsrt          , xend          )
-            self.lxloc = (node_xsrt-node_xsrt, xend-node_xsrt)
-        """
-
-        self.gxloc, self.lxloc = Structure._get_local_x_loc(self, gxsrts, gxends)
-
+        self.gxloc, self.lxloc = Structure._get_local_x_loc(self, gxsrt, gxend)
 
         if self.gxloc != None:      
 
@@ -487,6 +451,151 @@ class Sphere(Structure):
                             self.space. mu_Hz[lxloc[i], j, k] = self. mu_r * mu_0
 
             #print(MPIrank, self.gxloc, self.lxloc, rx, rr)
+
+        return
+
+
+class Sphere_percom(Structure):
+
+    def __init__(self, name, space, center, radius, eps_r, mu_r):
+        """Dielectric sphere.
+
+        Paramters
+        ---------
+            name: str
+                the name of the object.
+
+            space: space object.
+                Choose which space object to put on.
+
+            center: tuple
+                the coordinate of the center of the sphere in length unit, not indices.
+
+            radius: float
+                the radius of the sphere in length unit, not indices.
+
+            eps_r: float
+                dielectric constant.
+
+            mu_r: float
+                magnetic constant.
+
+        Returns
+        -------
+        None
+        """
+
+        Structure.__init__(self, name, space)
+
+        assert len(center) == 3, "Please insert x,y,z coordinate of the center."
+
+        assert type(eps_r) == float, "Only isotropic media is possible. eps_r must be a single float."  
+        assert type( mu_r) == float, "Only isotropic media is possible.  mu_r must be a single float."  
+
+        dx = self.space.dx
+        dy = self.space.dy
+        dz = self.space.dz
+
+        self.eps_r = eps_r
+        self.mu_r =  mu_r
+        self.radius = radius
+        self.center_idx = (round(center[0]/dx)-1, round(center[1]/dy)-1, round(center[2]/dz)-1)
+        #print(self.space.MPIrank, self.center_idx)
+
+        # Start and End index of the sphere along x-axis.
+        gxsrt = self.center_idx[0] - round(radius/dx) # Global srt index of the structure.
+        gxend = self.center_idx[0] + round(radius/dx) # Global end index of the structure.
+
+        assert gxsrt >= 0
+        assert gxend < self.space.Nx
+
+        MPIrank = self.space.MPIrank
+        MPIsize = self.space.MPIsize
+
+        # Global and Local x index of the sphere in each node.
+        self.gxloc, self.lxloc = Structure._get_local_x_loc(self, gxsrt, gxend)
+
+        if self.gxloc != None:      
+
+            print(self.space.MPIrank, self.gxloc)
+            print(self.space.MPIrank, self.lxloc)
+
+            lxloc = np.arange(self.lxloc[0], self.lxloc[1]+1)
+            print(self.space.MPIrank, lxloc, len(lxloc))
+
+            # Portion means the portion of a sphere that each node takes part in.
+            portion_srt  = self.gxloc[0] - self.center_idx[0] + round(radius/dx)
+            portion_end  = self.gxloc[1] - self.center_idx[0] + round(radius/dx)
+            self.portion = np.arange(portion_srt, portion_end+1)
+
+            rx = abs(self.portion - round(radius/dx))
+            rrx = self.portion - round(radius/dx)
+
+            #print(self.space.MPIrank,'rx:  ', rx)
+            #print(self.space.MPIrank,'rrx: ', rrx)
+
+            xdfcc = rrx      # x displacement from the center[0], for the centered grid point.
+            xdfcs = (rrx+.5) # x displacement from the center[0], for the staggered grid point.
+
+            #print(self.space.MPIrank,'xdfcc: ', xdfcc, len(xdfcc))
+            print(self.space.MPIrank,'xdfcs: ', xdfcs, len(xdfcs))
+
+            ydfcc = np.zeros_like(rx, dtype=np.float64)
+            ydfcs = np.zeros_like(rx, dtype=np.float64)
+
+            zdfcc = np.zeros_like(rx, dtype=np.float64)
+            zdfcs = np.zeros_like(rx, dtype=np.float64)
+
+            rr = np.zeros_like(rx, dtype=np.float64)
+            theta = np.zeros_like(rx, dtype=np.float64)
+
+            r_idx = round(radius/dx)
+            #print(r_idx)
+
+            # For Ex component.
+            for i,xx in enumerate(xdfcs):
+
+                dist = abs(xx)
+                theta[i] = np.arccos(dist/radius)
+                rr[i] = radius * np.sin(theta[i])
+
+                if dist <= r_idx:
+
+                    try: 
+                        for j in range(self.space.Ny):
+                            for k in range(self.space.Nz):
+
+                                if (((j-self.center_idx[1])*dy)**2 + ((k-self.center_idx[2])*dz)**2) <= (rr[i]**2):
+
+                                    self.space.eps_Ex[lxloc[i], j, k] = self.eps_r * epsilon_0
+
+                    except Exception as e: 
+
+                        pass
+                        #print(self.space.MPIrank, i, xx)
+
+                else: print(self.space.MPIrank, i, dist)
+
+            """
+            for i in range(len(rx)):
+                theta[i] = np.arccos(rx[i]*dx/radius)
+                rr[i] = radius * np.sin(theta[i])
+
+                for j in range(self.space.Ny):
+                    for k in range(self.space.Nz):
+
+                        if (((j-self.center_idx[1])*dy)**2 + ((k-self.center_idx[2])*dz)**2) <= (rr[i]**2):
+
+                            self.space.eps_Ex[lxloc[i], j, k] = self.eps_r * epsilon_0
+                            self.space.eps_Ey[lxloc[i], j, k] = self.eps_r * epsilon_0
+                            self.space.eps_Ez[lxloc[i], j, k] = self.eps_r * epsilon_0
+
+                            self.space. mu_Hx[lxloc[i], j, k] = self. mu_r * mu_0
+                            self.space. mu_Hy[lxloc[i], j, k] = self. mu_r * mu_0
+                            self.space. mu_Hz[lxloc[i], j, k] = self. mu_r * mu_0
+
+            #print(MPIrank, self.gxloc, self.lxloc, rx, rr)
+            """
 
         return
 

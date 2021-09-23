@@ -25,7 +25,7 @@ class Graphtool(object):
                 if os.path.exists(path) == True: break
                 else: continue
 
-            if os.path.exists(self.savedir) == False: os.mkdirs(self.savedir)
+            if os.path.exists(self.savedir) == False: os.makedirs(self.savedir)
             else: pass
 
     def gather(self, what):
@@ -95,12 +95,13 @@ class Graphtool(object):
                 sys.exit()
 
             colordeep = .1
-            stride    = 1
-            zlim      = 1
-            figsize   = (18, 8)
-            cmap      = plt.cm.bwr
+            stride = 1
+            zlim = 1
+            figsize = (18, 8)
+            cmap = plt.cm.bwr
             lc = 'b'
             aspect = 'auto'
+            savenpy = False
 
             for key, value in kwargs.items():
 
@@ -112,7 +113,9 @@ class Graphtool(object):
                 elif key == 'zlim': zlim = value
                 elif key == 'cmap': cmap = value
                 elif key == 'lc': lc = value
+                elif key == 'savenpy': savenpy = value
 
+            #if kwargs.get('colordeep') != None: colordeep = kwargs.get('colordeep')
 
             #####################################################################################
             ######### Build up total field with the parts of the grid from slave nodes ##########
@@ -233,6 +236,12 @@ class Graphtool(object):
                 ax12.set_xlabel('x')
                 ax12.set_ylabel('z')
 
+            if savenpy == True: 
+            
+                saveloc = f'{self.savedir}{plane}_profile/'
+                if os.path.exists(saveloc) == False: os.makedirs(saveloc)
+                np.save(saveloc+f'{tstep:07d}', self.plane_to_plot.T)
+
             ax11.set_title(r'$%s.real, 2D$' %self.what)
             ax12.set_title(r'$%s.real, 3D$' %self.what)
 
@@ -242,7 +251,7 @@ class Graphtool(object):
             foldername = 'plot2D3D/'
             save_dir   = self.savedir + foldername
 
-            if os.path.exists(save_dir) == False: os.mkdir(save_dir)
+            if os.path.exists(save_dir) == False: os.makedirs(save_dir)
             plt.tight_layout()
             fig.savefig('%s%s_%s_%s_%s_%s.png' %(save_dir, str(today), self.name, self.what, plane, tstep), format='png', bbox_inches='tight')
             plt.close('all')

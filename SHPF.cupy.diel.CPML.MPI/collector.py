@@ -348,22 +348,22 @@ class Sx(collector):
 
             self.Sx_area = self.Sx.sum(axis=(1,2)) * self.space.dy * self.space.dz
 
-            Eyname = f"{self.path}/{self.name}_DFT_Ey_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
-            Ezname = f"{self.path}/{self.name}_DFT_Ez_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
-            Hyname = f"{self.path}/{self.name}_DFT_Hy_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
-            Hzname = f"{self.path}/{self.name}_DFT_Hz_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+            Eyname = f"{self.path}{self.name}_DFT_Ey_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+            Ezname = f"{self.path}{self.name}_DFT_Ez_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+            Hyname = f"{self.path}{self.name}_DFT_Hy_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+            Hzname = f"{self.path}{self.name}_DFT_Hz_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
 
             self.xp.save(Eyname, self.DFT_Ey)
             self.xp.save(Ezname, self.DFT_Ez)
             self.xp.save(Hyname, self.DFT_Hy)
             self.xp.save(Hzname, self.DFT_Hz)
-            self.xp.save(f"{self.path}/{self.name}_{tstep:07d}tstep_area" , self.Sx_area)
+            self.xp.save(f"{self.path}{self.name}_{tstep:07d}tstep_area" , self.Sx_area)
 
             if h5 == True:
 
                 if self.space.engine == 'cupy':
 
-                    with h5py.File(f'{self.path}/{self.name}_DFTs_{tstep:07d}tstep_rank{self.space.MPIrank:02d}.h5', 'w') as hf:
+                    with h5py.File(f'{self.path}{self.name}_DFTs_{tstep:07d}tstep_rank{self.space.MPIrank:02d}.h5', 'w') as hf:
 
                         hf.create_dataset('Sx_Ey', data=cp.asnumpy(self.DFT_Ey))
                         hf.create_dataset('Sx_Ez', data=cp.asnumpy(self.DFT_Ez))
@@ -373,7 +373,7 @@ class Sx(collector):
 
                 else:
 
-                    with h5py.File(f'{self.path}/{self.name}_DFTs_{tstep:07d}tstep_rank{self.space.MPIrank:02d}.h5', 'w') as hf:
+                    with h5py.File(f'{self.path}{self.name}_DFTs_{tstep:07d}tstep_rank{self.space.MPIrank:02d}.h5', 'w') as hf:
 
                         hf.create_dataset('Sx_Ey', data=self.DFT_Ey)
                         hf.create_dataset('Sx_Ez', data=self.DFT_Ez)
@@ -432,8 +432,8 @@ class Sy(collector):
         yend = self.yend
         zend = self.zend
 
-        self.who_get_Sy_gloc = {} # global locations
-        self.who_get_Sy_lloc = {} # local locations
+        self.who_get_Sy_gxloc = {} # global locations
+        self.who_get_Sy_lxloc = {} # local locations
 
         # Every node has to know who collects Sy.
         for MPIrank in range(self.space.MPIsize):
@@ -449,38 +449,38 @@ class Sy(collector):
                 gloc = ((node_xsrt          , ysrt, zsrt), (xend          , yend, zend))
                 lloc = ((node_xsrt-node_xsrt, ysrt, zsrt), (xend-node_xsrt, yend, zend))
 
-                self.who_get_Sy_gloc[MPIrank] = gloc
-                self.who_get_Sy_lloc[MPIrank] = lloc
+                self.who_get_Sy_gxloc[MPIrank] = gloc
+                self.who_get_Sy_lxloc[MPIrank] = lloc
 
             if xsrt <  node_xsrt and xend > node_xend:
                 gloc = ((node_xsrt          , ysrt, zsrt), (node_xend          , yend, zend))
                 lloc = ((node_xsrt-node_xsrt, ysrt, zsrt), (node_xend-node_xsrt, yend, zend))
 
-                self.who_get_Sy_gloc[MPIrank] = gloc
-                self.who_get_Sy_lloc[MPIrank] = lloc
+                self.who_get_Sy_gxloc[MPIrank] = gloc
+                self.who_get_Sy_lxloc[MPIrank] = lloc
 
             if xsrt >= node_xsrt and xsrt < node_xend and xend <= node_xend:
                 gloc = ((xsrt          , ysrt, zsrt), (xend          , yend, zend))
                 lloc = ((xsrt-node_xsrt, ysrt, zsrt), (xend-node_xsrt, yend, zend))
 
-                self.who_get_Sy_gloc[MPIrank] = gloc
-                self.who_get_Sy_lloc[MPIrank] = lloc
+                self.who_get_Sy_gxloc[MPIrank] = gloc
+                self.who_get_Sy_lxloc[MPIrank] = lloc
 
             if xsrt >= node_xsrt and xsrt < node_xend and xend >  node_xend:
                 gloc = ((xsrt          , ysrt, zsrt), (node_xend          , yend, zend))
                 lloc = ((xsrt-node_xsrt, ysrt, zsrt), (node_xend-node_xsrt, yend, zend))
 
-                self.who_get_Sy_gloc[MPIrank] = gloc
-                self.who_get_Sy_lloc[MPIrank] = lloc
+                self.who_get_Sy_gxloc[MPIrank] = gloc
+                self.who_get_Sy_lxloc[MPIrank] = lloc
 
-        #if self.space.MPIrank == 0: print("{} collectors: rank{}" .format(self.name, list(self.who_get_Sy_gloc)))
+        #if self.space.MPIrank == 0: print("{} collectors: rank{}" .format(self.name, list(self.who_get_Sy_gxloc)))
 
         self.space.MPIcomm.barrier()
 
-        if self.space.MPIrank in self.who_get_Sy_lloc:
+        if self.space.MPIrank in self.who_get_Sy_lxloc:
 
-            self.gloc = self.who_get_Sy_gloc[self.space.MPIrank]
-            self.lloc = self.who_get_Sy_lloc[self.space.MPIrank]
+            self.gloc = self.who_get_Sy_gxloc[self.space.MPIrank]
+            self.lloc = self.who_get_Sy_lxloc[self.space.MPIrank]
 
             """
             print("rank {:>2}: x loc of {} collector >>> global range({:4d},{:4d}) // local range({:4d},{:4d})\"" \
@@ -502,12 +502,12 @@ class Sy(collector):
             self.DFT_Hx = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=np.complex128)
             self.DFT_Hz = self.xp.zeros((self.Nf, xend-xsrt, zend-zsrt), dtype=np.complex128)
         
-        #print(self.who_get_Sy_gloc)
-        #print(self.who_get_Sy_lloc)
+        #print(self.who_get_Sy_gxloc)
+        #print(self.who_get_Sy_lxloc)
 
     def do_RFT(self, tstep):
 
-        if self.space.MPIrank in self.who_get_Sy_lloc:
+        if self.space.MPIrank in self.who_get_Sy_lxloc:
 
             dt = self.space.dt
             xsrt = self.lloc[0][0]
@@ -526,16 +526,21 @@ class Sy(collector):
             self.DFT_Ez += self.space.Ez[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
             self.DFT_Hx += self.space.Hx[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
-    def get_Sy(self):
+    def get_Sy(self, tstep, h5=False):
 
         self.space.MPIcomm.barrier()
 
-        if self.space.MPIrank in self.who_get_Sy_lloc:
+        Exname = f"{self.path}{self.name}_DFT_Ex_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+        Ezname = f"{self.path}{self.name}_DFT_Ez_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+        Hxname = f"{self.path}{self.name}_DFT_Hx_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+        Hzname = f"{self.path}{self.name}_DFT_Hz_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
 
-            self.xp.save("{}/{}_DFT_Ex_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.DFT_Ex)
-            self.xp.save("{}/{}_DFT_Ez_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.DFT_Ez)
-            self.xp.save("{}/{}_DFT_Hx_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.DFT_Hx)
-            self.xp.save("{}/{}_DFT_Hz_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.DFT_Hz)
+        if self.space.MPIrank in self.who_get_Sy_lxloc:
+
+            self.xp.save(Exname, self.DFT_Ex)
+            self.xp.save(Ezname, self.DFT_Ez)
+            self.xp.save(Hxname, self.DFT_Hx)
+            self.xp.save(Hzname, self.DFT_Hz)
 
         self.space.MPIcomm.barrier()
 
@@ -547,12 +552,17 @@ class Sy(collector):
             DFT_Sy_Hxs = []
             DFT_Sy_Hzs = []
 
-            for rank in self.who_get_Sy_lloc:
+            for rank in self.who_get_Sy_lxloc:
 
-                DFT_Sy_Exs.append(np.load("{}/{}_DFT_Ex_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sy_Ezs.append(np.load("{}/{}_DFT_Ez_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sy_Hxs.append(np.load("{}/{}_DFT_Hx_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sy_Hzs.append(np.load("{}/{}_DFT_Hz_rank{:02d}.npy" .format(self.path, self.name, rank)))
+                Exname = f"{self.path}{self.name}_DFT_Ex_{tstep:07d}tstep_rank{rank:02d}.npy"
+                Ezname = f"{self.path}{self.name}_DFT_Ez_{tstep:07d}tstep_rank{rank:02d}.npy"
+                Hxname = f"{self.path}{self.name}_DFT_Hx_{tstep:07d}tstep_rank{rank:02d}.npy"
+                Hzname = f"{self.path}{self.name}_DFT_Hz_{tstep:07d}tstep_rank{rank:02d}.npy"
+
+                DFT_Sy_Exs.append(np.load(Exname))
+                DFT_Sy_Ezs.append(np.load(Ezname))
+                DFT_Sy_Hxs.append(np.load(Hxname))
+                DFT_Sy_Hzs.append(np.load(Hzname))
 
             DFT_Ex = np.concatenate(DFT_Sy_Exs, axis=1)
             DFT_Ez = np.concatenate(DFT_Sy_Ezs, axis=1)
@@ -563,11 +573,11 @@ class Sy(collector):
                               +(DFT_Ez.real*DFT_Hx.real) + (DFT_Ez.imag*DFT_Hx.imag)  )
 
             self.Sy_area = self.Sy.sum(axis=(1,2)) * self.space.dx * self.space.dz
-            self.xp.save("{}/{}_area" .format(self.path, self.name), self.Sy_area)
+            np.save(f"{self.path}{self.name}_{tstep:07d}tstep_area", self.Sy_area)
 
             if h5 == True:
 
-                with h5py.File('{}/{}_DFTs_rank{:02d}.h5' .format(self.path, self.name, self.space.MPIrank), 'w') as hf:
+                with h5py.File(f'{self.path}{self.name}_DFTs_rank{self.space.MPIrank:02d}.h5', 'w') as hf:
 
                     if self.space.engine == 'cupy':
                         hf.create_dataset('Sy_Ex', data=cp.asnumpy(self.DFT_Ex))
@@ -636,8 +646,8 @@ class Sz(collector):
         yend = self.yend
         zend = self.zend
 
-        self.who_get_Sz_gloc = {} # global locations
-        self.who_get_Sz_lloc = {} # local locations
+        self.who_get_Sz_gxloc = {} # global locations
+        self.who_get_Sz_lxloc = {} # local locations
 
         # Every node has to know who collects Sz.
         for MPIrank in range(self.space.MPIsize):
@@ -653,38 +663,38 @@ class Sz(collector):
                 gloc = ((node_xsrt          , ysrt, zsrt), (xend          , yend, zend))
                 lloc = ((node_xsrt-node_xsrt, ysrt, zsrt), (xend-node_xsrt, yend, zend))
 
-                self.who_get_Sz_gloc[MPIrank] = gloc
-                self.who_get_Sz_lloc[MPIrank] = lloc
+                self.who_get_Sz_gxloc[MPIrank] = gloc
+                self.who_get_Sz_lxloc[MPIrank] = lloc
 
             if xsrt <  node_xsrt and xend > node_xend:
                 gloc = ((node_xsrt          , ysrt, zsrt), (node_xend          , yend, zend))
                 lloc = ((node_xsrt-node_xsrt, ysrt, zsrt), (node_xend-node_xsrt, yend, zend))
 
-                self.who_get_Sz_gloc[MPIrank] = gloc
-                self.who_get_Sz_lloc[MPIrank] = lloc
+                self.who_get_Sz_gxloc[MPIrank] = gloc
+                self.who_get_Sz_lxloc[MPIrank] = lloc
 
             if xsrt >= node_xsrt and xsrt < node_xend and xend <= node_xend:
                 gloc = ((xsrt          , ysrt, zsrt), (xend          , yend, zend))
                 lloc = ((xsrt-node_xsrt, ysrt, zsrt), (xend-node_xsrt, yend, zend))
 
-                self.who_get_Sz_gloc[MPIrank] = gloc
-                self.who_get_Sz_lloc[MPIrank] = lloc
+                self.who_get_Sz_gxloc[MPIrank] = gloc
+                self.who_get_Sz_lxloc[MPIrank] = lloc
 
             if xsrt >= node_xsrt and xsrt < node_xend and xend >  node_xend:
                 gloc = ((xsrt          , ysrt, zsrt), (node_xend          , yend, zend))
                 lloc = ((xsrt-node_xsrt, ysrt, zsrt), (node_xend-node_xsrt, yend, zend))
 
-                self.who_get_Sz_gloc[MPIrank] = gloc
-                self.who_get_Sz_lloc[MPIrank] = lloc
+                self.who_get_Sz_gxloc[MPIrank] = gloc
+                self.who_get_Sz_lxloc[MPIrank] = lloc
 
-        #if self.space.MPIrank == 0: print("{} collectors: rank{}" .format(self.name, list(self.who_get_Sz_gloc)))
+        #if self.space.MPIrank == 0: print("{} collectors: rank{}" .format(self.name, list(self.who_get_Sz_gxloc)))
 
         self.space.MPIcomm.barrier()
 
-        if self.space.MPIrank in self.who_get_Sz_lloc:
+        if self.space.MPIrank in self.who_get_Sz_lxloc:
 
-            self.gloc = self.who_get_Sz_gloc[self.space.MPIrank]
-            self.lloc = self.who_get_Sz_lloc[self.space.MPIrank]
+            self.gloc = self.who_get_Sz_gxloc[self.space.MPIrank]
+            self.lloc = self.who_get_Sz_lxloc[self.space.MPIrank]
 
             #print("rank {:>2}: x loc of {} collector >>> global range({:4d},{:4d}) // local range({:4d},{:4d})\"" \
             #      .format(self.space.MPIrank, self.name, self.gloc[0][0], self.gloc[1][0], self.lloc[0][0], self.lloc[1][0]))
@@ -705,7 +715,7 @@ class Sz(collector):
         
     def do_RFT(self, tstep):
 
-        if self.space.MPIrank in self.who_get_Sz_lloc:
+        if self.space.MPIrank in self.who_get_Sz_lxloc:
 
             dt = self.space.dt
             xsrt = self.lloc[0][0]
@@ -724,16 +734,21 @@ class Sz(collector):
             self.DFT_Ey += self.space.Ey[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
             self.DFT_Hx += self.space.Hx[Fidx] * self.xp.exp(2.j*self.xp.pi*self.freqs[f]*tstep*dt) * dt
 
-    def get_Sz(self):
+    def get_Sz(self, tstep, h5=False):
 
         self.space.MPIcomm.barrier()
 
-        if self.space.MPIrank in self.who_get_Sz_lloc:
+        if self.space.MPIrank in self.who_get_Sz_lxloc:
 
-            self.xp.save("{}/{}_DFT_Ex_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.DFT_Ex)
-            self.xp.save("{}/{}_DFT_Ey_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.DFT_Ey)
-            self.xp.save("{}/{}_DFT_Hx_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.DFT_Hx)
-            self.xp.save("{}/{}_DFT_Hy_rank{:02d}" .format(self.path, self.name, self.space.MPIrank), self.DFT_Hy)
+            Exname = f"{self.path}{self.name}_DFT_Ex_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+            Eyname = f"{self.path}{self.name}_DFT_Ey_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+            Hxname = f"{self.path}{self.name}_DFT_Hx_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+            Hyname = f"{self.path}{self.name}_DFT_Hy_{tstep:07d}tstep_rank{self.space.MPIrank:02d}"
+
+            self.xp.save(Exname, self.DFT_Ex)
+            self.xp.save(Eyname, self.DFT_Ey)
+            self.xp.save(Hxname, self.DFT_Hx)
+            self.xp.save(Hyname, self.DFT_Hy)
 
         self.space.MPIcomm.barrier()
 
@@ -744,27 +759,32 @@ class Sz(collector):
             DFT_Sz_Hxs = []
             DFT_Sz_Hys = []
 
-            for rank in self.who_get_Sz_lloc:
+            for rank in self.who_get_Sz_lxloc:
 
-                DFT_Sz_Exs.append(self.xp.load("{}/{}_DFT_Ex_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sz_Eys.append(self.xp.load("{}/{}_DFT_Ey_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sz_Hxs.append(self.xp.load("{}/{}_DFT_Hx_rank{:02d}.npy" .format(self.path, self.name, rank)))
-                DFT_Sz_Hys.append(self.xp.load("{}/{}_DFT_Hy_rank{:02d}.npy" .format(self.path, self.name, rank)))
+                Exname = f"{self.path}{self.name}_DFT_Ex_{tstep:07d}tstep_rank{rank:02d}.npy"
+                Eyname = f"{self.path}{self.name}_DFT_Ey_{tstep:07d}tstep_rank{rank:02d}.npy"
+                Hxname = f"{self.path}{self.name}_DFT_Hx_{tstep:07d}tstep_rank{rank:02d}.npy"
+                Hyname = f"{self.path}{self.name}_DFT_Hy_{tstep:07d}tstep_rank{rank:02d}.npy"
 
-            DFT_Ex = self.xp.concatenate(DFT_Sz_Exs, axis=1)
-            DFT_Ey = self.xp.concatenate(DFT_Sz_Eys, axis=1)
-            DFT_Hx = self.xp.concatenate(DFT_Sz_Hxs, axis=1)
-            DFT_Hy = self.xp.concatenate(DFT_Sz_Hys, axis=1)
+                DFT_Sz_Exs.append(np.load(Exname))
+                DFT_Sz_Eys.append(np.load(Eyname))
+                DFT_Sz_Hxs.append(np.load(Hxname))
+                DFT_Sz_Hys.append(np.load(Hyname))
+
+            DFT_Ex = np.concatenate(DFT_Sz_Exs, axis=1)
+            DFT_Ey = np.concatenate(DFT_Sz_Eys, axis=1)
+            DFT_Hx = np.concatenate(DFT_Sz_Hxs, axis=1)
+            DFT_Hy = np.concatenate(DFT_Sz_Hys, axis=1)
 
             self.Sz = 0.5 * ( -(DFT_Ey.real*DFT_Hx.real) - (DFT_Ey.imag*DFT_Hx.imag)
                               +(DFT_Ex.real*DFT_Hy.real) + (DFT_Ex.imag*DFT_Hy.imag)  )
 
             self.Sz_area = self.Sz.sum(axis=(1,2)) * self.space.dx * self.space.dy
-            self.xp.save("{}/{}_area" .format(self.path, self.name), self.Sz_area)
+            np.save(f"{self.path}{self.name}_{tstep:07d}tstep_area" , self.Sz_area)
 
             if h5 == True:
 
-                with h5py.File('{}/{}_DFTs_rank{:02d}.h5' .format(self.path, self.name, self.space.MPIrank), 'w') as hf:
+                with h5py.File(f'{self.path}{self.name}_DFTs_rank{self.space.MPIrank:02d}.h5', 'w') as hf:
 
                     if self.space.engine == 'cupy':
                         hf.create_dataset('Sz_Ex', data=cp.asnumpy(self.DFT_Ex))
