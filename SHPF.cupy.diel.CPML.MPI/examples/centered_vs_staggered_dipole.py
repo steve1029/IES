@@ -106,7 +106,7 @@ mmt = (kx, ky, kz)
 wvc = 140*lunit
 w0 = (2*np.pi*c)/wvc
 interval = 1
-spread   = 0.2
+spread   = 0.3
 pick_pos = 1500
 ws = w0 * spread
 src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
@@ -222,7 +222,7 @@ TF.init_update_constants()
 #--------------------- Plotter object settings --------------------#
 #------------------------------------------------------------------#
 
-plot_per = 100
+plot_per = 25
 TFgraphtool = plotter.Graphtool(TF, 'TF', savedir)
 
 cells = (Nx, Ny, Nz)
