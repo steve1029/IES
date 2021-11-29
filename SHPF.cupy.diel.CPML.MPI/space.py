@@ -185,10 +185,10 @@ class Basic3D:
             nax = np.newaxis
             self.iky = 1j*self.ky[nax,:,nax]
             self.ikz = 1j*self.kz[nax,nax,:]
-            self.ypshift = self.xp.exp(self.iky*-self.dy/2)[None,:,None]
-            self.zpshift = self.xp.exp(self.ikz*-self.dz/2)[None,None,:]
-            self.ymshift = self.xp.exp(self.iky*+self.dy/2)[None,:,None]
-            self.zmshift = self.xp.exp(self.ikz*+self.dz/2)[None,None,:]
+            self.ypshift = self.xp.exp(self.iky*+self.dy/2)[None,:,None]
+            self.zpshift = self.xp.exp(self.ikz*+self.dz/2)[None,None,:]
+            self.ymshift = self.xp.exp(self.iky*-self.dy/2)[None,:,None]
+            self.zmshift = self.xp.exp(self.ikz*-self.dz/2)[None,None,:]
 
         self.diffxEy = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
         self.diffxEz = self.xp.zeros(self.loc_grid, dtype=self.field_dtype)
@@ -246,9 +246,9 @@ class Basic3D:
         self.imp   = self.xp.sqrt(mu_0/epsilon_0)       # impedence
         self.gO    = 3.                                 # gradingOrder
         self.sO    = 3.                                 # scalingOrder
-        self.bdw_x = (self.PMLgrading-1) * self.dx      # PML thickness along x (Boundarywidth)
-        self.bdw_y = (self.PMLgrading-1) * self.dy      # PML thickness along y
-        self.bdw_z = (self.PMLgrading-1) * self.dz      # PML thickness along z
+        self.bdw_x = (self.PMLgrading-1) * (self.dx/2)  # PML thickness along x (Boundarywidth)
+        self.bdw_y = (self.PMLgrading-1) * (self.dy/2)  # PML thickness along y
+        self.bdw_z = (self.PMLgrading-1) * (self.dz/2)  # PML thickness along z
 
         self.PMLsigmamaxx = -(self.gO+1) * self.xp.log(self.rc0) / (2*self.imp*self.bdw_x)
         self.PMLsigmamaxy = -(self.gO+1) * self.xp.log(self.rc0) / (2*self.imp*self.bdw_y)
@@ -300,7 +300,7 @@ class Basic3D:
                 self.psi_hyx_m = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.field_dtype)
                 self.psi_hzx_m = self.xp.zeros((npml, self.Ny, self.Nz), dtype=self.field_dtype)
 
-                loc = self.xp.arange(self.PMLgrading) * self.dx / self.bdw_x
+                loc = self.xp.arange(self.PMLgrading) / (self.PMLgrading-1)
                 self.PMLsigmax = self.PMLsigmamaxx * (loc **self.gO)
                 self.PMLkappax = 1 + ((self.PMLkappamaxx-1) * (loc **self.gO))
                 self.PMLalphax = self.PMLalphamaxx * ((1-loc) **self.sO)
@@ -317,7 +317,7 @@ class Basic3D:
                 self.psi_hxy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.field_dtype)
                 self.psi_hzy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.field_dtype)
 
-                loc  = self.xp.arange(self.PMLgrading) * self.dy / self.bdw_y
+                loc  = self.xp.arange(self.PMLgrading) * (self.PMLgrading-1)
                 self.PMLsigmay = self.PMLsigmamaxy * (loc **self.gO)
                 self.PMLkappay = 1 + ((self.PMLkappamaxy-1) * (loc **self.gO))
                 self.PMLalphay = self.PMLalphamaxy * ((1-loc) **self.sO)
@@ -334,7 +334,7 @@ class Basic3D:
                 self.psi_hxz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.field_dtype)
                 self.psi_hyz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.field_dtype)
 
-                loc  = self.xp.arange(self.PMLgrading) * self.dz / self.bdw_z
+                loc  = self.xp.arange(self.PMLgrading) * (self.PMLgrading-1)
                 self.PMLsigmaz = self.PMLsigmamaxz * (loc **self.gO)
                 self.PMLkappaz = 1 + ((self.PMLkappamaxz-1) * (loc **self.gO))
                 self.PMLalphaz = self.PMLalphamaxz * ((1-loc) **self.sO)

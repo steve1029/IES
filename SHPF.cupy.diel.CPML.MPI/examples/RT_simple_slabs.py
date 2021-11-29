@@ -276,7 +276,7 @@ if TF.MPIrank == 0:
     spacespecs = f"""Space:
 
     VOLUME of the space: {TF.VOLUME:.2e} m^3
-    Size of the space: {int(TF.Lx/lunit):04d} x {int(TF.Ly/lunit):04d} x {int(TF.Lz/lunit):04d}
+    Size of the space: {int(TF.Lx/lunit):04d}{lustr} x {int(TF.Ly/lunit):04d}{lustr} x {int(TF.Lz/lunit):04d}{lustr}
     The number of cells: {TF.Nx:4d} x {TF.Ny:4d} x {TF.Nz:4d}
     Grid spacing: {TF.dx/lunit:.3f} {lustr}, {TF.dy/lunit:.3f} {lustr}, {TF.dz/lunit:.3f} {lustr}
     """
@@ -296,7 +296,7 @@ if TF.MPIrank == 0:
     Gaussian wave pick position at: {pick_pos} Tstep.
     Gaussian angular frequency spread: {spread:.3f} * w0
     Frequency points: {len(freqs)}
-    Wavelength range: {round(l2,1)} to {round(l1,1)}
+    Wavelength range: {round(l2,1)}{lustr} to {round(l1,1)}{lustr}
     """
 
     plotterspecs=f"""Plotters:

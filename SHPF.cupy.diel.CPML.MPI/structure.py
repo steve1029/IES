@@ -520,6 +520,7 @@ class Sphere_percom(Structure):
             print(self.space.MPIrank, self.gxloc)
             print(self.space.MPIrank, self.lxloc)
 
+            """
             lxloc = np.arange(self.lxloc[0], self.lxloc[1]+1)
             print(self.space.MPIrank, lxloc, len(lxloc))
 
@@ -576,7 +577,6 @@ class Sphere_percom(Structure):
 
                 else: print(self.space.MPIrank, i, dist)
 
-            """
             for i in range(len(rx)):
                 theta[i] = np.arccos(rx[i]*dx/radius)
                 rr[i] = radius * np.sin(theta[i])

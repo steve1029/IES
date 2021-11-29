@@ -105,11 +105,11 @@ wvc = 640*lunit
 w0 = (2*np.pi*c)/wvc
 interval = 1
 spread   = 0.05
-pick_pos = 20000
+pick_pos = 5000
 ws = w0 * spread
 src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
 
-savedir = f'../graph/simple_2slab_{method}/{int(Lx/lunit):04d}\
+savedir = f'../graph/simple_2slab_long_{method}/{int(Lx/lunit):04d}\
 {lustr}{int(Ly/lunit):04d}{lustr}{int(Lz/lunit):04d}{lustr}_{Nx:04d}_{Ny:04d}_{Nz:04d}_{Tsteps:07d}\
 _100{lustr}_200{lustr}_100{lustr}/'
 
@@ -243,13 +243,13 @@ TF_Sx_R_calculator = collector.Sx("TF_R", savedir+"Sx/", TF, Lx*0.85, (lefty, le
 IF_Sx_R_calculator = collector.Sx("IF_R", savedir+"Sx/", IF, Lx*0.85, (lefty, leftz), (righty, rightz), freqs, engine)
 SF_Sx_L_calculator = collector.Sx("SF_L", savedir+"Sx/", SF, Lx*0.15, (lefty, leftz), (righty, rightz), freqs, engine)
 
-cal_per = 100000
+cal_per = 10000
 
 #------------------------------------------------------------------#
 #--------------------- Plotter object settings --------------------#
 #------------------------------------------------------------------#
 
-plot_per = 100000
+plot_per = 10000
 TFgraphtool = plotter.Graphtool(TF, 'TF', savedir)
 IFgraphtool = plotter.Graphtool(IF, 'IF', savedir)
 SFgraphtool = plotter.Graphtool(SF, 'SF', savedir)
@@ -276,7 +276,7 @@ if TF.MPIrank == 0:
     spacespecs = f"""Space:
 
     VOLUME of the space: {TF.VOLUME:.2e} m^3
-    Size of the space: {int(TF.Lx/lunit):04d} x {int(TF.Ly/lunit):04d} x {int(TF.Lz/lunit):04d}
+    Size of the space: {int(TF.Lx/lunit):04d}{lustr} x {int(TF.Ly/lunit):04d}{lustr} x {int(TF.Lz/lunit):04d}{lustr}
     The number of cells: {TF.Nx:4d} x {TF.Ny:4d} x {TF.Nz:4d}
     Grid spacing: {TF.dx/lunit:.3f} {lustr}, {TF.dy/lunit:.3f} {lustr}, {TF.dz/lunit:.3f} {lustr}
     """
@@ -296,7 +296,7 @@ if TF.MPIrank == 0:
     Gaussian wave pick position at: {pick_pos} Tstep.
     Gaussian angular frequency spread: {spread:.3f} * w0
     Frequency points: {len(freqs)}
-    Wavelength range: {round(l2,1)} to {round(l1,1)}
+    Wavelength range: {round(l2,1)}{lustr} to {round(l1,1)}{lustr}
     """
 
     plotterspecs=f"""Plotters:

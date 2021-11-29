@@ -25,7 +25,7 @@ import source, space, plotter, structure, collector, recorder
     sys.argv[8]: dz 
     sys.argv[9]: data precision 
     sys.argv[10]: PML thickness
-    sys.argv[11]: The location of the Surface of scattering, lunit.
+    sys.argv[11]: The location of the Surface of scattering from the center, lunit.
     sys.argv[12]: Radius of the sphere
 
 Command example:
@@ -62,9 +62,9 @@ if precision == 'DP':
     floattype = np.float64
     complextype = np.complex128
 
-TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, complextype, complextype, method=method, engine=engine) # Total field
-IF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, complextype, complextype, method=method, engine=engine) # Incident field
-SF = space.Empty3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, complextype, complextype, method=method, engine=engine) # Scattered field
+TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, floattype, complextype, method=method, engine=engine) # Total field
+IF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, floattype, complextype, method=method, engine=engine) # Incident field
+SF = space.Empty3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, floattype, complextype, method=method, engine=engine) # Scattered field
 
 TF.malloc()
 IF.malloc()
@@ -132,8 +132,8 @@ src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
 
 radius_int = int(sys.argv[12])
 savedir = f'../graph/mie_{method}/\
-{Nx:04d}_{Ny:04d}_{Nz:04d}\
-_{round(dx/lunit):02d}{lustr}_{round(dy/lunit):02d}{lustr}_{round(dz/lunit):02d}{lustr}\
+{round(dx/lunit):02d}{lustr}_{round(dy/lunit):02d}{lustr}_{round(dz/lunit):02d}{lustr}\
+_{Nx:04d}_{Ny:04d}_{Nz:04d}\
 _{Tsteps:07d}\
 _{precision}\
 _{pmlthick}\

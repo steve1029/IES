@@ -296,7 +296,7 @@ if TF.MPIrank == 0:
     Gaussian wave pick position at: {pick_pos} Tstep.
     Gaussian angular frequency spread: {spread:.3f} * w0
     Frequency points: {len(freqs)}
-    Wavelength range: {round(l2,1)} to {round(l1,1)}
+    Wavelength range: {round(l2,1)}{lustr} to {round(l1,1)}{lustr}
     """
 
     plotterspecs=f"""Plotters:
