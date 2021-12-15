@@ -393,6 +393,32 @@ class Cone(Structure):
 class Sphere(Structure):
 
     def __init__(self, name, space, center, radius, eps_r, mu_r):
+        """Dielectric sphere.
+
+        Paramters
+        ---------
+            name: str
+                the name of the object.
+
+            space: space object.
+                Choose which space object to put on.
+
+            center: tuple
+                the indices of the center of the sphere.
+
+            radius: float
+                the radius of the sphere in length unit, not indices.
+
+            eps_r: float
+                dielectric constant.
+
+            mu_r: float
+                magnetic constant.
+
+        Returns
+        -------
+        None
+        """
 
         Structure.__init__(self, name, space)
 

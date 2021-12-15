@@ -248,7 +248,7 @@ SF_Sy_R = collector.Sy("SF_R", savedir+"Sy/", SF, righty, (leftx, leftz), (right
 SF_Sz_L = collector.Sz("SF_L", savedir+"Sz/", SF, leftz,  (leftx, lefty), (rightx, righty), freqs, engine)
 SF_Sz_R = collector.Sz("SF_R", savedir+"Sz/", SF, rightz, (leftx, lefty), (rightx, righty), freqs, engine)
 
-cal_per = Tsteps-1
+cal_per = 10000
 
 #------------------------------------------------------------------#
 #--------------------- Plotter object settings --------------------#
@@ -313,6 +313,7 @@ if TF.MPIrank == 0:
 
 TF.MPIcomm.Barrier()
 
+print(f'Rank {TF.MPIrank}:{cal_per}')
 structurespecs=\
 f"""
     Structures:
@@ -328,6 +329,7 @@ f"""
                 z idx: {Ball.center_idx[2]}
 
 """
+
 
 collectorspecs=\
 f"""
@@ -375,12 +377,13 @@ f"""
             global x area: {SF_Sz_R.zsrt}, {SF_Sz_R.zend}
             global y area: {SF_Sz_R.ysrt}, {SF_Sz_R.yend}
 
-Calculate Poynting vector per: {cal_per}
+Calculate the Poynting vector per: {cal_per}
 """
 
 print(f'Rank {TF.MPIrank}:')
 print(structurespecs)
 print(collectorspecs)
+#sys.exit()
 
 #------------------------------------------------------------------#
 #------------------------ Time loop begins ------------------------#

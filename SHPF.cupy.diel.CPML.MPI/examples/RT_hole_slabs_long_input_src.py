@@ -239,9 +239,9 @@ leftx, rightx = 100*lunit, 500*lunit
 lefty, righty = 0*lunit, Ly
 leftz, rightz = 0*lunit, Lz
 
-TF_Sx_R_calculator = collector.Sx("TF_R", savedir+"Sx/", TF, Lx*0.85, (lefty, leftz), (righty, rightz), freqs, engine)
-IF_Sx_R_calculator = collector.Sx("IF_R", savedir+"Sx/", IF, Lx*0.85, (lefty, leftz), (righty, rightz), freqs, engine)
-SF_Sx_L_calculator = collector.Sx("SF_L", savedir+"Sx/", SF, Lx*0.15, (lefty, leftz), (righty, rightz), freqs, engine)
+TF_Sx_R = collector.Sx("TF_R", savedir+"Sx/", TF, Lx*0.85, (lefty, leftz), (righty, rightz), freqs, engine)
+IF_Sx_R = collector.Sx("IF_R", savedir+"Sx/", IF, Lx*0.85, (lefty, leftz), (righty, rightz), freqs, engine)
+SF_Sx_L = collector.Sx("SF_L", savedir+"Sx/", SF, Lx*0.15, (lefty, leftz), (righty, rightz), freqs, engine)
 
 cal_per = 100000
 
@@ -258,11 +258,11 @@ cells = (Nx, Ny, Nz)
 painter = plotter.SpectrumPlotter(method, cells, wvlens, fustr, lustr)
 
 #wvxlim = [0.4, .5]
-wvxlim = [None, None]
-wvylim = [-0.1, 1.1]
+#wvxlim = [None, None]
+#wvylim = [-0.1, 1.1]
 #freqxlim = [600, 700]
-freqxlim = [None, None]
-freqylim = [-0.1, 1.1]
+#freqxlim = [None, None]
+#freqylim = [-0.1, 1.1]
 
 #------------------------------------------------------------------#
 #--------------- Record simulation specifications------------------#
@@ -352,23 +352,23 @@ collectorspecs=\
 f"""
     Collectors:
 
-        {TF_Sx_R_calculator.name}:
-            global x location: {TF_Sx_R_calculator.gxloc}
-             local x location: {TF_Sx_R_calculator.lxloc}
-            global y location: {TF_Sx_R_calculator.ysrt}, {TF_Sx_R_calculator.yend}
-            global z location: {TF_Sx_R_calculator.zsrt}, {TF_Sx_R_calculator.zend}
+        {TF_Sx_R.name}:
+            global x location: {TF_Sx_R.gxloc}
+             local x location: {TF_Sx_R.lxloc}
+            global y location: {TF_Sx_R.ysrt}, {TF_Sx_R.yend}
+            global z location: {TF_Sx_R.zsrt}, {TF_Sx_R.zend}
 
-        {IF_Sx_R_calculator.name}:
-            global x location: {IF_Sx_R_calculator.gxloc}
-             local x location: {IF_Sx_R_calculator.lxloc}
-            global y location: {IF_Sx_R_calculator.ysrt}, {IF_Sx_R_calculator.yend}
-            global z location: {IF_Sx_R_calculator.zsrt}, {IF_Sx_R_calculator.zend}
+        {IF_Sx_R.name}:
+            global x location: {IF_Sx_R.gxloc}
+             local x location: {IF_Sx_R.lxloc}
+            global y location: {IF_Sx_R.ysrt}, {IF_Sx_R.yend}
+            global z location: {IF_Sx_R.zsrt}, {IF_Sx_R.zend}
 
-        {SF_Sx_L_calculator.name}:
-            global x location: {SF_Sx_L_calculator.gxloc}
-             local x location: {SF_Sx_L_calculator.lxloc}
-            global y location: {SF_Sx_L_calculator.ysrt}, {SF_Sx_L_calculator.yend}
-            global z location: {SF_Sx_L_calculator.zsrt}, {SF_Sx_L_calculator.zend}
+        {SF_Sx_L.name}:
+            global x location: {SF_Sx_L.gxloc}
+             local x location: {SF_Sx_L.lxloc}
+            global y location: {SF_Sx_L.ysrt}, {SF_Sx_L.yend}
+            global z location: {SF_Sx_L.zsrt}, {SF_Sx_L.zend}
 
 Calculate Poynting vector per: {cal_per}
 """
@@ -412,9 +412,9 @@ for tstep in range(Tsteps+1):
 
     SF.get_SF(TF, IF)
 
-    TF_Sx_R_calculator.do_RFT(tstep)
-    IF_Sx_R_calculator.do_RFT(tstep)
-    SF_Sx_L_calculator.do_RFT(tstep)
+    TF_Sx_R.do_RFT(tstep)
+    IF_Sx_R.do_RFT(tstep)
+    SF_Sx_L.do_RFT(tstep)
 
     # Plot the field profile
     if tstep % plot_per == 0:
@@ -468,8 +468,8 @@ for tstep in range(Tsteps+1):
 
     if tstep != 0 and tstep % cal_per == 0:
 
-        TF_Sx_R_calculator.get_Sx(tstep, h5=False)
-        IF_Sx_R_calculator.get_Sx(tstep, h5=False)
-        SF_Sx_L_calculator.get_Sx(tstep, h5=False)
+        TF_Sx_R.get_Sx(tstep, h5=False)
+        IF_Sx_R.get_Sx(tstep, h5=False)
+        SF_Sx_L.get_Sx(tstep, h5=False)
 
         #print(f'rank {TF.MPIrank:02d}: Sx has been saved at {tstep} time step.')
