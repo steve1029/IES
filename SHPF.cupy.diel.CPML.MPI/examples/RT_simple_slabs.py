@@ -13,6 +13,20 @@ import source, space, plotter, structure, collector, recorder
 #--------------------- Space object settings ----------------------#
 #------------------------------------------------------------------#
 
+"""Description.
+
+sys.argv[1]: str. method.
+sys.argv[2]: int. Time steps.
+sys.argv[3]: int. Nx.
+sys.argv[4]: int. Ny.
+sys.argv[5]: int. Nz.
+
+An execution example.
+
+$ python3 RT_simple_slabs.py FDTD 5001 360 64 64
+
+"""
+
 nm = 1e-9
 um = 1e-6
 
@@ -243,13 +257,13 @@ TF_Sx_R_calculator = collector.Sx("TF_R", savedir+"Sx/", TF, Lx*0.85, (lefty, le
 IF_Sx_R_calculator = collector.Sx("IF_R", savedir+"Sx/", IF, Lx*0.85, (lefty, leftz), (righty, rightz), freqs, engine)
 SF_Sx_L_calculator = collector.Sx("SF_L", savedir+"Sx/", SF, Lx*0.15, (lefty, leftz), (righty, rightz), freqs, engine)
 
-cal_per = 10000
+cal_per = 1000
 
 #------------------------------------------------------------------#
 #--------------------- Plotter object settings --------------------#
 #------------------------------------------------------------------#
 
-plot_per = 10000
+plot_per = 1000
 TFgraphtool = plotter.Graphtool(TF, 'TF', savedir)
 IFgraphtool = plotter.Graphtool(IF, 'IF', savedir)
 SFgraphtool = plotter.Graphtool(SF, 'SF', savedir)

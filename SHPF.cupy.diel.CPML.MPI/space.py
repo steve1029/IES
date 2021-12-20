@@ -317,7 +317,7 @@ class Basic3D:
                 self.psi_hxy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.field_dtype)
                 self.psi_hzy_m = self.xp.zeros((self.myNx, npml, self.Nz), dtype=self.field_dtype)
 
-                loc  = self.xp.arange(self.PMLgrading) * (self.PMLgrading-1)
+                loc  = self.xp.arange(self.PMLgrading) / (self.PMLgrading-1)
                 self.PMLsigmay = self.PMLsigmamaxy * (loc **self.gO)
                 self.PMLkappay = 1 + ((self.PMLkappamaxy-1) * (loc **self.gO))
                 self.PMLalphay = self.PMLalphamaxy * ((1-loc) **self.sO)
@@ -334,7 +334,7 @@ class Basic3D:
                 self.psi_hxz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.field_dtype)
                 self.psi_hyz_m = self.xp.zeros((self.myNx, self.Ny, npml), dtype=self.field_dtype)
 
-                loc  = self.xp.arange(self.PMLgrading) * (self.PMLgrading-1)
+                loc  = self.xp.arange(self.PMLgrading) / (self.PMLgrading-1)
                 self.PMLsigmaz = self.PMLsigmamaxz * (loc **self.gO)
                 self.PMLkappaz = 1 + ((self.PMLkappamaxz-1) * (loc **self.gO))
                 self.PMLalphaz = self.PMLalphamaxz * ((1-loc) **self.sO)

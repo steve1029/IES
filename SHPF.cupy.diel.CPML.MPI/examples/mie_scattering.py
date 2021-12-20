@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.constants import c
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import source, space, plotter, structure, collector, recorder
+from tqdm import tqdm
 
 #------------------------------------------------------------------#
 #----------------------- Paramter settings ------------------------#
@@ -37,8 +38,8 @@ Command example:
 nm = 1e-9
 um = 1e-6
 
-lunit = nm
-lustr = 'nm'
+lunit = um
+lustr = 'um'
 
 funit = 1e12
 fustr = 'THz'
@@ -237,16 +238,16 @@ leftx, rightx = Lx/2-Ssca*lunit, Lx/2+Ssca*lunit
 lefty, righty = Ly/2-Ssca*lunit, Ly/2+Ssca*lunit
 leftz, rightz = Lz/2-Ssca*lunit, Lz/2+Ssca*lunit
 
-IF_Sx_R = collector.Sx("IF_R", savedir+"Sx/", IF, rightx, (lefty, leftz), (righty, rightz), freqs, engine)
+IF_Sx_R = collector.Sx("IF_Sx_R", savedir+"Sx/", IF, rightx, (lefty, leftz), (righty, rightz), freqs, engine)
 
-SF_Sx_L = collector.Sx("SF_L", savedir+"Sx/", SF, leftx,  (lefty, leftz), (righty, rightz), freqs, engine)
-SF_Sx_R = collector.Sx("SF_R", savedir+"Sx/", SF, rightx, (lefty, leftz), (righty, rightz), freqs, engine)
+SF_Sx_L = collector.Sx("SF_Sx_L", savedir+"Sx/", SF, leftx,  (lefty, leftz), (righty, rightz), freqs, engine)
+SF_Sx_R = collector.Sx("SF_Sx_R", savedir+"Sx/", SF, rightx, (lefty, leftz), (righty, rightz), freqs, engine)
 
-SF_Sy_L = collector.Sy("SF_L", savedir+"Sy/", SF, lefty,  (leftx, leftz), (rightx, rightz), freqs, engine)
-SF_Sy_R = collector.Sy("SF_R", savedir+"Sy/", SF, righty, (leftx, leftz), (rightx, rightz), freqs, engine)
+SF_Sy_L = collector.Sy("SF_Sy_L", savedir+"Sy/", SF, lefty,  (leftx, leftz), (rightx, rightz), freqs, engine)
+SF_Sy_R = collector.Sy("SF_Sy_R", savedir+"Sy/", SF, righty, (leftx, leftz), (rightx, rightz), freqs, engine)
 
-SF_Sz_L = collector.Sz("SF_L", savedir+"Sz/", SF, leftz,  (leftx, lefty), (rightx, righty), freqs, engine)
-SF_Sz_R = collector.Sz("SF_R", savedir+"Sz/", SF, rightz, (leftx, lefty), (rightx, righty), freqs, engine)
+SF_Sz_L = collector.Sz("SF_Sz_L", savedir+"Sz/", SF, leftz,  (leftx, lefty), (rightx, righty), freqs, engine)
+SF_Sz_R = collector.Sz("SF_Sz_R", savedir+"Sz/", SF, rightz, (leftx, lefty), (rightx, righty), freqs, engine)
 
 cal_per = 10000
 
@@ -254,7 +255,7 @@ cal_per = 10000
 #--------------------- Plotter object settings --------------------#
 #------------------------------------------------------------------#
 
-plot_per = 1000
+plot_per = 100
 TFgraphtool = plotter.Graphtool(TF, 'TF', savedir)
 IFgraphtool = plotter.Graphtool(IF, 'IF', savedir)
 SFgraphtool = plotter.Graphtool(SF, 'SF', savedir)
@@ -300,90 +301,85 @@ if TF.MPIrank == 0:
     plotterspecs=f"""Plotters:
 
     Plot field profile per {plot_per} time steps.
-
     Save location: {savedir}
-    \nTotal time step: {TF.tsteps}
-    Data size of a Ex field array: {TF.TOTAL_NUM_GRID_SIZE:05.2f} Mbytes
     """
     print(spacespecs)
     print(sourcespecs)
     print(plotterspecs)
+    print(f'Calculate the Poynting vector per: {cal_per}')
     print(f'\nStructure and Collector objects in each Ranks:\n')
     #history = recorder.History(TF, "../history/")
 
 TF.MPIcomm.Barrier()
 
-print(f'Rank {TF.MPIrank}:{cal_per}')
 structurespecs=\
 f"""
-    Structures:
+        Structures:
 
-        {Ball.name}
-            global x location: {Ball.gxloc}
-             local x location: {Ball.lxloc}
-            radius: {Ball.radius/lunit}{lustr}
-            epsilon: {Ball.eps_r}
-            center index: 
-                x idx: {Ball.center_idx[0]}
-                y idx: {Ball.center_idx[1]}
-                z idx: {Ball.center_idx[2]}
-
+            {Ball.name}
+                global x location: {Ball.gxloc}
+                 local x location: {Ball.lxloc}
+                radius: {Ball.radius/lunit}{lustr}
+                epsilon: {Ball.eps_r}
+                center index: 
+                    x idx: {Ball.center_idx[0]}
+                    y idx: {Ball.center_idx[1]}
+                    z idx: {Ball.center_idx[2]}
 """
-
 
 collectorspecs=\
-f"""
-    Collectors:
+f'''
+        Collectors:
 
-        {IF_Sx_R.name}:
-            global x location: {IF_Sx_R.gxloc}
-             local x location: {IF_Sx_R.lxloc}
-            global y location: {IF_Sx_R.ysrt}, {IF_Sx_R.yend}
-            global z location: {IF_Sx_R.zsrt}, {IF_Sx_R.zend}
+            {IF_Sx_R.name}:
+                global x location: {IF_Sx_R.gxloc}
+                 local x location: {IF_Sx_R.lxloc}
+                global y location: {IF_Sx_R.ysrt}, {IF_Sx_R.yend}
+                global z location: {IF_Sx_R.zsrt}, {IF_Sx_R.zend}
 
-        {SF_Sx_L.name}:
-            global x location: {SF_Sx_L.gxloc}
-             local x location: {SF_Sx_L.lxloc}
-            global y location: {SF_Sx_L.ysrt}, {SF_Sx_L.yend}
-            global z location: {SF_Sx_L.zsrt}, {SF_Sx_L.zend}
+            {SF_Sx_L.name}:
+                global x location: {SF_Sx_L.gxloc}
+                 local x location: {SF_Sx_L.lxloc}
+                global y location: {SF_Sx_L.ysrt}, {SF_Sx_L.yend}
+                global z location: {SF_Sx_L.zsrt}, {SF_Sx_L.zend}
 
-        {SF_Sx_R.name}:
-            global x location: {SF_Sx_R.gxloc}
-             local x location: {SF_Sx_R.lxloc}
-            global y location: {SF_Sx_R.ysrt}, {SF_Sx_R.yend}
-            global z location: {SF_Sx_R.zsrt}, {SF_Sx_R.zend}
+            {SF_Sx_R.name}:
+                global x location: {SF_Sx_R.gxloc}
+                 local x location: {SF_Sx_R.lxloc}
+                global y location: {SF_Sx_R.ysrt}, {SF_Sx_R.yend}
+                global z location: {SF_Sx_R.zsrt}, {SF_Sx_R.zend}
 
-        {SF_Sy_L.name}:
-            global x srt: {SF_Sy_L.who_get_Sy_gxloc[TF.MPIrank]}
-             local x end: {SF_Sy_L.who_get_Sy_lxloc[TF.MPIrank]}
-            global x area: {SF_Sy_L.xsrt}, {SF_Sy_L.xend}
-            global z area: {SF_Sy_L.zsrt}, {SF_Sy_L.zend}
+            {SF_Sy_L.name}:
+                global x srt: {SF_Sy_L.who_get_Sy_gxloc[TF.MPIrank]}
+                 local x end: {SF_Sy_L.who_get_Sy_lxloc[TF.MPIrank]}
+                global x area: {SF_Sy_L.xsrt}, {SF_Sy_L.xend}
+                global z area: {SF_Sy_L.zsrt}, {SF_Sy_L.zend}
 
-        {SF_Sy_R.name}:
-            global x srt: {SF_Sy_R.who_get_Sy_gxloc[TF.MPIrank]}
-             local x end: {SF_Sy_R.who_get_Sy_lxloc[TF.MPIrank]}
-            global y area: {SF_Sy_R.xsrt}, {SF_Sy_R.xend}
-            global z area: {SF_Sy_R.zsrt}, {SF_Sy_R.zend}
+            {SF_Sy_R.name}:
+                global x srt: {SF_Sy_R.who_get_Sy_gxloc[TF.MPIrank]}
+                 local x end: {SF_Sy_R.who_get_Sy_lxloc[TF.MPIrank]}
+                global y area: {SF_Sy_R.xsrt}, {SF_Sy_R.xend}
+                global z area: {SF_Sy_R.zsrt}, {SF_Sy_R.zend}
 
-        {SF_Sz_L.name}:
-            global x srt: {SF_Sz_L.who_get_Sz_gxloc[TF.MPIrank]}
-             local x end: {SF_Sz_L.who_get_Sz_gxloc[TF.MPIrank]}
-            global x area: {SF_Sz_L.xsrt}, {SF_Sz_L.xend}
-            global y area: {SF_Sz_L.ysrt}, {SF_Sz_L.yend}
+            {SF_Sz_L.name}:
+                global x srt: {SF_Sz_L.who_get_Sz_gxloc[TF.MPIrank]}
+                 local x end: {SF_Sz_L.who_get_Sz_gxloc[TF.MPIrank]}
+                global x area: {SF_Sz_L.xsrt}, {SF_Sz_L.xend}
+                global y area: {SF_Sz_L.ysrt}, {SF_Sz_L.yend}
 
-        {SF_Sz_R.name}:
-            global x srt: {SF_Sz_R.who_get_Sz_gxloc[TF.MPIrank]}
-             local x end: {SF_Sz_R.who_get_Sz_gxloc[TF.MPIrank]}
-            global x area: {SF_Sz_R.zsrt}, {SF_Sz_R.zend}
-            global y area: {SF_Sz_R.ysrt}, {SF_Sz_R.yend}
+            {SF_Sz_R.name}:
+                global x srt: {SF_Sz_R.who_get_Sz_gxloc[TF.MPIrank]}
+                 local x end: {SF_Sz_R.who_get_Sz_gxloc[TF.MPIrank]}
+                global x area: {SF_Sz_R.zsrt}, {SF_Sz_R.zend}
+                global y area: {SF_Sz_R.ysrt}, {SF_Sz_R.yend}
+'''
 
-Calculate the Poynting vector per: {cal_per}
-"""
-
-print(f'Rank {TF.MPIrank}:')
+TF.MPIcomm.Barrier()
+print(f'    Rank {TF.MPIrank}:')
 print(structurespecs)
 print(collectorspecs)
-#sys.exit()
+
+TF.MPIcomm.Barrier()
 
 #------------------------------------------------------------------#
 #------------------------ Time loop begins ------------------------#
@@ -392,13 +388,21 @@ print(collectorspecs)
 # Save what time the simulation begins.
 start_time = datetime.datetime.now()
 
-if TF.MPIrank == 0: f'\nSimulation start: {start_time}'
-TF.MPIcomm.Barrier()
+info = f'''
+Total time step: {TF.tsteps}
+Data size of a Ex field array: {TF.TOTAL_NUM_GRID_SIZE:05.2f} Mbytes
+Simulation start: {start_time}
+'''
+
+if TF.MPIrank == 0: print(info)
+
+#sys.exit()
 
 # time loop begins
+#for tstep in tqdm(range(Tsteps)):
 for tstep in range(Tsteps):
 
-    # pulse for gaussian wave
+    # pulse for the gaussian wave.
     #pulse1 = src.pulse_c(tstep)
     pulse1 = src.pulse_re(tstep)
 

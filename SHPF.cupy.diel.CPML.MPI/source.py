@@ -10,21 +10,35 @@ class Setter:
 
         PARAMETERS
         ----------
-        self.space: Space object.
+        space: Space object.
 
         src_srt: tuple
+            The starting location of the source. 
+
+            ex) 
+                1. A plane wave.
+                    For a plane wave propagating along x-axis: (300um, 0, 0)
+
+                2. A dipole source.
+                    (300um, 300um, 300um)
+
+                3. A line source long y-axis.
+                    (300um, 0, 300um)
 
         src_end: tuple
             A tuple indicating the location of a point, like (x,y,z).
-            The elements designate the position of the source in the field.
+            The elements designate the end position of the source.
             
             ex)
-                1. point source
-                    src_srt: (30, 30, 30), src_end: (31, 31, 31)
-                2. line source
-                    src_srt: (30, 30, 0), src_end: (30, 30, Space.Nz)
-                3. plane wave
-                    src_srt: (30,0,0), src_end: (30, Space.Ny, Space.Nz)
+
+                1. A plane wave.
+                    For a plane wave propagating along x-axis: (300um+dx, 0, 0)
+
+                2. A dipole source.
+                    (300um+dx, 300um+dy, 300um+dz)
+
+                3. A line source long y-axis.
+                    (300um, 300um, 300um)
 
         mmt: tuple.
             momentum vector (kx,ky,kz). Only non-zero when the source is monochromatic.
