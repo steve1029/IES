@@ -1,7 +1,7 @@
 # 2nd_paper
 
 A Ph.D student in Department of Physics, Korea University.
-This directory contains the programs and codes for the second paper.
+This directory contains the programs and codes used in my second paper.
 
 ## SHPF.cupy.diel.CPML.MPI
 The simulation package for the electromagnetic wave simulation.
