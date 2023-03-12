@@ -1,7 +1,12 @@
-# 2nd_paper
+# SHPF_GPU
 
-A Ph.D student in Department of Physics, Korea University.
-This directory contains the programs and codes used in my second paper.
+The numerical solver of Maxwell's equations.
+It provides three simulation methods: the Finite-Difference Time-Domain (FDTD) method, 
+the Pseudo-Spectral Time-Domain method and Staggered-grid Hybrid PSTD-FDTD (SHPF) method.
+A user can choose to run the program with CPU or GPU, if one has GPU manufactured by Nvidia.
+
+### Author
+A Ph.D in Physics, received from Department of Physics, Korea University.
 
 ## SHPF.cupy.diel.CPML.MPI
 The simulation package for the electromagnetic wave simulation.
