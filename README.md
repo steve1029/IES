@@ -3,7 +3,9 @@
 The numerical solver of Maxwell's equations.
 It provides three simulation methods: the Finite-Difference Time-Domain (FDTD) method, 
 the Pseudo-Spectral Time-Domain method and Staggered-grid Hybrid PSTD-FDTD (SHPF) method.
-A user can choose to run the program with CPU or GPU, if one has GPU manufactured by Nvidia.
+A user can choose to run the program with CPU or GPU, if one has a GPU manufactured by Nvidia.
+It also provides two parallel computing methodology, the distributed memory system and shared memory system.
+To run this package with its full capability, one should use Linux based COW (cluster of workstation).
 
 ### Author
 A Ph.D in Physics, received from Department of Physics, Korea University.
