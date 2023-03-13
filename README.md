@@ -23,20 +23,20 @@ Currently working at LG innotek.
 [**Curriculum Vitae**](/CV.pdf)
 
 ## Features
-* Numerical solvers
+#### Numerical solvers
   - **FDTD**: Uses Finite-Difference method to approximate the derivatives in Maxwell's equations.
   - **PSTD**: Uses pseudo-spectral methods to approximate the spatial derivatives in Maxwell's equations.
   - **SHPF**: By hybridizing the PSTD and FDTD method, Staggered grid Hybrid PSTD-FDTD(SHPF) method is optimized for large-scale electromagnetic simulations using COW. 
 
-* Parallelism
+#### Parallelism
   * **OpenMP**: Shared memory parallelism is provided.
   * **OpenMPI**: Distributed Parallel Computing with OpenMPI(wrapped with mpi4py) is implemented.
   * **GPU**: The simulation can be run with numpy or cupy.
 
-* Materials
+#### Materials
   * So far, only dielectric materials can be modeled.
 
-* CPML
+#### CPML
   * Convolutional PML is implemented.
 
 ## Requirements
