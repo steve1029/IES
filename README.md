@@ -45,7 +45,7 @@ Currently working at LG innotek.
 * Python
 * Nvidia toolkits
 * SSH Login without password
-* harminv/pharminv: 
+* pharminv: 
   * A package for analyzing the dominant frequency component for a given signal. The band structure of the photonic crystal can be obtained.
 
 ## Installation
