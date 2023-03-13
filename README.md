@@ -26,7 +26,7 @@ Currently working at LG innotek.
 * Numerical solvers
   - **FDTD**: Uses Finite-Difference method to approximate the derivatives in Maxwell's equations.
   - **PSTD**: Uses pseudo-spectral methods to approximate the spatial derivatives in Maxwell's equations.
-  - **SHPF**: By hybridizing the PSTD and FDTD method, it is optimized for large-scale electromagnetic simulations using COW. 
+  - **SHPF**: By hybridizing the PSTD and FDTD method, Staggered grid Hybrid PSTD-FDTD(SHPF) method is optimized for large-scale electromagnetic simulations using COW. 
 
 * Parallelism
   * **OpenMP**: Shared memory parallelism is provided.
