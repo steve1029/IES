@@ -7,13 +7,13 @@ A user can choose to run the program with CPU or GPU, if one has a GPU manufactu
 It also provides two parallel computing methodology, the distributed memory system and shared memory system.
 To run this package with its full capability, one should use Linux based COW (cluster of workstation).
 
-### Author
+## Author
 A Ph.D in Physics, received from Department of Physics, Korea University.
 
 ## SHPF.cupy.diel.CPML.MPI
 The simulation package for the electromagnetic wave simulation.
 
-### Staggered Hybrid PSTD-FDTD method
+### Staggered Hybrid PSTD-FDTD (SHPF) method
 The staggered-grid hybrid PSTD-FDTD method adopted for the EM wave simulation.
 
 ### cupy
