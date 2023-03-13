@@ -23,25 +23,22 @@ Currently working at LG innotek.
 
 [**Curriculum Vitae**](/CV.pdf)
 
-## FDTD
-## PSTD
-## SHPF
-The staggered-grid hybrid PSTD-FDTD method adopted for the EM wave simulation.
+## Implements
+### Numerical solvers
+* **FDTD** Uses Finite-Difference method to approximate the derivatives in Maxwell's equations.
+* **PSTD** Uses pseudo-spectral methods to approximate the spatial derivatives in Maxwell's equations.
+* **SHPF** By hybridizing the PSTD and FDTD method, it is optimized for large-scale electromagnetic simulations using COW. 
 
-## Parallelism
-### OpenMP
-### OpenMPI
-### GPU
-The simulation can be run with numpy or cupy.
+### Parallelism
+* **OpenMP**
+* **OpenMPI** Distributed Parallel Computing with OpenMPI(wrapped with mpi4py) is implemented.
+* **GPU** The simulation can be run with numpy or cupy.
 
-#### dielectric
+### Materials
 So far, only dielectric materials can be modeled.
 
-#### CPML
+### CPML
 Convolutional PML is implemented.
-
-#### MPI
-Distributed Parallel Computing with OpenMPI(wrapped with mpi4py) is implemented.
 
 ## harminv
 A package for analyzing the dominant frequency component for a given signal.
