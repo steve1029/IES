@@ -1,4 +1,5 @@
 # Introduction
+[![CI](https://github.com/steve1029/SHPF/actions/workflows/blank.yml/badge.svg)](https://github.com/steve1029/SHPF/actions/workflows/blank.yml)
 
 The numerical solver of Maxwell's equations.
 It provides three simulation methods: 
