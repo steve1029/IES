@@ -1,4 +1,4 @@
-# SHPF_GPU
+# Introduction
 
 The numerical solver of Maxwell's equations.
 It provides three simulation methods: 
@@ -11,8 +11,6 @@ A user can choose to run the program with CPU or GPU, if one has a GPU manufactu
 It also provides two parallel computing methodology, the distributed memory system and shared memory system.
 To run this package with its full capability, one should use Linux based COW (cluster of workstation).
 
-Please see `INSTALL.md` for installation.
-
 ## Author
 A Ph.D in Physics, received from Department of Physics, Korea University.
 Currently working at LG innotek.
@@ -23,22 +21,36 @@ Currently working at LG innotek.
 
 [**Curriculum Vitae**](/CV.pdf)
 
-## Implements
-### Numerical solvers
-* **FDTD** Uses Finite-Difference method to approximate the derivatives in Maxwell's equations.
-* **PSTD** Uses pseudo-spectral methods to approximate the spatial derivatives in Maxwell's equations.
-* **SHPF** By hybridizing the PSTD and FDTD method, it is optimized for large-scale electromagnetic simulations using COW. 
+## Features
+* Numerical solvers
+  - **FDTD**: Uses Finite-Difference method to approximate the derivatives in Maxwell's equations.
+  - **PSTD**: Uses pseudo-spectral methods to approximate the spatial derivatives in Maxwell's equations.
+  - **SHPF**: By hybridizing the PSTD and FDTD method, it is optimized for large-scale electromagnetic simulations using COW. 
 
-### Parallelism
-* **OpenMP** Shared memory parallelism is provided.
-* **OpenMPI** Distributed Parallel Computing with OpenMPI(wrapped with mpi4py) is implemented.
-* **GPU** The simulation can be run with numpy or cupy.
+* Parallelism
+  * **OpenMP**: Shared memory parallelism is provided.
+  * **OpenMPI**: Distributed Parallel Computing with OpenMPI(wrapped with mpi4py) is implemented.
+  * **GPU**: The simulation can be run with numpy or cupy.
 
-### Materials
-So far, only dielectric materials can be modeled.
+* Materials
+  * So far, only dielectric materials can be modeled.
 
-### CPML
-Convolutional PML is implemented.
+* CPML
+  * Convolutional PML is implemented.
+
+## Requirements
+* Debian/Ubuntu COW
+* Network
+* Python
+* Nvidia toolkits
+* SSH Login without password
+
+## Installation
+Please see `INSTALL.md` for installation.
+
+## Usage
+* Reflectance / Transmittance calculation
+* Band structure calculation
 
 ## harminv
 A package for analyzing the dominant frequency component for a given signal.
