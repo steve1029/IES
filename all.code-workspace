@@ -11,6 +11,9 @@
 		{
 			"name": "steve1029",
 			"path": "../steve1029"
+		},
+		{
+			"path": "../pycuda_prac"
 		}
 	],
 	"settings": {}

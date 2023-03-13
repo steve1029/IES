@@ -44,6 +44,8 @@ Currently working at LG innotek.
 * Python
 * Nvidia toolkits
 * SSH Login without password
+* harminv/pharminv: 
+  * A package for analyzing the dominant frequency component for a given signal. The band structure of the photonic crystal can be obtained.
 
 ## Installation
 Please see `INSTALL.md` for installation.
@@ -51,15 +53,3 @@ Please see `INSTALL.md` for installation.
 ## Usage
 * Reflectance / Transmittance calculation
 * Band structure calculation
-
-## harminv
-A package for analyzing the dominant frequency component for a given signal.
-The band structure of the photonic crystal can be obtained.
-
-## pycuda_prac
-It contains the codes for testing the pycuda package, to determine the future usage for my research.
-At first, I was intended to use pycuda.
-I started to practice how to use pycuda to accelerate the simulation.
-Then later I found 'cupy', a more readable and convenient package for using the GPGPU in python environment.
-So I transferred from pycuda to cupy.
-So this directory is a remnant of my earlier research and has been abandoned now.
