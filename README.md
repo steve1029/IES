@@ -7,6 +7,8 @@ A user can choose to run the program with CPU or GPU, if one has a GPU manufactu
 It also provides two parallel computing methodology, the distributed memory system and shared memory system.
 To run this package with its full capability, one should use Linux based COW (cluster of workstation).
 
+Please see `INSTALL.md` for installation.
+
 ## Author
 A Ph.D in Physics, received from Department of Physics, Korea University.
 Currently working at LG innotek.
