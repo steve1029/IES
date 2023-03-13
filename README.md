@@ -10,8 +10,11 @@ To run this package with its full capability, one should use Linux based COW (cl
 ## Author
 A Ph.D in Physics, received from Department of Physics, Korea University.
 Currently working at LG innotek.
+
 [Google Scholar](https://scholar.google.com/citations?user=iYm5ThEAAAAJ&hl=ko)
+
 [Paper](https://doi.org/10.1016/j.cpc.2020.107631)
+
 [Curriculum Vitae](/CV.pdf)
 
 ## SHPF.cupy.diel.CPML.MPI
