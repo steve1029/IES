@@ -13,28 +13,28 @@ Please see `installation.md` for installation.
 A Ph.D in Physics, received from Department of Physics, Korea University.
 Currently working at LG innotek.
 
-[Google Scholar](https://scholar.google.com/citations?user=iYm5ThEAAAAJ&hl=ko)
+[**Google Scholar**](https://scholar.google.com/citations?user=iYm5ThEAAAAJ&hl=ko)
 
-[Paper](https://doi.org/10.1016/j.cpc.2020.107631)
+[**Paper**](https://doi.org/10.1016/j.cpc.2020.107631)
 
-[Curriculum Vitae](/CV.pdf)
+[**Curriculum Vitae**](/CV.pdf)
 
 ## SHPF.cupy.diel.CPML.MPI
 The simulation package for the electromagnetic wave simulation.
 
-### Staggered Hybrid PSTD-FDTD (SHPF) method
+#### Staggered Hybrid PSTD-FDTD (SHPF) method
 The staggered-grid hybrid PSTD-FDTD method adopted for the EM wave simulation.
 
-### cupy
+#### cupy
 The simulation can be run with numpy or cupy.
 
-### dielectric
+#### dielectric
 So far, only dielectric materials can be modeled.
 
-### CPML
+#### CPML
 Convolutional PML is implemented.
 
-### MPI
+#### MPI
 Distributed Parallel Computing with OpenMPI(wrapped with mpi4py) is implemented.
 
 ## harminv
