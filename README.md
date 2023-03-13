@@ -30,7 +30,7 @@ Currently working at LG innotek.
 * **SHPF** By hybridizing the PSTD and FDTD method, it is optimized for large-scale electromagnetic simulations using COW. 
 
 ### Parallelism
-* **OpenMP**
+* **OpenMP** Shared memory parallelism is provided.
 * **OpenMPI** Distributed Parallel Computing with OpenMPI(wrapped with mpi4py) is implemented.
 * **GPU** The simulation can be run with numpy or cupy.
 
