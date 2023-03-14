@@ -20,6 +20,8 @@ Currently working at LG innotek.
 
 [**Paper**](https://doi.org/10.1016/j.cpc.2020.107631)
 
+Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PSTD-FDTD method for large-scale electromagnetic simulation. Computer Physics Communications, 259, 107631.
+
 [**Curriculum Vitae**](/CV.pdf)
 
 ## Features
