@@ -10,7 +10,7 @@ It provides three simulation methods:
 
 A user can choose to run the program with CPU or GPU, if one has a GPU manufactured by Nvidia.
 It also provides two parallel computing methodology, the distributed memory system and shared memory system.
-To run this package with its full capability, one should use Linux based COW (cluster of workstation).
+To run this package with full capability, one should use Linux-based COW (cluster of the workstation) where each node has an Nvidia GPU.
 
 ## Author
 A Ph.D in Physics, received from Department of Physics, Korea University.
@@ -26,23 +26,29 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
 
 ## Features
 #### Numerical solvers
-  - **FDTD**: Uses Finite-Difference method to approximate the derivatives in Maxwell's equations.
-  - **PSTD**: Uses pseudo-spectral methods to approximate the spatial derivatives in Maxwell's equations.
-  - **SHPF**: By hybridizing the PSTD and FDTD method, Staggered grid Hybrid PSTD-FDTD(SHPF) method is optimized for large-scale electromagnetic simulations using COW. 
+- **FDTD**: Uses Finite-Difference method to approximate the derivatives in Maxwell's equations.
+- **PSTD**: Uses pseudo-spectral methods to approximate the spatial derivatives in Maxwell's equations.
+- **SHPF**: By hybridizing the PSTD and FDTD method, Staggered grid Hybrid PSTD-FDTD(SHPF) method is optimized for large-scale electromagnetic simulations using COW. 
 
 #### Parallelism
-  * **OpenMP**: Shared memory parallelism is provided.
-  * **OpenMPI**: Distributed Parallel Computing with OpenMPI(wrapped with mpi4py) is implemented.
-  * **GPU**: The simulation can be run with numpy or cupy.
+* **OpenMP**: Shared memory parallelism is provided.
+* **OpenMPI**: Distributed Parallel Computing with OpenMPI(wrapped with mpi4py) is implemented.
+
+#### Computing Devices
+* **CPU**: If a user wants to run with CPU, choose core engine as 'numpy'.
+* **GPU**: If a user wants to run with GPU, choose core engine as 'cupy'.
 
 #### Materials
-  * So far, only dielectric materials can be modeled.
+* So far, only dielectric materials can be modeled.
 
-#### CPML
-  * Convolutional PML is implemented.
+#### Boundary Conditions
+* PBC: Periodic Boundary Conditions.
+* BBC: Bloch Boundary Conditions.
+* PML: Convolutional PML (CPML) is implemented.
 
 ## Requirements
-* Debian/Ubuntu COW
+* Debian/Ubuntu
+* COW (not necessary but highly recommanded.)
 * Network
 * Python
 * Nvidia toolkits
@@ -53,6 +59,12 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
 ## Installation
 Please see `INSTALL.md` for installation.
 
-## Usage
-* Reflectance / Transmittance calculation
-* Band structure calculation
+## Basic Usage
+#### Parallel computing
+Run the code in bash shell as the following command.
+```Shell
+mpirun -host <host1>,<host2>,...,<hostn> python3 examples/<example.py>
+```
+#### Reflectance / Transmittance calculation
+#### Scattering Analysis
+#### Band structure calculation
