@@ -46,6 +46,11 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
 * BBC: Bloch Boundary Conditions.
 * PML: Convolutional PML (CPML) is implemented.
 
+#### Sources
+* Dipole source
+* Plain wave source
+* Gaussian source
+
 ## Requirements
 * Debian/Ubuntu
 * COW (not necessary but highly recommanded.)
