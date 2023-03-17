@@ -58,10 +58,9 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
     * Scipy
     * Numpy
     * Cupy
-    * hypy
+    * hypy: $\varepsilon$ and $\mu$ are provided with h5 format.
     * mpi4py
-    * pharminv: 
-        * A package for analyzing the dominant frequency component for a given signal. The band structure of the photonic crystal can be obtained.
+    * pharminv: A package for analyzing the dominant frequency component for a given signal. The band structure of the photonic crystal can be obtained.
 
 ## Installation
 Please see `INSTALL.md` for installation.
