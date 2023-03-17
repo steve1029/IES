@@ -49,17 +49,17 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
 ## Requirements
 * Debian/Ubuntu
 * COW (not necessary but highly recommanded.)
-* Network
-* Python
+* OpenMPI, OpenMP
 * Nvidia toolkits
 * SSH Login without password
-* Python libraries
+* Python3
+* Python3 libraries
     * Matplotlib
     * Scipy
     * Numpy
     * Cupy
     * h5py: $\varepsilon$ and $\mu$ are provided with h5 format.
-    * mpi4py
+    * mpi4py: Python wrapper for OpenMPI.
     * pharminv: A package for analyzing the dominant frequency component for a given signal. The band structure of the photonic crystal can be obtained.
 
 ## Installation
