@@ -54,7 +54,12 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
 * Nvidia toolkits
 * SSH Login without password
 * Python libraries
-    * Matplotlib, Scipy, Numpy, Cupy, hypy, mpi4py
+    * Matplotlib
+    * Scipy
+    * Numpy
+    * Cupy
+    * hypy
+    * mpi4py
     * pharminv: 
         * A package for analyzing the dominant frequency component for a given signal. The band structure of the photonic crystal can be obtained.
 
