@@ -67,10 +67,10 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
     * mpi4py: Python wrapper for OpenMPI.
     * pharminv: A package for analyzing the dominant frequency component for a given signal. The band structure of the photonic crystal can be obtained.
 
-## Installation
+# Installation
 Please see `INSTALL.md` for installation.
 
-## Basic Usage
+# Basic Usage
 #### Parallel computing
 Run the code in the bash shell as the following command.
 ```Shell
