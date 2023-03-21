@@ -9,7 +9,7 @@ It provides three simulation methods:
 * the Staggered-grid Hybrid PSTD-FDTD (SHPF) method.
 
 A user can choose to run the program with CPU or GPU, if one has a GPU manufactured by Nvidia.
-It also provides two parallel computing methodology, the distributed memory system and shared memory system.
+It also provides two parallel computing methodology, the distributed memory parallelism and shared memory parallelism.
 To run this package with full capability, one should use Linux-based COW (cluster of the workstation) where each node has an Nvidia GPU.
 
 ## Author
