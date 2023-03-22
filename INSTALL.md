@@ -1,20 +1,17 @@
 # Installation Guide
 
-- [Installation Guide](#installation-guide)
-  * [Installation on Debian/Ubuntu](#installation-on-debian-ubuntu)
-  * [Installation on Windows](#installation-on-windows)
-  * [Building a Linux COW (Cluster of Workstation)](#building-a-linux-cow--cluster-of-workstation-)
-    + [Installation options for Ubuntu](#installation-options-for-ubuntu)
-    + [Installing the required packages](#installing-the-required-packages)
-      - [Ubuntu packages](#ubuntu-packages)
-      - [Python packages](#python-packages)
-
 ## Installation on Debian/Ubuntu
 
 ## Installation on Windows
 Unfortunately, installation on Windows is currently not available.
 
 ## Building a Linux COW (Cluster of Workstation)
+For users who want to build a cluster for high-performance computing from scratch, I introduce here how to build an Ubuntu Cluster using desktops.
+
+### Introduction
+
+#### What is COW?
+COW is the acronym of cluster of workstation.
 
 ### Installation options for Ubuntu
 
