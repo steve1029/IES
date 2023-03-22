@@ -79,19 +79,19 @@ $ mpirun -host <host1>,<host2>,...,<hostn> python3 examples/<example.py>
 
 # Installation Guide
 
-## Installation on Debian/Ubuntu
+### Installation on Debian/Ubuntu
 
-## Installation on Windows
+### Installation on Windows
 Unfortunately, installation on Windows is currently not available.
 
-## Building a Ubuntu COW (Cluster of Workstation)
+# Building a Ubuntu COW (Cluster of Workstation)
 For users who want to build a cluster for high-performance computing from scratch, I introduce here how to build an Ubuntu Cluster using desktops.
 
-### What is COW?
+## What is COW?
 COW is the acronym of **_cluster of workstation_**. A workstation is a single computer equipped with high-performance hardwares.
 Hardware for workstations usually involves additional functions that are not included in the hardware for ordinary uses.
 
-### Ubuntu installation
+## Ubuntu installation
 1. Download the ISO image file from [Ubuntu download](https://ubuntu.com/download/server#download). We highly recommend a server image because, without GUI, a COW is more stable and nimble.
 1. Install the Ubuntu using USB or other methods. During the setup, choose to install OpenSSH for convenience.
 2. Acquire root authentication right after the installation is finished.
@@ -99,9 +99,9 @@ Hardware for workstations usually involves additional functions that are not inc
 
 ### Installation options for Ubuntu
 
-### Installing the required packages
+## Installing the required packages
 
-#### Nvidia Driver
+### Nvidia Driver
 We will show you how to install Nvidia driver, CUDA and CuPy using Ubuntu 18.04 and GeForce GTX 1050 Ti.
 This procedure can be applied to other GPUs and driver versions.
 
@@ -155,7 +155,7 @@ If you want to remove Nvidia driver, use the following command.
 # apt-get remove --purge 'nvidia-.<version>' 
 ```
 
-#### CUDA
+### CUDA
 The version of CUDA should be chosen carefully. 
 For GPU computing to operate properly, the version of CUDA must be compatible with the Nvidia driver, installed GPU and the current version of CuPy.
 One might be aware that the CUDA toolkit installer includes Nvidia drivers.
@@ -193,7 +193,8 @@ Built on Sun_Mar_21_19:15:46_PDT_2021
 Cuda compilation tools, release 11.3, V11.3.58
 Build cuda_11.3.r11.3/compiler.29745058_0
 ```
-#### Python packages
+
+### Python packages
 Install cupy and other Python packages by following command.
 ```
 # apt install python3-matplotlib python3-numpy python3-mpi4py python3-scipy python3-h5py ipython3 python3-pandas python3-pip
