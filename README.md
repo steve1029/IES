@@ -170,6 +170,12 @@ Thus, any CUDA with version 10.2 ~ 12.0 is fine with our device.
 However, rather than installing the latest version, we recommend installing the slightly former version such as v11.7.
 The latest version often provokes a stability issue.
 
+Go to [CUDA download](https://developer.nvidia.com/cuda-toolkit-archive) and get CUDA toolkit __runfile (local)__.
+```bash
+# wget https://developer.download.nvidia.com/compute/cuda/11.7.0/local_installers/cuda_11.7.0_515.43.04_linux.run
+# sh cuda_11.7.0_515.43.04_linux.run
+```
+
 Put the following command in `~/.bashrc`.
 ```bash
 # vi ~/.bashrc
