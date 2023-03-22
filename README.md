@@ -73,7 +73,7 @@ Please see `INSTALL.md` for installation.
 # Basic Usage
 #### Parallel computing
 Run the code in the bash shell as the following command.
-```Shell
+```
 $ mpirun -host <host1>,<host2>,...,<hostn> python3 examples/<example.py>
 ```
 #### Reflectance / Transmittance calculation
