@@ -164,6 +164,11 @@ This is because the Nvidia driver version provided with the CUDA Toolkit install
 
 According to [the official documentation of CuPy](https://docs.cupy.dev/en/stable/install.html), 
 as of 03/22/2023, CuPy is compatible with CUDA GPU with compute capability 3.0 or larger and CUDA Toolkit version 10.2 ~ 12.0.
+Also, according to [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus), GeForce GTX 1050 Ti has to compute compatibility of 6.1.
+Lastly, according to [GPUs supported](https://en.wikipedia.org/wiki/CUDA), a GPU of 6.1 compute compatibility is supported by CUDA version >9.0.
+Thus, any CUDA with version 10.2 ~ 12.0 is fine with our device.
+However, rather than installing the latest version, we recommend installing the slightly former version such as v11.7.
+The latest version often provokes a stability issue.
 
 Put the following command in `~/.bashrc`.
 ```bash
