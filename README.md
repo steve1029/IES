@@ -31,8 +31,8 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
 - **SHPF**: By hybridizing the PSTD and FDTD method, Staggered grid Hybrid PSTD-FDTD(SHPF) method is optimized for large-scale electromagnetic simulations using COW. 
 
 #### Parallelism
-* **OpenMP**: Shared memory parallelism is provided.
-* **OpenMPI**: Distributed Parallel Computing with OpenMPI(wrapped with mpi4py) is implemented.
+* **SMP**: Shared Memory Parallelism (SMP) using OpenMP is provided.
+* **MPI**: Message Passing Interface (MPI) parallel programming with OpenMPI(wrapped with mpi4py) is provided.
 
 #### Computing Devices
 * **CPU**: If a user wants to run with CPU, choose core engine as 'numpy'.
