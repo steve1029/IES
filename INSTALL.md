@@ -22,6 +22,33 @@ Hardware for workstations usually involves additional functions that are not inc
 
 ### Installing the required packages
 
+#### Nvidia Driver
+First, check if Nivdia GPU is identified.
+```
+$ sudo lshw -c display
+```
+
+Follow the following example command. The version of the Nvidia driver depends on the GPU, the Ubuntu distribution and the version of CuPy. Here, we choose the driver version 450.
+
+```Shell
+$ sudo add-apt-repository ppa:graphics-drivers/ppa
+$ sudo apt update
+$ sudo apt install ubuntu-drivers-common
+$ ubuntu-drivers devices
+== /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0 ==
+modalias : pci:v000010DEd00001E02sv000010DEsd000012A3bc03sc00i00
+vendor   : NVIDIA Corporation
+model    : TU102 [TITAN RTX]
+driver   : nvidia-driver-440 - distro non-free
+driver   : nvidia-driver-418-server - distro non-free
+driver   : nvidia-driver-440-server - distro non-free
+driver   : nvidia-driver-435 - distro non-free
+driver   : nvidia-driver-450 - third-party free recommended
+driver   : xserver-xorg-video-nouveau - distro free builtin
+$ sudo apt install nvidia-driver-450
+$ sudo reboot
+```
+
 #### Ubuntu packages
 
 #### Python packages
