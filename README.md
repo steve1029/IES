@@ -102,16 +102,19 @@ Hardware for workstations usually involves additional functions that are not inc
 ### Installing the required packages
 
 #### Nvidia Driver
-First, get root authentication. Then, check if Nivdia GPU is identified.
+We will show you how to install Nvidia driver, CUDA and CuPy using Ubuntu 18.04 and GeForce GTX 1050 Ti.
+This procedure can be applied to other GPUs and driver versions.
+
+First, get root authentication for convenience. Then, check if a Nivdia GPU is identified.
 ```
+$ su root
 # lspci | grep NVIDIA
 01:00.0 VGA compatible controller: NVIDIA Corporation GP107 [GeForce GTX 1050 Ti] (rev a1)
 01:00.1 Audio device: NVIDIA Corporation GP107GL High Definition Audio Controller (rev a1)
 ```
 
 Next, install Nvidia driver using the following command. 
-The version of the Nvidia driver depends on the GPU, the Ubuntu distribution and the version of CuPy. 
-Here, we choose the driver version 450.
+
 
 ```bash
 # apt update
@@ -130,6 +133,10 @@ driver   : nvidia-driver-418-server - distro non-free
 driver   : nvidia-driver-495 - distro non-free
 driver   : nvidia-driver-460-server - distro non-free
 driver   : xserver-xorg-video-nouveau - distro free builtin
+```
+The version of the Nvidia driver depends on the GPU, the Ubuntu distribution and the version of CuPy. 
+Here, we choose the driver version 450.
+```
 # apt install nvidia-driver-460-server
 # reboot
 ```
