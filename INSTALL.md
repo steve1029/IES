@@ -70,7 +70,14 @@ If you want to remove Nvidia driver, use the following command.
 ```
 
 #### CUDA
-The version of CUDA should be chosen carefully.
+The version of CUDA should be chosen carefully. 
+For GPU computing to operate properly, the version of CUDA must be compatible with the Nvidia driver, installed GPU and the current version of CuPy.
+One might be aware that the CUDA toolkit installer includes Nvidia drivers.
+However, it is recommended to install the Nvidia driver first, then install CUDA separately.
+This is because the Nvidia driver version provided with the CUDA Toolkit installer may not be compatible with the GPU installed on your system.
+
+According to [the official documentation of CuPy](https://docs.cupy.dev/en/stable/install.html), 
+as of 03/22/2023, CuPy is compatible with CUDA GPU with compute capability 3.0 or larger and CUDA Toolkit version 10.2 ~ 12.0.
 
 Put the following command in ```~/.bashrc```.
 ```bash
@@ -90,7 +97,7 @@ Cuda compilation tools, release 11.3, V11.3.58
 Build cuda_11.3.r11.3/compiler.29745058_0
 ```
 #### Python packages
-Install cupy by following command.
+Install cupy and other Python packages by following command.
 ```
 # apt install python3-matplotlib python3-numpy python3-mpi4py python3-scipy python3-h5py ipython3 python3-pandas python3-pip
 # pip3 install cupy-cuda<version>
