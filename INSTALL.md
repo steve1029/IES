@@ -55,15 +55,20 @@ driver   : xserver-xorg-video-nouveau - distro free builtin
 # reboot
 ```
 Check if the installation is completed.
-```shell
+```
 # nvidia-smi
 ```
 If you installed the non-server version, then Gnome, the GUI of Ubuntu is automatically installed.
 The sleep mode of Gnome is enabled by default. If you want to get rid of this, type the following command.
 
-```shell
+```
 # systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 ```
+If you want to remove Nvidia driver, use the following command.
+```
+# apt-get remove --purge 'nvidia-.<version>' 
+```
+
 #### CUDA
 The version of CUDA should be chosen carefully.
 
