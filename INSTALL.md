@@ -11,7 +11,7 @@ For users who want to build a cluster for high-performance computing from scratc
 ### Introduction
 
 #### What is COW?
-COW is the acronym of cluster of workstation.
+COW is the acronym of **_cluster of workstation_**.
 
 ### Installation options for Ubuntu
 
