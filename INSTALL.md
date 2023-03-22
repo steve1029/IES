@@ -79,7 +79,7 @@ This is because the Nvidia driver version provided with the CUDA Toolkit install
 According to [the official documentation of CuPy](https://docs.cupy.dev/en/stable/install.html), 
 as of 03/22/2023, CuPy is compatible with CUDA GPU with compute capability 3.0 or larger and CUDA Toolkit version 10.2 ~ 12.0.
 
-Put the following command in ```~/.bashrc```.
+Put the following command in `~/.bashrc`.
 ```bash
 # vi ~/.bashrc
 export PATH=$PATH:/usr/local/cuda-11.3/bin
