@@ -23,32 +23,70 @@ Hardware for workstations usually involves additional functions that are not inc
 ### Installing the required packages
 
 #### Nvidia Driver
-First, check if Nivdia GPU is identified.
+First, get root authentication. Then, check if Nivdia GPU is identified.
 ```
-$ sudo lshw -c display
+# lspci | grep NVIDIA
+01:00.0 VGA compatible controller: NVIDIA Corporation GP107 [GeForce GTX 1050 Ti] (rev a1)
+01:00.1 Audio device: NVIDIA Corporation GP107GL High Definition Audio Controller (rev a1)
 ```
 
-Follow the following example command. The version of the Nvidia driver depends on the GPU, the Ubuntu distribution and the version of CuPy. Here, we choose the driver version 450.
+Next, install Nvidia driver using the following command. 
+The version of the Nvidia driver depends on the GPU, the Ubuntu distribution and the version of CuPy. 
+Here, we choose the driver version 450.
 
-```Shell
-$ sudo add-apt-repository ppa:graphics-drivers/ppa
-$ sudo apt update
-$ sudo apt install ubuntu-drivers-common
-$ ubuntu-drivers devices
+```bash
+# apt update
+# apt install ubuntu-drivers-common
+# ubuntu-drivers devices
 == /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0 ==
-modalias : pci:v000010DEd00001E02sv000010DEsd000012A3bc03sc00i00
+modalias : pci:v000010DEd00001C82sv00001043sd000085CDbc03sc00i00
 vendor   : NVIDIA Corporation
-model    : TU102 [TITAN RTX]
-driver   : nvidia-driver-440 - distro non-free
+model    : GP107 [GeForce GTX 1050 Ti]
+driver   : nvidia-driver-470 - distro non-free recommended
+driver   : nvidia-driver-470-server - distro non-free
+driver   : nvidia-driver-450-server - distro non-free
+driver   : nvidia-driver-460 - distro non-free
+driver   : nvidia-driver-390 - distro non-free
 driver   : nvidia-driver-418-server - distro non-free
-driver   : nvidia-driver-440-server - distro non-free
-driver   : nvidia-driver-435 - distro non-free
-driver   : nvidia-driver-450 - third-party free recommended
+driver   : nvidia-driver-495 - distro non-free
+driver   : nvidia-driver-460-server - distro non-free
 driver   : xserver-xorg-video-nouveau - distro free builtin
-$ sudo apt install nvidia-driver-450
-$ sudo reboot
+# apt install nvidia-driver-460-server
+# reboot
 ```
+Check if the installation is completed.
+```shell
+# nvidia-smi
+```
+If you installed the non-server version, then Gnome, the GUI of Ubuntu is automatically installed.
+The sleep mode of Gnome is enabled by default. If you want to get rid of this, type the following command.
 
-#### Ubuntu packages
+```shell
+# systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+```
+#### CUDA
+The version of CUDA should be chosen carefully.
 
+Put the following command in ```~/.bashrc```.
+```bash
+# vi ~/.bashrc
+export PATH=$PATH:/usr/local/cuda-11.3/bin
+export CUDADIR=/usr/local/cuda-11.3
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-11.3/lib64
+```
+Check if CUDA is successfully installed.
+```bash
+# source ~/.bashrc
+# nvcc –version
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2021 NVIDIA Corporation
+Built on Sun_Mar_21_19:15:46_PDT_2021
+Cuda compilation tools, release 11.3, V11.3.58
+Build cuda_11.3.r11.3/compiler.29745058_0
+```
 #### Python packages
+Install cupy by following command.
+```
+# apt install python3-matplotlib python3-numpy python3-mpi4py python3-scipy python3-h5py ipython3 python3-pandas python3-pip
+# pip3 install cupy-cuda<version>
+```
