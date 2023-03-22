@@ -97,8 +97,6 @@ Hardware for workstations usually involves additional functions that are not inc
 2. Acquire root authentication right after the installation is finished.
 3. Repeat the aboves for each node.
 
-### Installation options for Ubuntu
-
 ## Installing the required packages
 
 ### Nvidia Driver
