@@ -85,7 +85,7 @@ $ mpirun -host <host1>,<host2>,...,<hostn> python3 examples/<example.py>
 Unfortunately, installation on Windows is currently not available.
 
 # Building a Ubuntu COW (Cluster of Workstation)
-For users who want to build a cluster for high-performance computing from scratch, I introduce here how to build an Ubuntu Cluster using desktops.
+For beginners who want to build a cluster for high-performance computing from scratch, I introduce here how to build an Ubuntu Cluster using desktops.
 
 ## What is COW?
 COW is the acronym of **_cluster of workstation_**. A workstation is a single computer equipped with high-performance hardwares.
