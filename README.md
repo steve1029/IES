@@ -84,3 +84,5 @@ $ mpirun -host <host1>,<host2>,...,<hostn> python3 examples/<example.py>
 ### Installation on Windows
 Unfortunately, installation on Windows is currently not available.
 
+### Building a COW
+Please see `how_to_build_cow.md'.
