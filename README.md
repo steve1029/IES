@@ -68,6 +68,10 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
     * pharminv: A package for analyzing the dominant frequency component for a given signal. The band structure of the photonic crystal can be obtained.
 
 # Basic Usage
+#### Run with single node
+```
+$ python3 examples/<example.py>
+```
 #### Parallel computing
 Run the code in the bash shell as the following command.
 ```
