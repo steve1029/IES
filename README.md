@@ -91,3 +91,6 @@ Unfortunately, installation on Windows is currently not available.
 
 ### Building a COW
 Please see `how_to_build_cow.md`
+
+### Running on a docker container
+A guide for users who want to run this package on a docker container will be given soon.
