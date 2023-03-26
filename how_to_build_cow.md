@@ -112,4 +112,3 @@ Install cupy and other Python packages by following command.
 # apt install python3-matplotlib python3-numpy python3-mpi4py python3-scipy python3-h5py ipython3 python3-pandas python3-pip
 # pip3 install cupy-cuda<version>
 ```
-
