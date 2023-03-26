@@ -118,8 +118,25 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
    # apt update
    # apt install ubuntu-drivers-common
    # ubuntu-drivers devices
+   == /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0 ==
+   modalias : pci:v000010DEd00001C02sv000019DAsd00002438bc03sc00i00
+   vendor   : NVIDIA Corporation
+   model    : GP106 [GeForce GTX 1060 3GB]
+   driver   : nvidia-driver-525-server - distro non-free
+   driver   : nvidia-driver-450-server - distro non-free
+   driver   : nvidia-driver-515-server - distro non-free
+   driver   : nvidia-driver-470-server - distro non-free
+   driver   : nvidia-driver-520 - third-party non-free
+   driver   : nvidia-driver-470 - distro non-free
+   driver   : nvidia-driver-510 - distro non-free recommended
+   driver   : nvidia-driver-530 - third-party non-free
+   driver   : nvidia-driver-515 - third-party non-free
+   driver   : nvidia-driver-390 - distro non-free
+   driver   : nvidia-driver-418-server - distro non-free
+   driver   : nvidia-driver-525 - third-party non-free
+   driver   : xserver-xorg-video-nouveau - distro free builtin
    ```
-1. Install nvidia driver
+1. Install nvidia driver. We recommend to install server version.
    ```bash
    apt install nvidia-driver-525-server
    ```
@@ -129,5 +146,14 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
    # apt update
    # apt install docker git
    ```
-
+#### Trouble shooting
+* If you get an error when updating apt after adding a GPG key, like, do the following.
+   ```bash
+   E: Conflicting values set for option Signed-By regarding source https://nvidia.github.io/libnvidia-container/stable/ubuntu18.04/amd64/ /: /usr/share  /keyrings/nvidia-container-toolkit-keyring.gpg != 
+   E: The list of sources could not be read.
+   ```
+   do the following.
+   ```bash
+   # rm /etc/apt/sources.list.d/nvidia-container-toolkit.list
+   ```
 A full guide for users who want to run this package on a docker container will be update continuously.
