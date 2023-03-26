@@ -149,7 +149,7 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
    ```bash
    # curl https://get.docker.com | sh && sudo systemctl --now enable docker
    ```
-3. Setup a package repository, add a GPG key, and install nvidia-container-toolkit.
+1. Setup a package repository, add a GPG key, and install nvidia-container-toolkit.
    ```bash
    # distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
    # curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
@@ -158,7 +158,19 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
    # apt update && apt install -y nvidia-container-toolkit
    # systemctl restart docker
    ```
-1. Download and run the cupy image. Note that cupy/cupy:latest image uses CUDA toolkit v11.7.
+1. Configure the Docker daemon to recognize the NVIDIA container Runtime.
+   ```bash
+   nvidia-ctk runtime configure --runtime=docker
+   ```
+1. Restart the docker daemon.
+   ```bash
+   systemctl restart docker
+   ```
+1. Test the setup by runninb a bash CUDA container.
+   ```bash
+   docker run --rm --runtime=nvidia --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
+   ```
+3. Download and run the cupy image. Note that cupy/cupy:latest image uses CUDA toolkit v11.7.
    ```bash
    # docker run --gpus all -it --name cupy cupy/cupy:latest /bin/bash
    ```
