@@ -140,12 +140,22 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
    ```bash
    apt install nvidia-driver-525-server
    ```
-3. Follow the instructions [here]() to install Nvidia-driver on a PC
-4. Install docker and Git.
+1. Install docker and Git.
    ```bash
    # apt update
    # apt install docker git
    ```
+1. Install nvidia-container-toolkit.
+   ```bash
+   # distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+   # curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+   # curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+
+   # apt update && apt install -y nvidia-container-toolkit
+   # systemctl restart docker
+   ```
+For more details, see the instructions [here](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) to install Nvidia-container toolkit on a PC
+
 #### Trouble shooting
 * If you get an error when updating apt after adding a GPG key, like, do the following.
    ```bash
