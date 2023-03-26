@@ -166,16 +166,27 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
    ```bash
    systemctl restart docker
    ```
-1. Test the setup by runninb a bash CUDA container.
+1. Root authentication is not necessary from now. Test the setup by running a bash CUDA container.
    ```bash
-   docker run --rm --runtime=nvidia --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
+   # exit()
+   $ docker run --rm --runtime=nvidia --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
    ```
-3. Download and run the cupy image. Note that cupy/cupy:latest image uses CUDA toolkit v11.7.
+1. Download and run the cupy image. Note that cupy/cupy:latest image uses CUDA toolkit v11.7.
    ```bash
-   # docker run --gpus all -it --name cupy cupy/cupy:latest /bin/bash
+   $ docker run --gpus all -it --name cupy cupy/cupy:latest /bin/bash
    ```
    A docker image for cupy can be found [here](https://hub.docker.com/r/cupy/cupy/).
    
+1. Install the rest of the python packages as a root of the container.
+   ```bash
+   # apt update
+   # apt install python3-matplotlib python3-numpy python3-mpi4py python3-scipy python3-h5py ipython3 python3-pandas python3-pip
+   ```
+1. Commit the container as an image.
+   ```bash
+   # docker commit -m "The python packages installed." -a $USER cupy cupy:python
+   ```
+
 For more details, see the instructions [here](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) to install Nvidia-container toolkit on a PC
 
 #### Trouble shooting
