@@ -145,7 +145,11 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
    # apt update
    # apt install docker git
    ```
-1. Install nvidia-container-toolkit.
+1. Setting up Docker.
+   ```bash
+   # curl https://get.docker.com | sh && sudo systemctl --now enable docker
+   ```
+3. Setup a package repository, add a GPG key, and install nvidia-container-toolkit.
    ```bash
    # distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
    # curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
@@ -154,10 +158,16 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
    # apt update && apt install -y nvidia-container-toolkit
    # systemctl restart docker
    ```
+1. Download and run the cupy image. Note that cupy/cupy:latest image uses CUDA toolkit v11.7.
+   ```bash
+   # docker run --gpus all -it --name cupy cupy/cupy:latest /bin/bash
+   ```
+   A docker image for cupy can be found [here](https://hub.docker.com/r/cupy/cupy/).
+   
 For more details, see the instructions [here](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) to install Nvidia-container toolkit on a PC
 
 #### Trouble shooting
-* If you get an error when updating apt after adding a GPG key, like, do the following.
+* If you get an error when updating apt after adding a GPG key, like, do the following. [Ref](https://github.com/NVIDIA/nvidia-docker/issues/1238).
    ```bash
    E: Conflicting values set for option Signed-By regarding source https://nvidia.github.io/libnvidia-container/stable/ubuntu18.04/amd64/ /: /usr/share  /keyrings/nvidia-container-toolkit-keyring.gpg != 
    E: The list of sources could not be read.
@@ -166,4 +176,6 @@ For more details, see the instructions [here](https://docs.nvidia.com/datacenter
    ```bash
    # rm /etc/apt/sources.list.d/nvidia-container-toolkit.list
    ```
+   Then, follow the installation guide from _install_nvidia-container-toolkit_.
+   
 A full guide for users who want to run this package on a docker container will be update continuously.
