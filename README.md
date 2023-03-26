@@ -93,4 +93,41 @@ Unfortunately, installation on Windows is currently not available.
 Please see `how_to_build_cow.md`
 
 ### Running on a docker container
-A guide for users who want to run this package on a docker container will be given soon.
+For those who want to use this package on a single computer, i.e. without MPI, running with nvidia container would be the most convenient way to run the SHPF package.
+To use nvidia container, there are some pre-requisites before you get started.
+For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
+
+#### Pre-requisistes
+1. GNU/Linux x86_64 with kernel version > 3.10
+1. Docker >= 19.03 (recommended, but some distributions may include older versions of Docker. The minimum supported version is 1.12)
+1. NVIDIA GPU with Architecture >= Kepler (or compute capability 3.0)
+1. NVIDIA Linux drivers >= 418.81.07 (Note that older driver releases or branches are unsupported.)
+
+#### Summarized procedure to install nvidia-container-toolkit
+1. Intall ubuntu on a PC and acquire root authentication.
+```bash
+$ su passwd root
+$ su root
+```
+1. Check the GPU card and driver at _configuration_.
+```bash
+# lshw -c display
+```
+1. If the Nvidia GPU card is identified, check the list of available nvidia driver.
+```bash
+# apt update
+# apt install ubuntu-drivers-common
+# ubuntu-drivers devices
+```
+1. Install nvidia driver
+```bash
+apt install nvidia-driver-525-server
+```
+3. Follow the instructions [here]() to install Nvidia-driver on a PC
+4. Install docker and Git.
+```bash
+# apt update
+# apt install docker git
+```
+
+A full guide for users who want to run this package on a docker container will be update continuously.
