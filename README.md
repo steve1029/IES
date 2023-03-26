@@ -84,7 +84,7 @@ $ mpirun -host <host1>,<host2>,...,<hostn> python3 examples/<example.py>
 # Installation Guide
 
 ### Installation on Debian/Ubuntu
-Installation on Debian/Ubuntu system is straighforward. Download all the files in your home directory `~/SHPF/` and run `examples/<filename>.py`.
+Installation on Debian/Ubuntu system is straighforward. Download all the files in your home directory `~/SHPF/` and follow the instructions in **Basic Usage**.
 
 ### Installation on Windows
 Unfortunately, installation on Windows is currently not available.
