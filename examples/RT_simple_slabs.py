@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, time, datetime, sys, psutil
+import os, time, datetime, sys
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
@@ -90,21 +90,21 @@ kz = 0
 phi, theta = 0, 0
 wvlen = lamy*np.cos(theta)
 
-# mmt for plane wave normal to x axis.
+# Apply mmt to the plane wave normal to x axis.
 # phi is the angle between k0 vector and xz-plane.
 # theta is the angle between k0cos(phi) and x-axis.
 #kx = k0 * np.cos(phi) * np.cos(theta)
 #ky = k0 * np.sin(phi)
 #kz = k0 * np.cos(phi) * np.sin(theta)
 
-# mmt for plane wave normal to y axis.
+# Apply mmt to plane wave normal to y axis.
 # phi is the angle between k0 vector and xy-plane.
 # theta is the angle between k0cos(phi) and y-axis.
 #kx = k0 * np.cos(phi) * np.sin(theta)
 #ky = k0 * np.cos(phi) * np.cos(theta)
 #kz = k0 * np.sin(phi)
 
-# mmt for plane wave normal to z axis.
+# Apply mmt to plane wave normal to z axis.
 # phi is the angle between k0 vector and yz-plane.
 # theta is the angle between k0cos(phi) and z-axis.
 #kx = k0 * np.sin(phi)
