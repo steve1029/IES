@@ -78,6 +78,10 @@ Run the code in the bash shell as the following command.
 $ mpirun -host <host1>,<host2>,...,<hostn> python3 examples/<example.py>
 ```
 #### Reflectance / Transmittance calculation
+The reflectance and transmittance of one-dimenstional slabs can be obtained by running `RT_simple_slabs.py`. The file takes 4 additional system arguments.
+```
+$ python3 RT_simple_slab.py FDTD 1000 100 100 100
+```
 #### Scattering Analysis
 #### Band structure calculation
 
