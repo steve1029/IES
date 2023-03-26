@@ -105,29 +105,29 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
 
 #### Summarized procedure to install nvidia-container-toolkit
 1. Intall ubuntu on a PC and acquire root authentication.
-```bash
-$ su passwd root
-$ su root
-```
+   ```bash
+   $ su passwd root
+   $ su root
+   ```
 1. Check the GPU card and driver at _configuration_.
-```bash
-# lshw -c display
-```
+   ```bash
+   # lshw -c display
+   ```
 1. If the Nvidia GPU card is identified, check the list of available nvidia driver.
-```bash
-# apt update
-# apt install ubuntu-drivers-common
-# ubuntu-drivers devices
-```
+   ```bash
+   # apt update
+   # apt install ubuntu-drivers-common
+   # ubuntu-drivers devices
+   ```
 1. Install nvidia driver
-```bash
-apt install nvidia-driver-525-server
-```
+   ```bash
+   apt install nvidia-driver-525-server
+   ```
 3. Follow the instructions [here]() to install Nvidia-driver on a PC
 4. Install docker and Git.
-```bash
-# apt update
-# apt install docker git
-```
+   ```bash
+   # apt update
+   # apt install docker git
+   ```
 
 A full guide for users who want to run this package on a docker container will be update continuously.
