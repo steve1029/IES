@@ -6,7 +6,8 @@ import numpy as np
 from mpi4py import MPI
 import matplotlib.pyplot as plt
 from scipy.constants import c
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+#sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+sys.path.append("/root/SHPF/")
 import source, space, plotter, structure, collector, recorder
 
 #------------------------------------------------------------------#
@@ -123,7 +124,7 @@ peak_pos = 2000
 ws = w0 * spread
 src = source.Gaussian(dt, wvc, spread, peak_pos, dtype=np.float32)
 
-savedir = f'../graph/simple_2slab_{method}/{int(Lx/lunit):04d}\
+savedir = f'/root/SHPF/graph/simple_2slab_{method}/{int(Lx/lunit):04d}\
 {lustr}{int(Ly/lunit):04d}{lustr}{int(Lz/lunit):04d}{lustr}_{Nx:04d}_{Ny:04d}_{Nz:04d}_{tsteps:07d}\
 _100{lustr}_200{lustr}_100{lustr}/'
 
@@ -498,7 +499,9 @@ if TF.MPIrank == 0:
     sim_data["time_steps"] = tsteps
     sim_data["courant"] = courant
     sim_data["length_unit"] = lunit
+    sim_data["length_unit_str"] = lustr
     sim_data["freq_unit"] = funit
+    sim_data["freq_unit_str"] = fustr
     sim_data["dt"] = dt
     sim_data["Nx"] = Nx
     sim_data["Ny"] = Ny
@@ -511,7 +514,8 @@ if TF.MPIrank == 0:
     sim_data["bbc"] = bbc
     sim_data["pbc"] = pbc
     sim_data["source"] = "Gaussian"
-    sim_data["source_parameters"] = {"wvc":wvc, "w0":w0, "interval":interval, "spread":spread, "peak_pos":peak_pos, "ws":ws}
+    sim_data["source_parameters"] = {"wvc":wvc, "w0":w0, "interval":interval, "spread":spread, "peak_pos":peak_pos, "ws":ws, "l1":l1, "l2":l2, "w1":w1, "w2":w2}
+    sim_data["savedir"] = savedir
 
     json_data = json.dumps(sim_data, ensure_ascii=False, indent='\t')
 
