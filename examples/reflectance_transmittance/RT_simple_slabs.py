@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, time, datetime, sys
+import os, time, datetime, sys, json
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
@@ -45,14 +45,14 @@ dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz
 
 courant = 1./4
 dt = courant * min(dx,dy,dz) / c
-Tsteps = int(sys.argv[2])
+tsteps = int(sys.argv[2])
 
 method = sys.argv[1]
 engine = 'cupy'
 
-TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.complex64, method=method, engine=engine)
-IF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.complex64, method=method, engine=engine)
-SF = space.Empty3D((Nx, Ny, Nz), (dx, dy, dz), dt, Tsteps, np.complex64, np.complex64, method=method, engine=engine)
+TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, tsteps, np.complex64, np.complex64, method=method, engine=engine)
+IF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, tsteps, np.complex64, np.complex64, method=method, engine=engine)
+SF = space.Empty3D((Nx, Ny, Nz), (dx, dy, dz), dt, tsteps, np.complex64, np.complex64, method=method, engine=engine)
 
 TF.malloc()
 IF.malloc()
@@ -119,12 +119,12 @@ wvc = 100*lunit
 w0 = (2*np.pi*c)/wvc
 interval = .2
 spread   = 0.08
-pick_pos = 2000
+peak_pos = 2000
 ws = w0 * spread
-src = source.Gaussian(dt, wvc, spread, pick_pos, dtype=np.float32)
+src = source.Gaussian(dt, wvc, spread, peak_pos, dtype=np.float32)
 
 savedir = f'../graph/simple_2slab_{method}/{int(Lx/lunit):04d}\
-{lustr}{int(Ly/lunit):04d}{lustr}{int(Lz/lunit):04d}{lustr}_{Nx:04d}_{Ny:04d}_{Nz:04d}_{Tsteps:07d}\
+{lustr}{int(Ly/lunit):04d}{lustr}{int(Lz/lunit):04d}{lustr}_{Nx:04d}_{Ny:04d}_{Nz:04d}_{tsteps:07d}\
 _100{lustr}_200{lustr}_100{lustr}/'
 
 w1 = w0 * (1-spread*2)
@@ -135,7 +135,7 @@ l2 = 2*np.pi*c / w2 / lunit
 
 wvlens = np.arange(l2,l1, interval)*lunit
 freqs = c / wvlens
-src.plot_pulse(Tsteps, freqs, savedir)
+src.plot_pulse(tsteps, freqs, savedir)
 #sys.exit()
 
 ########## Sine source
@@ -307,7 +307,7 @@ if TF.MPIrank == 0:
 
     Gaussian center wavelength: {wvc/um:.4f} um.
     Gaussian wavelength discretized per: {interval} {lustr}.
-    Gaussian wave pick position at: {pick_pos} Tstep.
+    Gaussian wave pick position at: {peak_pos} Tstep.
     Gaussian angular frequency spread: {spread:.3f} * w0
     Frequency points: {len(freqs)}
     Wavelength range: {round(l2,1)}{lustr} to {round(l1,1)}{lustr}
@@ -405,7 +405,7 @@ if TF.MPIrank == 0: f'\nSimulation start: {start_time}'
 TF.MPIcomm.Barrier()
 
 # time loop begins
-for tstep in range(Tsteps+1):
+for tstep in range(tsteps+1):
 
     # At the start point
     # pulse for gaussian wave.
@@ -489,3 +489,30 @@ for tstep in range(Tsteps+1):
         SF_Sx_L_calculator.get_Sx(tstep, h5=False)
 
         #print(f'rank {TF.MPIrank:02d}: Sx has been saved at {tstep} time step.')
+
+if TF.MPIrank == 0:
+
+    sim_data = {}
+    sim_data["method"] = method
+    sim_data["engin"] = engine
+    sim_data["time_steps"] = tsteps
+    sim_data["courant"] = courant
+    sim_data["length_unit"] = lunit
+    sim_data["freq_unit"] = funit
+    sim_data["dt"] = dt
+    sim_data["Nx"] = Nx
+    sim_data["Ny"] = Ny
+    sim_data["Nz"] = Nz
+    sim_data["dx"] = dx
+    sim_data["dy"] = dy
+    sim_data["dz"] = dz
+    sim_data["pml"] = pml
+    sim_data["pml_thick"] = thick
+    sim_data["bbc"] = bbc
+    sim_data["pbc"] = pbc
+    sim_data["source"] = "Gaussian"
+    sim_data["source_parameters"] = {"wvc":wvc, "w0":w0, "interval":interval, "spread":spread, "peak_pos":peak_pos, "ws":ws}
+
+    json_data = json.dumps(sim_data, ensure_ascii=False, indent='\t')
+
+    with open(f"{savedir}sim_data.json", 'w') as outfile: outfile.write(json_data)
