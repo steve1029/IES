@@ -79,7 +79,7 @@ $ mpirun -host <host1>,<host2>,...,<hostn> python3 examples/<example.py>
 ```
 #### Reflectance / Transmittance calculation
 The reflectance and transmittance of one-dimenstional slabs can be obtained by running `RT_simple_slabs.py`. 
-The file takes 5 additional system arguments: <method> <Total time steps> <Nx> <Ny> <Nz>.
+The file takes 5 additional system arguments: \<method\> \<Total time steps\> \<Nx\> \<Ny\> \<Nz\>.
 ```
 $ python3 RT_simple_slab.py FDTD 1000 100 100 100
 ```
