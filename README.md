@@ -97,7 +97,8 @@ Unfortunately, installation on Windows is currently not available.
 Please see `how_to_build_cow.md`
 
 ### Running on a docker container
-For those who want to use this package on a single computer, i.e. without MPI, running with nvidia container would be the most convenient way to run the SHPF package.
+For those who want to use this package on a single computer, i.e. without MPI, 
+running with the nvidia container would be the most convenient way to run the SHPF package.
 To use nvidia container, there are some pre-requisites before you get started.
 For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
 
