@@ -28,7 +28,7 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
 #### Numerical solvers
 - **FDTD**: Uses Finite-Difference method to approximate the derivatives in Maxwell's equations.
 - **PSTD**: Uses pseudo-spectral methods to approximate the spatial derivatives in Maxwell's equations.
-- **SHPF**: By hybridizing the PSTD and FDTD method, Staggered grid Hybrid PSTD-FDTD(SHPF) method is optimized for large-scale electromagnetic simulations using COW. 
+- **SHPF**: Combination of the PSTD and FDTD method. Staggered grid Hybrid PSTD-FDTD(SHPF) method is optimized for large-scale electromagnetic simulations with parallel computing. 
 
 #### Parallelism
 * **SMP**: Shared Memory Parallelism (SMP) using OpenMP is provided.
