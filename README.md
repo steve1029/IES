@@ -13,7 +13,7 @@ It also provides two parallel computing methodology, the distributed memory para
 To run this package with full capability, one should use Linux-based COW (cluster of the workstation) where each node has an Nvidia GPU.
 
 ## Author
-A Ph.D in Physics, received from Department of Physics, Korea University.
+Doctorate in Physics, in Feb 2022, received from the Department of Physics, Korea University.
 Currently working at LG innotek.
 
 [**Google Scholar**](https://scholar.google.com/citations?user=iYm5ThEAAAAJ&hl=ko)
