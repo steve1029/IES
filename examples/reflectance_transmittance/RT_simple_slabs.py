@@ -40,7 +40,7 @@ fustr = 'THz'
 #a = 779.42*lunit
 a = 512*lunit
 
-Lx, Ly, Lz = 720*lunit, a, a 
+Lx, Ly, Lz = 720*lunit, a, a
 Nx, Ny, Nz = int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5])
 dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz
 
@@ -128,11 +128,11 @@ savedir = f'/root/SHPF/graph/simple_2slab_{method}/{int(Lx/lunit):04d}\
 {lustr}{int(Ly/lunit):04d}{lustr}{int(Lz/lunit):04d}{lustr}_{Nx:04d}_{Ny:04d}_{Nz:04d}_{tsteps:07d}\
 _100{lustr}_200{lustr}_100{lustr}/'
 
-w1 = w0 * (1-spread*2)
-w2 = w0 * (1+spread*2)
+w1 = w0 * (1-spread*2) #  low omega where the amplitude becomes e**(-1).
+w2 = w0 * (1+spread*2) # high omega where the amplitude becomes e**(-1).
 
-l1 = 2*np.pi*c / w1 / lunit
-l2 = 2*np.pi*c / w2 / lunit
+l1 = 2*np.pi*c / w1 / lunit # the wavelength corresponds to w1.
+l2 = 2*np.pi*c / w2 / lunit # the wavelength corresponds to w2.
 
 wvlens = np.arange(l2,l1, interval)*lunit
 freqs = c / wvlens
@@ -506,6 +506,9 @@ if TF.MPIrank == 0:
     sim_data["Nx"] = Nx
     sim_data["Ny"] = Ny
     sim_data["Nz"] = Nz
+    sim_data["Lx"] = Lx
+    sim_data["Ly"] = Ly
+    sim_data["Lz"] = Lz
     sim_data["dx"] = dx
     sim_data["dy"] = dy
     sim_data["dz"] = dz
