@@ -1,0 +1,50 @@
+{
+	"method": "FDTD",
+	"engin": "cupy",
+	"time_steps": 8000,
+	"courant": 0.25,
+	"length_unit": 1e-06,
+	"length_unit_str": "um",
+	"freq_unit": 1000000000000.0,
+	"freq_unit_str": "THz",
+	"dt": 2.4016614854266947e-15,
+	"Nx": 250,
+	"Ny": 70,
+	"Nz": 80,
+	"Lx": 0.0007199999999999999,
+	"Ly": 0.000512,
+	"Lz": 0.000512,
+	"dx": 2.88e-06,
+	"dy": 7.314285714285714e-06,
+	"dz": 6.4e-06,
+	"pml": {
+		"x": "+-",
+		"y": "",
+		"z": ""
+	},
+	"pml_thick": 10,
+	"bbc": {
+		"x": false,
+		"y": false,
+		"z": false
+	},
+	"pbc": {
+		"x": false,
+		"y": true,
+		"z": true
+	},
+	"source": "Gaussian",
+	"source_parameters": {
+		"wvc": 9.999999999999999e-05,
+		"w0": 18836515673088.53,
+		"interval": 0.2,
+		"spread": 0.08,
+		"peak_pos": 2000,
+		"ws": 1506921253847.0825,
+		"l1": 119.04761904761907,
+		"l2": 86.20689655172414,
+		"w1": 15822673165394.365,
+		"w2": 21850358180782.695
+	},
+	"savedir": "/root/SHPF/graph/simple_2slab_FDTD/0720um0512um0512um_0250_0070_0080_0008000_100um_200um_100um/"
+}

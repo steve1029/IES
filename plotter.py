@@ -230,6 +230,7 @@ class Graphtool(object):
 
                 #ax11.invert_yaxis()
                 ax12.invert_yaxis()
+                ax12.invert_xaxis()
 
                 ax11.set_xlabel('x')
                 ax11.set_ylabel('z')

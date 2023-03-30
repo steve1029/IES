@@ -270,10 +270,8 @@ IFgraphtool = plotter.Graphtool(IF, 'IF', savedir)
 SFgraphtool = plotter.Graphtool(SF, 'SF', savedir)
 
 cells = (Nx, Ny, Nz)
-painter = plotter.SpectrumPlotter(method, cells, wvlens, fustr, lustr)
 
 #wvxlim = [0.4, .5]
-wvxlim = [None, None]
 wvylim = [-0.1, 1.1]
 #freqxlim = [600, 700]
 freqxlim = [None, None]
