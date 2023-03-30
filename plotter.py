@@ -222,7 +222,7 @@ class Graphtool(object):
 
                 image11 = ax11.imshow(self.plane_to_plot.T, vmax=colordeep, vmin=-colordeep, cmap=cmap, aspect=aspect)
                 ax12.plot_wireframe(X, Y, self.plane_to_plot[X, Y], color=lc, rstride=stride, cstride=stride)
-
+                print(self.plane_to_plot.shape)
                 divider11 = make_axes_locatable(ax11)
 
                 cax11  = divider11.append_axes('right', size='5%', pad=0.1)
