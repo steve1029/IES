@@ -4,7 +4,7 @@ import numpy as np
 from scipy.constants import c
 import plotter
 
-with open("/root/SHPF/graph/simple_2slab_FDTD/0720um0512um0512um_0200_0050_0050_0007000_100um_200um_100um/sim_data.json") as f:
+with open("/root/SHPF/graph/simple_2slab_FDTD/0720um0512um0512um_0250_0070_0080_0008000_100um_200um_100um/sim_data.json") as f:
     sim_data = json.load(f)
 
 savedir = sim_data["savedir"]
