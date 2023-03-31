@@ -79,10 +79,25 @@ $ mpirun -host <host1>,<host2>,...,<hostn> python3 examples/<example.py>
 ```
 #### Reflectance / Transmittance calculation
 The reflectance and transmittance of one-dimenstional slabs can be obtained by running `RT_simple_slabs.py`. 
-The file takes 5 additional system arguments: \<method\> \<Total time steps\> \<Nx\> \<Ny\> \<Nz\>.
+The file takes 5 additional system arguments: \<method\> \<engin\> \<Total time steps\> \<Nx\> \<Ny\> \<Nz\>.
+For example, if you want to run with FDTD method and GPU,
 ```
-$ python3 RT_simple_slab.py FDTD 15000 360 20 20
+$ python3 tutorials/RT_simple_slabs.py FDTD cupy 15000 360 20 20
 ```
+or 
+```
+$ python3 tutorials/RT_simple_slabs.py SHPF cupy 15000 360 20 20
+```
+to run with SHPF method.
+
+After the simulation is finished, 
+the result will be saved in `graph/simple_2slab_<method>/0720um0512um0512um_0360_0016_0032_0015000_100um_200um_100um/'
+Run `plot_RT.py` to get reflectance and transmittance.
+```
+$ python3 tutorials/plot_RT.py graph/simple_2slab_<method>/0720um0512um0512um_0360_0016_0032_0015000_100um_200um_100um/sim_data.jason
+```
+Since this example is a one-dimensional problem, FDTD and SHPF shows the same performance.
+
 #### Scattering Analysis
 #### Band structure calculation
 

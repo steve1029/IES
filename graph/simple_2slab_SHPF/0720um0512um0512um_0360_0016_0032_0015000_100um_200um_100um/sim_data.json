@@ -1,0 +1,50 @@
+{
+	"method": "SHPF",
+	"engin": "cupy",
+	"time_steps": 15000,
+	"courant": 0.25,
+	"length_unit": 1e-06,
+	"length_unit_str": "um",
+	"freq_unit": 1000000000000.0,
+	"freq_unit_str": "THz",
+	"dt": 1.6678204759907603e-15,
+	"Nx": 360,
+	"Ny": 16,
+	"Nz": 32,
+	"Lx": 0.0007199999999999999,
+	"Ly": 0.000512,
+	"Lz": 0.000512,
+	"dx": 2e-06,
+	"dy": 3.2e-05,
+	"dz": 1.6e-05,
+	"pml": {
+		"x": "+-",
+		"y": "",
+		"z": ""
+	},
+	"pml_thick": 10,
+	"bbc": {
+		"x": false,
+		"y": false,
+		"z": false
+	},
+	"pbc": {
+		"x": false,
+		"y": true,
+		"z": true
+	},
+	"source": "Gaussian",
+	"source_parameters": {
+		"wvc": 9.999999999999999e-05,
+		"w0": 18836515673088.53,
+		"interval": 0.2,
+		"spread": 0.08,
+		"peak_pos": 2000,
+		"ws": 1506921253847.0825,
+		"l1": 119.04761904761907,
+		"l2": 86.20689655172414,
+		"w1": 15822673165394.365,
+		"w2": 21850358180782.695
+	},
+	"savedir": "/root/SHPF/graph/simple_2slab_SHPF/0720um0512um0512um_0360_0016_0032_0015000_100um_200um_100um/"
+}
