@@ -139,7 +139,7 @@ class Graphtool(object):
                     plane = 'xz'
                     col = np.arange(self.Space.Nx)
                     row = np.arange(self.Space.Nz)
-                    plane_to_plot = np.zeros((len(row), len(col)), dtype=np.float32)
+                    plane_to_plot = np.zeros((len(col), len(row)), dtype=np.float32)
 
                 elif zidx != None :
                     assert type(zidx) == int
@@ -170,7 +170,7 @@ class Graphtool(object):
                     self.plane_to_plot = integrated[xidx, yidx].real
                 else: self.plane_to_plot = integrated[xidx, yidx]
 
-            X, Y = np.meshgrid(col, row, indexing='xy', sparse=False)
+            X, Y = np.meshgrid(col, row, indexing='xy', sparse=True)
             today = datetime.date.today()
 
             fig  = plt.figure(figsize=figsize)
@@ -220,9 +220,9 @@ class Graphtool(object):
 
             elif plane == 'xz':
 
-                image11 = ax11.imshow(self.plane_to_plot.T, vmax=colordeep, vmin=-colordeep, cmap=cmap, aspect=aspect)
+                image11 = ax11.imshow(self.plane_to_plot, vmax=colordeep, vmin=-colordeep, cmap=cmap, aspect=aspect)
                 ax12.plot_wireframe(X, Y, self.plane_to_plot[X, Y], color=lc, rstride=stride, cstride=stride)
-                print(self.plane_to_plot.shape)
+                #print(self.plane_to_plot.shape)
                 divider11 = make_axes_locatable(ax11)
 
                 cax11  = divider11.append_axes('right', size='5%', pad=0.1)
@@ -254,7 +254,8 @@ class Graphtool(object):
 
             if os.path.exists(save_dir) == False: os.makedirs(save_dir)
             plt.tight_layout()
-            fig.savefig('%s%s_%s_%s_%s_%s.png' %(save_dir, str(today), self.name, self.what, plane, tstep), format='png', bbox_inches='tight')
+            #fig.savefig('%s%s_%s_%s_%s_%s.png' %(save_dir, str(today), self.name, self.what, plane, tstep), format='png', bbox_inches='tight')
+            fig.savefig(f'{save_dir}{str(today)}_{self.name}_{self.what}_{plane}_{tstep:07d}.png', format='png', bbox_inches='tight')
             plt.close('all')
 
 
