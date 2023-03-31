@@ -229,7 +229,7 @@ class Graphtool(object):
                 cbar11 = fig.colorbar(image11, cax=cax11)
 
                 #ax11.invert_yaxis()
-                #ax12.invert_yaxis()
+                ax12.invert_yaxis()
                 #ax12.invert_xaxis()
 
                 ax11.set_xlabel('x')
