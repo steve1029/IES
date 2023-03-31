@@ -148,7 +148,7 @@ class Graphtool(object):
                     plane = 'xy'
                     col = np.arange(self.Space.Nx)
                     row = np.arange(self.Space.Ny)
-                    plane_to_plot = np.zeros((len(row),len(col)), dtype=np.float32)
+                    plane_to_plot = np.zeros((len(col),len(row)), dtype=np.float32)
             
                 elif (xidx,yidx,zidx) == (None,None,None):
                     raise ValueError("Plane is not defined. Please insert one of x,y or z index of the plane.")
@@ -220,7 +220,7 @@ class Graphtool(object):
 
             elif plane == 'xz':
 
-                image11 = ax11.imshow(self.plane_to_plot, vmax=colordeep, vmin=-colordeep, cmap=cmap, aspect=aspect)
+                image11 = ax11.imshow(self.plane_to_plot.T, vmax=colordeep, vmin=-colordeep, cmap=cmap, aspect=aspect)
                 ax12.plot_wireframe(X, Y, self.plane_to_plot[X, Y], color=lc, rstride=stride, cstride=stride)
                 #print(self.plane_to_plot.shape)
                 divider11 = make_axes_locatable(ax11)
@@ -229,8 +229,8 @@ class Graphtool(object):
                 cbar11 = fig.colorbar(image11, cax=cax11)
 
                 #ax11.invert_yaxis()
-                #ax12.invert_yaxis()
-                ax12.invert_xaxis()
+                ax12.invert_yaxis()
+                #ax12.invert_xaxis()
 
                 ax11.set_xlabel('x')
                 ax11.set_ylabel('z')
