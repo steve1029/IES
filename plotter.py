@@ -130,7 +130,7 @@ class Graphtool(object):
                     plane = 'yz'
                     col = np.arange(self.Space.Ny)
                     row = np.arange(self.Space.Nz)
-                    plane_to_plot = np.zeros((len(col),len(row)), dtype=np.float32)
+                    #plane_to_plot = np.zeros((len(row),len(col)), dtype=np.float32)
 
                 elif yidx != None :
                     assert type(yidx) == int
@@ -139,7 +139,7 @@ class Graphtool(object):
                     plane = 'xz'
                     col = np.arange(self.Space.Nx)
                     row = np.arange(self.Space.Nz)
-                    plane_to_plot = np.zeros((len(col), len(row)), dtype=np.float32)
+                    #plane_to_plot = np.zeros((len(row), len(col)), dtype=np.float32)
 
                 elif zidx != None :
                     assert type(zidx) == int
@@ -148,7 +148,7 @@ class Graphtool(object):
                     plane = 'xy'
                     col = np.arange(self.Space.Nx)
                     row = np.arange(self.Space.Ny)
-                    plane_to_plot = np.zeros((len(col),len(row)), dtype=np.float32)
+                    #plane_to_plot = np.zeros((len(row),len(col)), dtype=np.float32)
             
                 elif (xidx,yidx,zidx) == (None,None,None):
                     raise ValueError("Plane is not defined. Please insert one of x,y or z index of the plane.")
@@ -170,7 +170,7 @@ class Graphtool(object):
                     self.plane_to_plot = integrated[xidx, yidx].real
                 else: self.plane_to_plot = integrated[xidx, yidx]
 
-            X, Y = np.meshgrid(col, row, indexing='xy', sparse=True)
+            X, Y = np.meshgrid(col, row, indexing='ij', sparse=False)
             today = datetime.date.today()
 
             fig  = plt.figure(figsize=figsize)
@@ -198,11 +198,6 @@ class Graphtool(object):
             elif plane == 'xy':
 
                 image11 = ax11.imshow(self.plane_to_plot.T, vmax=colordeep, vmin=-colordeep, cmap=cmap, aspect=aspect)
-                #print(self.plane_to_plot.shape)
-                #print(Y.shape)
-                #print(X.shape)
-                #print(col.shape)
-                #print(row.shape)
                 ax12.plot_wireframe(X, Y, self.plane_to_plot[X, Y], color=lc, rstride=stride, cstride=stride)
 
                 divider11 = make_axes_locatable(ax11)
@@ -220,16 +215,24 @@ class Graphtool(object):
 
             elif plane == 'xz':
 
+                #print(self.name, "here?")
+                #print(self.plane_to_plot.shape)
+                #print(X.shape)
+                #print(Y.shape)
+                #print(col.shape)
+                #print(row.shape)
+                #print(X)
+                #print(Y)
+
                 image11 = ax11.imshow(self.plane_to_plot.T, vmax=colordeep, vmin=-colordeep, cmap=cmap, aspect=aspect)
                 ax12.plot_wireframe(X, Y, self.plane_to_plot[X, Y], color=lc, rstride=stride, cstride=stride)
-                #print(self.plane_to_plot.shape)
                 divider11 = make_axes_locatable(ax11)
 
                 cax11  = divider11.append_axes('right', size='5%', pad=0.1)
                 cbar11 = fig.colorbar(image11, cax=cax11)
 
                 #ax11.invert_yaxis()
-                ax12.invert_yaxis()
+                #ax12.invert_yaxis()
                 #ax12.invert_xaxis()
 
                 ax11.set_xlabel('x')
