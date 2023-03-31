@@ -81,7 +81,7 @@ $ mpirun -host <host1>,<host2>,...,<hostn> python3 examples/<example.py>
 The reflectance and transmittance of one-dimenstional slabs can be obtained by running `RT_simple_slabs.py`. 
 The file takes 5 additional system arguments: \<method\> \<Total time steps\> \<Nx\> \<Ny\> \<Nz\>.
 ```
-$ python3 RT_simple_slab.py FDTD 1000 100 100 100
+$ python3 RT_simple_slab.py FDTD 15000 360 20 20
 ```
 #### Scattering Analysis
 #### Band structure calculation
