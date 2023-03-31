@@ -17,14 +17,15 @@ import source, space, plotter, structure, collector, recorder
 """Description.
 
 sys.argv[1]: str. method.
-sys.argv[2]: int. Time steps.
-sys.argv[3]: int. Nx.
-sys.argv[4]: int. Ny.
-sys.argv[5]: int. Nz.
+sys.argv[2]: str. engine.
+sys.argv[3]: int. Time steps.
+sys.argv[4]: int. Nx.
+sys.argv[5]: int. Ny.
+sys.argv[6]: int. Nz.
 
 An execution example.
 
-$ python3 RT_simple_slabs.py FDTD 5001 360 64 64
+$ python3 RT_simple_slabs.py FDTD cupy 15000 360 32 32
 
 """
 
@@ -41,15 +42,15 @@ fustr = 'THz'
 a = 512*lunit
 
 Lx, Ly, Lz = 720*lunit, a, a
-Nx, Ny, Nz = int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5])
+Nx, Ny, Nz = int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6])
 dx, dy, dz = Lx/Nx, Ly/Ny, Lz/Nz
 
 courant = 1./4
 dt = courant * min(dx,dy,dz) / c
-tsteps = int(sys.argv[2])
+tsteps = int(sys.argv[3])
 
 method = sys.argv[1]
-engine = 'cupy'
+engine = sys.argv[2]
 
 TF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, tsteps, np.complex64, np.complex64, method=method, engine=engine)
 IF = space.Basic3D((Nx, Ny, Nz), (dx, dy, dz), dt, tsteps, np.complex64, np.complex64, method=method, engine=engine)
