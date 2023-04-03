@@ -54,9 +54,11 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
 ## Requirements
 * Debian/Ubuntu
 * COW (not necessary but highly recommanded.)
-* OpenMPI, OpenMP
-* Nvidia toolkits
 * SSH Login without password
+* OpenMPI
+* OpenMP
+* Nvidia driver
+* CUDA toolkits
 * Python3
 * Python3 libraries
     * Matplotlib
