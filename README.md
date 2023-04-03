@@ -93,11 +93,14 @@ $ python3 tutorials/RT_simple_slabs.py SHPF cupy 15000 360 20 20
 to run with SHPF method.
 
 After the simulation is finished, 
-the result will be saved in `graph/simple_2slab_<method>/0720um0512um0512um_0360_0016_0032_0015000_100um_200um_100um/'
+the result will be saved in `graph/simple_2slab_<method>/0720um0512um0512um_0360_0016_0032_0015000_100um_200um_100um/`.
+
 Run `plot_RT.py` to get reflectance and transmittance.
 ```
 $ python3 tutorials/plot_RT.py graph/simple_2slab_<method>/0720um0512um0512um_0360_0016_0032_0015000_100um_200um_100um/sim_data.jason
 ```
+![Refectance and transmittance of the two slabs.](./graph/simple_2slab_FDTD/0720um0512um0512um_0360_0020_0030_0015000_100um_200um_100um/IRT_0015000tstep.png)
+
 Since this example is a one-dimensional problem, FDTD and SHPF shows the same performance.
 
 #### Scattering Analysis
