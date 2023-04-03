@@ -70,16 +70,16 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
     * pharminv: A package for analyzing the dominant frequency component for a given signal. The band structure of the photonic crystal can be obtained.
 
 # Basic Usage
-#### Run with single node
+### Run with single node
 ```
 $ python3 examples/<example.py>
 ```
-#### Parallel computing
+### Parallel computing
 Run the code in the bash shell as the following command.
 ```
 $ mpirun -host <host1>,<host2>,...,<hostn> python3 examples/<example.py>
 ```
-#### Reflectance / Transmittance calculation
+### Reflectance / Transmittance calculation
 The reflectance and transmittance of one-dimenstional slabs can be obtained by running `RT_simple_slabs.py`. 
 The file takes 5 additional system arguments: \<method\> \<engin\> \<Total time steps\> \<Nx\> \<Ny\> \<Nz\>.
 For example, if you want to run with FDTD method and GPU,
@@ -103,8 +103,8 @@ $ python3 tutorials/plot_RT.py graph/simple_2slab_<method>/0720um0512um0512um_03
 
 Since this example is a one-dimensional problem, FDTD and SHPF shows the same performance.
 
-#### Scattering Analysis
-#### Band structure calculation
+### Scattering Analysis
+### Band structure calculation
 
 # Installation Guide
 
