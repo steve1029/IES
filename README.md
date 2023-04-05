@@ -1,6 +1,6 @@
 # Introduction
 [![CI](https://github.com/steve1029/SHPF/actions/workflows/blank.yml/badge.svg)](https://github.com/steve1029/SHPF/actions/workflows/blank.yml)
-![Numerical stability of each method.](./test.png)
+
 This package provides the time-domain numerical solvers of Maxwell's equations.
 It provides three simulation methods: 
 
@@ -105,6 +105,9 @@ Since this example is a one-dimensional problem, FDTD and SHPF shows the same pe
 
 ### Scattering Analysis
 ### Band structure calculation
+
+# Numerical statiblity
+![Numerical stability of each method.](./test.png)
 
 # Installation Guide
 
