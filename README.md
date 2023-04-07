@@ -217,6 +217,14 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
    ```bash
    # docker commit -m "The python packages installed." -a $USER cupy cupy:python
    ```
+From now on, you can work with the docker container named 'cupy'. To switch the bash to the running container, use the following command.
+```
+$ docker exec -it cupy /bin/bash
+```
+The easier way to install a docker image for SHPF is to build from the Dockerfile.
+```
+$ docker build --tag cupy:python
+```
 
 For more details, see the instructions [here](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) to install Nvidia-container toolkit on a PC
 
