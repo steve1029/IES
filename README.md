@@ -202,7 +202,7 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
    # exit()
    $ docker run --rm --runtime=nvidia --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
    ```
-1. Download and run the cupy image. Note that cupy/cupy:latest image uses CUDA toolkit v11.7.
+1. Download and run the cupy image.
    ```bash
    $ docker run --gpus all -it --name cupy cupy/cupy:latest /bin/bash
    ```
