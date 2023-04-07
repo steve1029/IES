@@ -217,16 +217,18 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
    ```bash
    # docker commit -m "The python packages installed." -a $USER cupy cupy:python
    ```
-From now on, you can work with the docker container named 'cupy'. To switch the bash to the running container, use the following command.
-```
-$ docker exec -it cupy /bin/bash
-```
+For more details, see the instructions [here](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) to install Nvidia-container toolkit on a PC
+
 The easier way to install a docker image for SHPF is to build from the Dockerfile.
 ```
 $ docker build --tag cupy:python
 ```
 
-For more details, see the instructions [here](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) to install Nvidia-container toolkit on a PC
+After the installation is finished, you can work with the docker container named 'cupy'. 
+To switch the bash to the running container, use the following command.
+```
+$ docker exec -it cupy /bin/bash
+```
 
 #### Trouble shooting
 * If you get an error when updating apt after adding a GPG key, like, do the following. [Ref](https://github.com/NVIDIA/nvidia-docker/issues/1238).
