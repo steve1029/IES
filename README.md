@@ -1,5 +1,7 @@
 # Introduction
-[![CI](https://github.com/steve1029/SHPF/actions/workflows/blank.yml/badge.svg)](https://github.com/steve1029/SHPF/actions/workflows/blank.yml)
+<!--[![CI](https://github.com/steve1029/SHPF/actions/workflows/blank.yml/badge.svg)](https://github.com/steve1029/SHPF/actions/workflows/blank.yml)-->
+<img src="https://img.shields.io/github/actions/workflow/status/steve1029/SHPF/blank.yml?style=for-the-badge">
+<img src="https://img.shields.io/github/license/steve1029/SHPF?style=for-the-badge">
 
 This package provides the time-domain numerical solvers of Maxwell's equations.
 It provides three simulation methods: 
