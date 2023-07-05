@@ -175,7 +175,7 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
    driver   : nvidia-driver-525 - third-party non-free
    driver   : xserver-xorg-video-nouveau - distro free builtin
    ```
-1. Install nvidia driver. We recommend to install server version.
+1. Install nvidia driver. If your machine doesn't use Graphic User Interface(GUI), we recommend to install the server version.
    ```bash
    apt install nvidia-driver-525-server
    ```
