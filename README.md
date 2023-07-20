@@ -25,12 +25,31 @@ Doctorate in Physics, in Feb 2022, received from the Department of Physics, Kore
 Currently working at LG innotek.
 
 [**Google Scholar**](https://scholar.google.com/citations?user=iYm5ThEAAAAJ&hl=ko)
+[**Curriculum Vitae**](/CV.pdf)
 
-[**Paper**](https://doi.org/10.1016/j.cpc.2020.107631)
+## Citation
+If you ues SHPF in your work, please cite the [**Paper**](https://doi.org/10.1016/j.cpc.2020.107631)
 
 Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PSTD-FDTD method for large-scale electromagnetic simulation. Computer Physics Communications, 259, 107631.
 
-[**Curriculum Vitae**](/CV.pdf)
+```
+@article{Lee2021,
+abstract = {We developed a parallel solver for large-scale electromagnetic simulation by hybridizing the Pseudo-Spectral Time Domain (PSTD) and Finite Difference Time Domain (FDTD) methods. Parallelization is implemented with a Message Passing Interface (MPI) and Open Multi-Processing (OpenMP) and applied to a single spatial dimension in the full three-dimensional simulation. The stability and accuracy of the hybridized PSTD-FDTD (HPF) method are analyzed and compared with the FDTD method, in particular by applying to a known exact solution of the Mie scattering theory. We also present a roofline model analysis to explain the high computing speed of the HPF method despite its heavy computational loads. The HPF method features high stability, low parallelization cost and fast computing speed on the PC cluster, especially when the sampling rate is low.},
+author = {Lee, DongGun and Kim, TaeHyung and Park, Q-Han},
+doi = {10.1016/j.cpc.2020.107631},
+file = {:C\:/Users/user/OneDrive - LG Innotek Co., Ltd/문서/Mendeley Desktop/Lee, Kim, Park_Performance analysis of parallelized PSTD-FDTD method for large-scale electromagnetic simulation.pdf:pdf},
+issn = {00104655},
+journal = {Computer Physics Communications},
+keywords = {FDTD,Hybrid,PSTD,Parallelization,Roofline model},
+month = {feb},
+pages = {107631},
+publisher = {Elsevier B.V.},
+title = {{Performance analysis of parallelized PSTD-FDTD method for large-scale electromagnetic simulation}},
+url = {https://doi.org/10.1016/j.cpc.2020.107631 https://linkinghub.elsevier.com/retrieve/pii/S0010465520303039},
+volume = {259},
+year = {2021}
+}
+```
 
 ## Features
 #### Numerical solvers
@@ -61,6 +80,13 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
 * Plain wave source
 * Gaussian source
 
+#### Numerical statiblity
+![Numerical stability of each method.](./test.png)
+* The numerical stability of the SHPF method is guaranteed by the staggered grid.
+As revealed in [**Cerrea et.al.**](https://doi.org/10.1190/1.1512801) and [**Ozdenvar et.al.**](https://doi.org/10.1111/j.1365-246X.1996.tb04705.x),
+the staggered grid shows better stability when solving odd-order derivatives, like first-order derivatives in Maxwell's equations.
+Thus, instead of usinsg x-staggered grid of the HPF method, we upgraded for it to use staggered-grid in all directions, and named it the SHPF method.
+
 ## Requirements
 * Debian/Ubuntu
 * COW (not necessary but highly recommanded.)
@@ -79,7 +105,10 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
     * mpi4py: Python wrapper for OpenMPI.
     * pharminv: A package for analyzing the dominant frequency component for a given signal. The band structure of the photonic crystal can be obtained.
 
-# Basic Usage
+# Usage
+After following the installation process, just clone the repository into your workstation and type the basic command.
+
+## Basic command
 ### Run with single node
 ```
 $ python3 examples/<example.py>
@@ -89,6 +118,7 @@ Run the code in the bash shell as the following command.
 ```
 $ mpirun -host <host1>,<host2>,...,<hostn> python3 examples/<example.py>
 ```
+## Examples
 ### Reflectance / Transmittance calculation
 The reflectance and transmittance of one-dimenstional slabs can be obtained by running `RT_simple_slabs.py`. 
 The file takes 5 additional system arguments: \<method\> \<engin\> \<Total time steps\> \<Nx\> \<Ny\> \<Nz\>.
@@ -114,15 +144,17 @@ $ python3 tutorials/plot_RT.py graph/simple_2slab_<method>/0720um0512um0512um_03
 Since this example is a one-dimensional problem, FDTD and SHPF shows the same performance.
 
 ### Scattering Analysis
+
 ### Band structure calculation
 
-# Numerical statiblity
-![Numerical stability of each method.](./test.png)
-
 # Installation Guide
+This package is supposed to be run without any cumbersome system settings in Linux.
+If you want to use it with CPU, no other system settings are required.
+But if you want to use it with distributed-memory environment or GPUs, the relevant system settings are required.
 
 ### Installation on Debian/Ubuntu
-Installation on Debian/Ubuntu system is straighforward. Download all the files in your home directory `~/SHPF/` and follow the instructions in **Basic Usage**.
+Installation on Debian/Ubuntu system is straighforward. 
+Clone the repository in your home directory `~/SHPF/` and follow the instructions in **Usage**.
 
 ### Installation on Windows
 Unfortunately, installation on Windows is currently not available.
