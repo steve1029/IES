@@ -145,19 +145,17 @@ Since this example is a one-dimensional problem, FDTD and SHPF shows the same pe
 ### Band structure calculation
 
 # Installation Guide
-This package is supposed to be run without any cumbersome system settings in Linux.
+This package is supposed to be run without any cumbersome system settings like `make` or `./configure`, if you meet the **Requirements**.
 If you want to use it with CPU, no other system settings are required.
-But if you want to use it with distributed-memory environment or GPUs, the relevant system settings are required.
+However, you want to use it with distributed-memory parallelism or GPUs, the relevant system settings are required.
+To use it with a COW and do not know how to build Debian/Ubuntu COW, please see `how_to_build_cow.md`
 
 ### Installation on Debian/Ubuntu
-Installation on Debian/Ubuntu system is straighforward. 
-Clone the repository in your home directory `~/SHPF/` and follow the instructions in **Usage**.
+Installation on Debian/Ubuntu system is straighforward.
+If you meet the **Requirements** just clone the repository in your home directory like `~/SHPF/` and follow the instructions in **Usage**.
 
 ### Installation on Windows
 Unfortunately, installation on Windows is currently not available.
-
-### Building a COW
-Please see `how_to_build_cow.md`
 
 ### Running on a docker container
 For those who want to use this package on a single computer, i.e. without MPI, 
