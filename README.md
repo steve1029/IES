@@ -34,10 +34,7 @@ Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PST
 
 ```
 @article{Lee2021,
-abstract = {We developed a parallel solver for large-scale electromagnetic simulation by hybridizing the Pseudo-Spectral Time Domain (PSTD) and Finite Difference Time Domain (FDTD) methods. Parallelization is implemented with a Message Passing Interface (MPI) and Open Multi-Processing (OpenMP) and applied to a single spatial dimension in the full three-dimensional simulation. The stability and accuracy of the hybridized PSTD-FDTD (HPF) method are analyzed and compared with the FDTD method, in particular by applying to a known exact solution of the Mie scattering theory. We also present a roofline model analysis to explain the high computing speed of the HPF method despite its heavy computational loads. The HPF method features high stability, low parallelization cost and fast computing speed on the PC cluster, especially when the sampling rate is low.},
-author = {Lee, DongGun and Kim, TaeHyung and Park, Q-Han},
 doi = {10.1016/j.cpc.2020.107631},
-file = {:C\:/Users/user/OneDrive - LG Innotek Co., Ltd/문서/Mendeley Desktop/Lee, Kim, Park_Performance analysis of parallelized PSTD-FDTD method for large-scale electromagnetic simulation.pdf:pdf},
 issn = {00104655},
 journal = {Computer Physics Communications},
 keywords = {FDTD,Hybrid,PSTD,Parallelization,Roofline model},
