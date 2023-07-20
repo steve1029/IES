@@ -88,7 +88,7 @@ Thus, instead of usinsg x-staggered grid of the HPF method, we upgraded for it t
 * Debian/Ubuntu
 * COW (not necessary but highly recommanded.)
 * SSH Login without password
-* OpenMPI
+* OpenMPI (not necessary but required when computing with multiple nodes.)
 * OpenMP
 * Nvidia driver
 * CUDA toolkits
