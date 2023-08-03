@@ -67,7 +67,7 @@ year = {2021}
 - **FDTD**: Uses Finite-Difference method to approximate the derivatives in Maxwell's equations.
 - **PSTD**: Uses pseudo-spectral methods to approximate the spatial derivatives in Maxwell's equations.
 - **SPSTD**: An acronym of Staggered-grid PSTD method. It is a deviation of the PSTD method which uses the Yee grid. (In developing)
-- **HPF**: A hybrid PSTD-FDTD method which uses $x$-staggered grid. (In developing)
+- **HPF**: A hybrid PSTD-FDTD method which uses $x$-staggered grid. (Upgraded to SHPF.)
 - **SHPF**: Combination of the PSTD and FDTD method. Staggered grid Hybrid PSTD-FDTD(SHPF) method is optimized for large-scale electromagnetic simulations with parallel computing. 
 
 #### Parallelism
