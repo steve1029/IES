@@ -184,7 +184,7 @@ For more details, see [Installation Guide](https://docs.nvidia.com/datacenter/cl
 1. NVIDIA GPU with Architecture >= Kepler (or compute capability 3.0)
 1. NVIDIA Linux drivers >= 418.81.07 (Note that older driver releases or branches are unsupported.)
 
->**Note**
+> **Note**
 To use NVIDIA container toolkit in your system, make sure that appropreate NVIDIA DRIVER is installed in your system.
 You do not need to install the CUDA Toolkit on your host system but the NVIDIA DRIVER must be installed.
 
