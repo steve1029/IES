@@ -1,15 +1,15 @@
 Table of Contents
 =================
-* [Introduction](#Introduction)
+* [Introduction](#introduction)
   * Author
   * Citation
   * Features
   * Requirments
-* [Usage](#Usage)
+* [Usage](#usage)
   * Basic Command
   * Parallel Computing
   * Examples
-* [Installation Guide](#Installation-Guide)
+* [Installation Guide](#installation-guide)
   * Installation on Debian/Ubuntu
   * Installation on Windows
   * Running on a docker container
