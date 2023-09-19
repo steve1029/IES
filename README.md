@@ -98,7 +98,7 @@ year = {2021}
 ![Numerical stability of each method.](./test.png)
 * The numerical stability of the SHPF method is guaranteed by the staggered grid.
 As revealed in [**Cerrea et.al.**](https://doi.org/10.1190/1.1512801) and [**Ozdenvar et.al.**](https://doi.org/10.1111/j.1365-246X.1996.tb04705.x),
-the staggered grid shows better stability when solving odd-order derivatives, like first-order derivatives in Maxwell's equations.
+the staggered grid shows better stability when solving odd-order derivatives, such as the first-order derivatives in Maxwell's equations.
 Thus, instead of usinsg x-staggered grid of the HPF method, we upgraded for it to use staggered-grid in all directions, and named it the SHPF method.
 
 ## Requirements
