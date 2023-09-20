@@ -25,7 +25,8 @@ Table of Contents
 <!--[![license](https://img.shields.io/github/license/steve1029/SHPF?style=for-the-badge)](https://github.com/steve1029/SHPF/LICENSE.md)-->
 <!--![License](https://img.shields.io/github/license/steve1029/SHPF?style=for-the-badge)-->
 </p>
-IES is the acronym of "Integrated Electromagnetic Simulation".
+
+IES is the acronym of *Integrated Electromagnetic Simulation*.
 This package provides the time-domain numerical solvers of Maxwell's equations.
 It provides three simulation methods: 
 
@@ -45,7 +46,7 @@ Currently working at LG innotek.
 [**Curriculum Vitae**](/CV.pdf)
 
 ## Citation
-If you ues SHPF in your work, please cite the [**Paper**](https://doi.org/10.1016/j.cpc.2020.107631)
+If you ues IES in your work, please cite the [**Paper**](https://doi.org/10.1016/j.cpc.2020.107631)
 
 Lee, D., Kim, T., & Park, Q. H. (2021). Performance analysis of parallelized PSTD-FDTD method for large-scale electromagnetic simulation. Computer Physics Communications, 259, 107631.
 
