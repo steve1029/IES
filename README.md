@@ -138,7 +138,7 @@ $ mpirun -host <host1>,<host2>,...,<hostn> python3 examples/<example.py>
 ![A schematic of one-dimensional reflection/transmission calculation.](./single_slab.png)
 
 The reflectance and transmittance of one-dimenstional slabs can be obtained by running `RT_simple_slabs.py`. 
-The file takes 5 additional system arguments: \<method\> \<engin\> \<Total time steps\> \<Nx\> \<Ny\> \<Nz\>.
+The file takes 5 additional system arguments: \<method\> \<engine\> \<Total time steps\> \<Nx\> \<Ny\> \<Nz\>.
 For example, if you want to run with FDTD method and GPU,
 ```
 $ python3 tutorials/RT_simple_slabs.py FDTD cupy 15000 360 20 20
